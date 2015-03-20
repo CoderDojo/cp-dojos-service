@@ -2,6 +2,7 @@
 
 var seneca = require('seneca')(),
     express = require('express'),
+    config = require('config'),
     request = require('supertest');
 
 var bodyparser   = require('body-parser')
@@ -15,12 +16,10 @@ app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json({ limit: 100000}));
 app.use(seneca.export('web'));
 
+console.log(config.db);
 
-seneca.use('mongo-store',{
-  name:'zen_live',
-  host:'127.0.0.1',
-  port:27018,
-})
+
+seneca.use('mongo-store', config.db)
 
 var testDojo = {
   "id": 9999999,
@@ -125,10 +124,4 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-
 });
-
-
-
-
-
