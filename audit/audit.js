@@ -36,6 +36,9 @@ module.exports = function (options) {
 
     var user = args.req$ && args.req$.user;
 
+    var ip =  args.req$ && args.req$.headers['x-forwarded-for'] || 
+              args.req$ && args.req$.connection && args.req$.connection.remoteAddress;
+
     var actaudit = args.audit$;
     delete args.audit$;
 
@@ -48,7 +51,8 @@ module.exports = function (options) {
     auditent.save$({
       when: new Date(),
       act: act,
-      user: user
+      user: user,
+      ip: ip
     }, function (err) {
       if (err) { return done(err); }
 
