@@ -1,8 +1,8 @@
 {
-  "name": "dojos-service",
+  "name": "audit-service",
   "version": "0.0.1",
-  "description": "Seneca microservice for dojos",
-  "main": "service.js",
+  "description": "Seneca microservice for audits",
+  "main": "index.js",
   "directories": {
     "test": "test"
   },
@@ -22,14 +22,15 @@
     "mocha": "~2.2.1",
     "supertest": "~0.15.0",
     "express": "~4.12.3",
-    "body-parser": "~1.12.2"
+    "body-parser": "~1.12.2",
+    "seneca-web": "~0.3.3",
+    "seneca-mongo-store": "~0.2.0",
+    "chai": "~2.1.2"
   },
   "dependencies": {
-    "seneca": "0.6.1",
-    "seneca-mongo-store": "0.2.0",
-    "config": "1.12.x",
-    "js-yaml": "3.2.x",
-    "async": "0.9.x",
-    "lodash": "3.6.x"
+    "seneca": "~0.6.1",
+    "config": "~1.12.0",
+    "js-yaml": "~3.2.7",
+    "lodash": "~3.5.0"
   }
 }

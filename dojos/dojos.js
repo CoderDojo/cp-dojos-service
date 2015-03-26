@@ -1,32 +1,27 @@
 'use strict';
 
+var _ = require('lodash');
 var path = require('path');
 var async = require('async');
-var serve_static = require('serve-static');
-var _ = require('lodash');
 
 module.exports = function (options) {
   var seneca = this;
   var plugin = 'cd-dojos';
-  var version = '1.0';
-  var ENTITY_NS = "cd/dojos";
+  var ENTITY_NS = 'cd/dojos';
 
-  options = seneca.util.deepextend({
-    prefix: '/api/'
-  }, options);
 
-  seneca.add({ role: plugin, spec: 'web' }, spec_web);
-  seneca.add({ role: plugin, cmd: 'search'}, cmd_search);
-  seneca.add({ role: plugin, cmd: 'list'}, cmd_list);
-  seneca.add({ role: plugin, cmd: 'create'}, cmd_create);
-  seneca.add({ role: plugin, cmd: 'delete'}, cmd_delete);
-  seneca.add({ role: plugin, cmd: 'my_dojos_count'}, cmd_my_dojos_count);
-  seneca.add({ role: plugin, cmd: 'my_dojos_search'}, cmd_my_dojos_search);
+  seneca.add({role: plugin, cmd: 'search'}, cmd_search);
+  seneca.add({role: plugin, cmd: 'list'}, cmd_list);
+  seneca.add({role: plugin, cmd: 'create'}, cmd_create);
+  seneca.add({role: plugin, cmd: 'update'}, cmd_update);
+  seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
+  seneca.add({role: plugin, cmd: 'my_dojos_count'}, cmd_my_dojos_count);
+  seneca.add({role: plugin, cmd: 'my_dojos_search'}, cmd_my_dojos_search);
+
 
   function cmd_search(args, done){
     var seneca = this, query = {}, dojos_ent;
     query = args.query;
-
     dojos_ent = seneca.make$(ENTITY_NS);
     dojos_ent.list$(query, done);
   }
@@ -38,7 +33,7 @@ module.exports = function (options) {
       var dojosByCountry = {};
       response = _.sortBy(response, 'country_name');
       async.each(response, function(dojo, dojoCb) {
-        if(dojo.deleted === 1) return dojoCb();
+        if(dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return dojoCb();
         var id = dojo.id;
         if(!dojosByCountry[dojo.country_name]) {
           dojosByCountry[dojo.country_name] = {};
@@ -56,20 +51,23 @@ module.exports = function (options) {
         }, function() {
           done(null, dojosByCountry);
         });
-        
       });
     });
   }
 
   function cmd_create(args, done){
-    var seneca = this, query = {}, dojo_ent, dojo;
-    dojo = args.dojo;
-
+    var seneca = this, dojo = args.dojo;
     seneca.make$(ENTITY_NS).save$(dojo, function(err, response) {
-      if(err){
-        return done(err);
-      }
+      if(err) return done(err);
+      done(null, response);
+    });
+  }
 
+  function cmd_update(args, done){
+    var seneca = this;
+    var dojo = args.dojo;
+    seneca.make(ENTITY_NS).save$(dojo, function(err, response) {
+      if(err) return done(err);
       done(null, response);
     });
   }
@@ -77,13 +75,7 @@ module.exports = function (options) {
   function cmd_delete(args, done){
     var seneca = this;
     var id = args.id;
-
-    seneca.make$(ENTITY_NS).remove$( id, function(err){
-      if(err){
-        return done(err);
-      }
-      done();
-    });
+    seneca.make$(ENTITY_NS).remove$(args.id, done);
   }
 
   function cmd_my_dojos_count(args, done) {
@@ -115,7 +107,7 @@ module.exports = function (options) {
       query.sort$ = query.sort;
       delete query.sort;
     }
-   
+
     query._id = {$in:user.dojos};
     seneca.make$(ENTITY_NS).list$(query, function(err, response) {
       if(err) return done(err);
@@ -123,53 +115,19 @@ module.exports = function (options) {
     });
   }
 
-  function spec_web(args, done) {
-    var public_folder = path.join(__dirname, 'public');
 
-    done(null, {
-      name: 'dojos',
-      public: public_folder
-    });
-  }
-
-  seneca.add({ init: plugin }, function (args, done) {
-    var seneca = this;
-
-    seneca.act({ role: plugin, spec: 'web' }, function (err, spec) {
-      if (err) { return done(err); }
-
-      var serve = serve_static(spec.public);
-      var prefix = '/content/' + spec.name;
-
-      seneca.act({ role: 'web', use: function (req, res, next) {
-        var origurl = req.url;
-        if (0 === origurl.indexOf(prefix)) {
-          req.url = origurl.substring(prefix.length);
-          serve(req, res, function () {
-            req.url = origurl;
-            next();
-          });
-        }
-        else {
-          return next();
-        }
-      }});
-
-      done();
-    });
-  });
-
-  // web interface
+   // web interface
   seneca.act({ role: 'web', use: {
-    prefix: options.prefix + version + '/',
+    prefix: '/',
     pin: { role: plugin, cmd: '*' },
     map: {
       'search': {POST: true, alias: 'dojos/search'},
       'create': {POST: true, alias: 'dojos'},
+      'update': {PUT: true,  alias: 'dojos/:id'},
       'delete': {DELETE: true, alias: 'dojos/:id'},
       'list'  : {GET: true, alias: 'dojos'},
       'my_dojos_count':  {POST: true, alias: 'dojos/my_dojos_count'},
-      'my_dojos_search': {POST: true, alias: 'dojos/my_dojos_search'},
+      'my_dojos_search': {POST: true, alias: 'dojos/my_dojos_search'}
     }
   }});
 
@@ -178,4 +136,4 @@ module.exports = function (options) {
     name: plugin
   };
 
-}
+};
