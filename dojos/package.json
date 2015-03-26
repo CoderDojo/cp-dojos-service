@@ -2,7 +2,7 @@
   "name": "dojos-service",
   "version": "0.0.1",
   "description": "Seneca microservice for dojos",
-  "main": "index.js",
+  "main": "service.js",
   "directories": {
     "test": "test"
   },
