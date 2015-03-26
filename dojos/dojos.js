@@ -6,7 +6,7 @@ module.exports = function (options) {
   var seneca = this;
   var plugin = 'cd-dojos';
   var version = '1.0';
-  var ENTITY_NS = "cd/dojos";
+  var ENTITY_NS = 'cd/dojos';
 
   seneca.add({ role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({ role: plugin, cmd: 'create'}, cmd_create);
@@ -61,4 +61,4 @@ module.exports = function (options) {
     name: plugin
   };
 
-}
+};
