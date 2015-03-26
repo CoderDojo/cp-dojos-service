@@ -7,19 +7,20 @@ var seneca = require('seneca')(),
 
 var bodyparser   = require('body-parser');
 
+console.log('using configuration', JSON.stringify(config, null, 4));
+seneca.options(config);
+
+seneca
+  .use('web')
+  .use('mongo-store')
+  .use('../dojos.js');
+
+
 var app = require('express')();
-
-seneca.use( require('seneca-web') );
-seneca.use('../dojos.js');
-
 app.use(bodyparser.urlencoded({ extended: true }));
 app.use(bodyparser.json({ limit: 100000}));
 app.use(seneca.export('web'));
 
-console.log(config.db);
-
-
-seneca.use('mongo-store', config.db);
 
 var testDojo = {
   'id': 9999999,
