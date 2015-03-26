@@ -115,23 +115,6 @@ module.exports = function (options) {
     });
   }
 
-
-   // web interface
-  seneca.act({ role: 'web', use: {
-    prefix: '/',
-    pin: { role: plugin, cmd: '*' },
-    map: {
-      'search': {POST: true, alias: 'dojos/search'},
-      'create': {POST: true, alias: 'dojos'},
-      'update': {PUT: true,  alias: 'dojos/:id'},
-      'delete': {DELETE: true, alias: 'dojos/:id'},
-      'list'  : {GET: true, alias: 'dojos'},
-      'my_dojos_count':  {POST: true, alias: 'dojos/my_dojos_count'},
-      'my_dojos_search': {POST: true, alias: 'dojos/my_dojos_search'}
-    }
-  }});
-
-
   return {
     name: plugin
   };
