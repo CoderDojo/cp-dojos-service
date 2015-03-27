@@ -3,6 +3,7 @@
 var _ = require('lodash');
 var path = require('path');
 var async = require('async');
+var ObjectID = require('mongodb').ObjectID;
 
 module.exports = function (options) {
   var seneca = this;
@@ -57,9 +58,20 @@ module.exports = function (options) {
 
   function cmd_create(args, done){
     var seneca = this, dojo = args.dojo;
+    var userEntity = seneca.make$('sys/user');
+    var createdby = args.user;
+
     seneca.make$(ENTITY_NS).save$(dojo, function(err, response) {
       if(err) return done(err);
-      done(null, response);
+      userEntity.load$(createdby, function(err, user) {
+        if(err) return done(err);
+        if(!user.dojos) user.dojos = [];
+        user.dojos.push(response.id);
+        userEntity.save$(user, function(err, response) {
+          if(err) return done(err);
+          done(null, response);
+        });
+      });
     });
   }
 
@@ -81,7 +93,7 @@ module.exports = function (options) {
   function cmd_my_dojos_count(args, done) {
     var seneca = this, query = {};
     var user = args.user;
-    query._id = {$in:user.dojos};
+    query._id = {$in:user.dojos||[]};
     seneca.make$(ENTITY_NS).list$(query, function(err, response) {
       if(err) return done(err);
       done(null, response.length);
@@ -108,7 +120,10 @@ module.exports = function (options) {
       delete query.sort;
     }
 
-    query._id = {$in:user.dojos};
+    query._id = {
+      $in: _.map(user.dojos, function(dojoid) { return new ObjectID(dojoid); })
+    };
+
     seneca.make$(ENTITY_NS).list$(query, function(err, response) {
       if(err) return done(err);
       done(null, response);
