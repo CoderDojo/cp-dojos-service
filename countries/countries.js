@@ -15,8 +15,9 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
   
   function cmd_list(args, done){
-    var seneca = this;
-    seneca.make(ENTITY_NS).list$({}, function(err, response) {
+    var seneca = this, query;
+    query = args.query ?  args.query : {};
+    seneca.make(ENTITY_NS).list$(query, function(err, response) {
       if(err){
         return done(err);
       } else {
@@ -46,6 +47,7 @@ module.exports = function (options) {
     var id = args.id;
     seneca.make$(ENTITY_NS).remove$(args.id, done);
   }
+
 
   return {
     name: plugin

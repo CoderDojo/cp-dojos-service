@@ -5,6 +5,7 @@ var seneca = require('seneca')(),
     async = require('async');
 
 var expect = require('chai').expect;
+var role = "cd-countries";
 
 console.log('using configuration', JSON.stringify(config, null, 4));
 seneca.options(config);
@@ -50,8 +51,16 @@ var countries = [{
   }
 ];
 
+var testCountry = {
+  "continent": "EU",
+  "alpha2": "GG",
+  "alpha3": "GGY",
+  "number": 831,
+  "country_name": "Guernsey, Bailiwick of"
+}
+
 describe('Countries Microservice test', function(){
-  var countryEnt = seneca.make$('cd/countries');
+  var countryEnt = seneca.make$('cd/countries'), id;
 
   before(function(done){
     seneca.ready(function(){
@@ -66,11 +75,11 @@ describe('Countries Microservice test', function(){
         });
       });
     });
-  }); 
-  
+  });
+
   before(function(done){
     function createCountries(country, cb){
-      seneca.act({role: 'cd-countries', cmd: 'create', country:  country}, function(err, res){
+      seneca.act({role: role, cmd: 'create', country:  country}, function(err, res){
         if(err){
           return cb(err);
         }
@@ -90,7 +99,7 @@ describe('Countries Microservice test', function(){
 
   describe('Countries list', function(){
     it('should return all 5 entries', function(done){      
-      seneca.act({role: 'cd-countries', cmd: 'list'}, {}, function(err, countries){
+      seneca.act({role: role, cmd: 'list'}, function(err, countries){
         if(err){
           return done(err)
         } else {
@@ -101,5 +110,38 @@ describe('Countries Microservice test', function(){
       });
     });
   });
+
+  describe('Save Country', function(){
+    
+    before(function(done){
+      seneca.ready(function(){
+        countryEnt.native$(function(err, db){
+          var collection = db.collection('cd_countries');
+          collection.remove({}, function(err, noRemoved){
+            if(err){
+              return done(err);
+            } else {
+              return done();
+            }
+          });
+        });
+      });
+    });
+
+    it('Should save successfully', function(done){
+      seneca.act({role: role, cmd: 'create', country: testCountry}, function(err, country){
+        seneca.act({role: role, cmd: 'list', query: {id: country.id}}, function(err, savedCountry){
+          if(err){
+            return done(err);
+          }
+          
+          expect(savedCountry).to.not.be.undefined;
+          expect(savedCountry).to.be.ok;
+          done();
+        });
+      })
+    });
+  });
+
 
 });
