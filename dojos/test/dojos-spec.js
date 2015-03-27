@@ -1,127 +1,99 @@
 'use strict';
 
 var seneca = require('seneca')(),
-    express = require('express'),
     config = require('config'),
-    request = require('supertest');
+    fs = require('fs'),
+    expect = require('chai').expect;
 
-var bodyparser   = require('body-parser');
+var role = "cd-dojos";
+var async = require("async");
+
+var users = JSON.parse(fs.readFileSync('./test/fixtures/users.json', 'utf8'));
+var dojos = JSON.parse(fs.readFileSync('./test/fixtures/dojos.json', 'utf8'));
 
 console.log('using configuration', JSON.stringify(config, null, 4));
 seneca.options(config);
 
 seneca
-  .use('web')
-  .use('mongo-store')
-  .use('../dojos.js');
-
-
-var app = require('express')();
-app.use(bodyparser.urlencoded({ extended: true }));
-app.use(bodyparser.json({ limit: 100000}));
-app.use(seneca.export('web'));
-
-
-var testDojo = {
-  'id': 9999999,
-  'name': 'Test',
-  'creator': 999999,
-  'created': '2015-03-12T02:49:49.000Z',
-  'verified_at': null,
-  'verified_by': null,
-  'verified': 0,
-  'need_mentors': 0,
-  'stage': 0,
-  'time': 'Thursday, once a month, 6-8pm',
-  'country': 'US',
-  'location': 'Test Public Library',
-  'coordinates': '40.4917889,-74.4453375',
-  'notes': '<p>None</p>',
-  'email': null,
-  'website': 'http://test.com',
-  'twitter': null,
-  'google_group': null,
-  'eb_id': null,
-  'supporter_image': null,
-  'deleted': 0,
-  'deleted_by': null,
-  'deleted_at': null,
-  'private': 0,
-  'url_slug': null,
-  'continent': 'NA',
-  'alpha2': 'US',
-  'alpha3': 'USA',
-  'number': 840,
-  'country_name': 'United States of America'
-};
-
-var testResponse = [ { 
-  'entity$': '-/cd/dojos',
-  name: 'Test',
-  creator: 999999,
-  created: '2015-03-12T02:49:49.000Z',
-  verified_at: null,
-  verified_by: null,
-  verified: 0,
-  need_mentors: 0,
-  stage: 0,
-  time: 'Thursday, once a month, 6-8pm',
-  country: 'US',
-  location: 'Test Public Library',
-  coordinates: '40.4917889,-74.4453375',
-  notes: '<p>None</p>',
-  email: null,
-  website: 'http://test.com',
-  twitter: null,
-  google_group: null,
-  eb_id: null,
-  supporter_image: null,
-  deleted: 0,
-  deleted_by: null,
-  deleted_at: null,
-  private: 0,
-  url_slug: null,
-  continent: 'NA',
-  alpha2: 'US',
-  alpha3: 'USA',
-  number: 840,
-  country_name: 'United States of America',
-  id: '9999999' }];
+  .use('mongo-store', config["mongo-store"])
+  .use('../../dojos.js');
 
 
 describe('Dojo Microservice test', function(){
+  var usersEnt, dojosEnt;
 
+  usersEnt = seneca.make$("sys/user");
+  dojosEnt = seneca.make$("cd/dojos");
+
+  //Empty Tables
   before(function(done){
     seneca.ready(function(){
-      request(app)
-        .post('/dojos')
-        .send({dojo: testDojo})
-        .end(function(err, res){
-          if (err) { return done(err); }
-          done();
+      dojosEnt.native$(function(err, db){
+        var collection = db.collection('cd_dojos');
+        collection.remove({}, function(err, noRemoved){
+          if(err){
+            return done(err);
+          } else {
+            return done();
+          }
         });
-    });
-  });
-
-  describe('POST /dojos/search', function(){
-    it('respond with json', function(done){      
-      seneca.ready(function(){
-        request(app)
-          .post('/dojos/search')
-          .send({query:{_id: testDojo.id}})
-          .expect(200, testResponse ,done);
       });
     });
   });
 
-  after(function(done){
+  before(function(done){
     seneca.ready(function(){
-      request(app)
-        .delete('/dojos/' + testDojo.id)
-        .end(function(err, res){
-          if (err) { return done(err); }
-          done();
+      usersEnt.native$(function(err, db){
+        var collection = db.collection('sys_users');
+        collection.remove({}, function(err, noRemoved){
+          if(err){
+            return done(err);
+          } else {
+            return done();
+          }
         });
+      });
+    });
+  });
+
+
+  var loadUsers = function(user, cb){
+    usersEnt.save$(user, function(err, user){
+      if(err){
+        return cb(err);
+      } else {
+        cb();
+      }
+    });
+  }
+
+  before(function(done){
+    seneca.ready(function(){
+      async.eachSeries(users, loadUsers, function(err){if(err){return done(err)} done();});
+    });
+  });
+
+
+  describe('Save successfully', function(){
+    it('respond with json', function(done){      
+      seneca.ready(function(){
+        seneca.act({role: role, cmd: 'create', dojo:  dojos[0], user: users[0].id}, 
+          function(err, savedDojo){
+            if(err){
+              return done(err);
+            } else {
+              seneca.act({role: role, cmd: 'search', query: {_id: savedDojo.id}}, function(err, users){
+                if(err){
+                  return done(err);
+                }
+                expect(users.length).to.be.equal(1);
+                expect(users[0]).to.be.ok;
+                
+                done();
+              });
+            }
+        });
+      });
     });
   });
 

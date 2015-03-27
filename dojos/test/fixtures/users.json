@@ -1,0 +1,148 @@
+[{
+    "id": 1000,
+    "username": "test1",
+    "email": "test1@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "ban_reason": null,
+    "last_ip": "0.0.0.0",
+    "last_login": "2015-03-11T22:49:42.000Z",
+    "created": "2015-03-11T22:48:22.000Z",
+    "modified": "2015-03-11T22:49:42.000Z",
+    "agreements": [],
+    "profiles": [
+      {
+        "id": 4621,
+        "user_id": 1000,
+        "role": 1,
+        "dojo": null
+      }
+    ],
+    "dojos": [
+      {
+        "user_id": 1000,
+        "dojo_id": 2000,
+        "owner": 1
+      }
+    ]
+  },
+  {
+    "id": 1001,
+    "username": "test2",
+    "email": "test2@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "ban_reason": null,
+    "last_ip": "0.0.0.0",
+    "last_login": "2015-03-12T00:31:34.000Z",
+    "created": "2015-03-11T23:43:26.000Z",
+    "modified": "2015-03-12T00:31:34.000Z",
+    "agreements": [],
+    "profiles": [
+      {
+        "id": 4622,
+        "user_id": 1001,
+        "role": 1,
+        "dojo": null
+      }
+    ],
+    "dojos": [
+      {
+        "user_id": 1003,
+        "dojo_id": 2000,
+        "owner": 1
+      }
+    ]
+  },
+  {
+    "id": 1002,
+    "username": "test3",
+    "email": "sjagjeet@hotmail.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "ban_reason": null,
+    "last_ip": "0.0.0.0",
+    "last_login": "2015-03-12T05:58:12.000Z",
+    "created": "2015-03-11T23:46:04.000Z",
+    "modified": "2015-03-12T05:58:12.000Z",
+    "agreements": [],
+    "profiles": [
+      {
+        "id": 4625,
+        "user_id": 1002,
+        "role": 1,
+        "dojo": null
+      }
+    ],
+    "dojos": []
+  },
+  {
+    "id": 1003,
+    "username": "test4",
+    "email": "test4@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "ban_reason": null,
+    "last_ip": "0.0.0.0",
+    "last_login": "2015-03-12T00:52:32.000Z",
+    "created": "2015-03-12T00:52:01.000Z",
+    "modified": "2015-03-12T00:52:32.000Z",
+    "agreements": [],
+    "profiles": [
+      {
+        "id": 4623,
+        "user_id": 1003,
+        "role": 1,
+        "dojo": null
+      }
+    ],
+    "dojos": [
+      {
+        "user_id": 1003,
+        "dojo_id": 2000,
+        "owner": 1
+      }
+    ]
+  },
+  {
+    "id": 1004,
+    "username": "test5",
+    "email": "test5@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "ban_reason": null,
+    "last_ip": "0.0.0.0",
+    "last_login": "2015-03-12T02:38:35.000Z",
+    "created": "2015-03-12T02:38:04.000Z",
+    "modified": "2015-03-12T02:38:35.000Z",
+    "agreements": [
+      {
+        "user_id": 1004,
+        "full_name": "test five",
+        "last_ip": "0.0.0.0",
+        "timestamp": "2015-03-12T02:43:12.000Z",
+        "agreement_version": 2
+      }
+    ],
+    "profiles": [
+      {
+        "id": 4624,
+        "user_id": 1004,
+        "role": 1,
+        "dojo": null
+      }
+    ],
+    "dojos": [
+      {
+        "user_id": 1004,
+        "dojo_id": 2000,
+        "owner": 1
+      }
+    ]
+  }
+]
