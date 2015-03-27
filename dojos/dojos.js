@@ -61,15 +61,15 @@ module.exports = function (options) {
     var userEntity = seneca.make$('sys/user');
     var createdby = args.user;
 
-    seneca.make$(ENTITY_NS).save$(dojo, function(err, response) {
+    seneca.make$(ENTITY_NS).save$(dojo, function(err, dojo) {
       if(err) return done(err);
       userEntity.load$(createdby, function(err, user) {
         if(err) return done(err);
         if(!user.dojos) user.dojos = [];
-        user.dojos.push(response.id);
+        user.dojos.push(dojo.id);
         userEntity.save$(user, function(err, response) {
           if(err) return done(err);
-          done(null, response);
+          done(null, dojo);
         });
       });
     });
