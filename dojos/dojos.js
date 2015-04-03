@@ -60,6 +60,7 @@ module.exports = function (options) {
     var seneca = this, dojo = args.dojo;
     var userEntity = seneca.make$('sys/user');
     var createdby = args.user;
+    dojo.creator = createdby;
 
     seneca.make$(ENTITY_NS).save$(dojo, function(err, dojo) {
       if(err) return done(err);
@@ -86,8 +87,31 @@ module.exports = function (options) {
 
   function cmd_delete(args, done){
     var seneca = this;
-    var id = args.id;
-    seneca.make$(ENTITY_NS).remove$(args.id, done);
+    var dojoEntity = seneca.make$(ENTITY_NS);
+    var userEntity = seneca.make$('sys/user');
+    
+    dojoEntity.load$(args.id, function(err, dojo) {
+      if(err) return done(err);
+      var createdby = dojo.creator;
+      dojoEntity.remove$(args.id, function(err, dojoRemoved) {
+        if(err) return done(err);
+
+        userEntity.load$(createdby, function(err, user) {
+          if(err) return done(err);
+          var dojoToRemove;
+          _.find(user.dojos, function(dojo, index) {
+            if(dojo === args.id) {
+              dojoToRemove = index;
+            }
+          });
+          user.dojos.splice(dojoToRemove, 1);
+          userEntity.save$(user, function(err, response) {
+            if(err) return done(err);
+            done(null, dojoRemoved);
+          });
+        });
+      });
+    });
   }
 
   function cmd_my_dojos_count(args, done) {
