@@ -11,6 +11,7 @@ module.exports = function (options) {
   var ENTITY_NS = 'cd/countries';
 
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
+  seneca.add({role: plugin, cmd: 'load_children'}, cmd_load_children);
   seneca.add({role: plugin, cmd: 'create'}, cmd_create);
   seneca.add({role: plugin, cmd: 'update'}, cmd_update);
   seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
@@ -29,6 +30,27 @@ module.exports = function (options) {
         countries = countries.geonames;
         countries = _.sortBy(countries, 'countryName');
         done(null, countries);
+      });
+    }).on('error', function(e) {
+      done(null, []);
+    });
+  }
+
+  function cmd_load_children(args, done) {
+    var seneca = this;
+    var geonameId = args.geonameId;
+
+    http.get("http://www.geonames.org/childrenJSON?geonameId="+geonameId+"&username=davidc", function(res) {
+      var children = '';
+      res.setEncoding('utf8');
+      res.on("data", function(chunk) {
+        children += chunk;
+      });
+      res.on('end', function() {
+        children = JSON.parse(children);
+        children = children.geonames;
+        children = _.sortBy(children, 'toponymName');
+        done(null, children);
       });
     }).on('error', function(e) {
       done(null, []);
