@@ -3,6 +3,7 @@
 var _ = require('lodash');
 var path = require('path');
 var async = require('async');
+var http = require('http');
 
 module.exports = function (options) {
   var seneca = this;
@@ -17,12 +18,20 @@ module.exports = function (options) {
   function cmd_list(args, done){
     var seneca = this, query;
     query = args.query ?  args.query : {};
-    seneca.make(ENTITY_NS).list$(query, function(err, response) {
-      if(err){
-        return done(err);
-      } else {
-        return done(null, response);
-      }
+    http.get("http://api.geonames.org/countryInfoJSON?formatted=true&lang=en&username=davidc&style=full", function(res) {
+      var countries = '';
+      res.setEncoding('utf8');
+      res.on("data", function(chunk) {
+        countries += chunk;
+      });
+      res.on('end', function() {
+        countries = JSON.parse(countries);
+        countries = countries.geonames;
+        countries = _.sortBy(countries, 'countryName');
+        done(null, countries);
+      });
+    }).on('error', function(e) {
+      done(null, []);
     });
   }
 
