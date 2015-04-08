@@ -9,6 +9,6 @@ seneca.log.info('using config', JSON.stringify(config, null, 4));
 seneca.options(config);
 
 seneca
-  .use('mongo-store')
+  .use('postgresql-store', config["postgresql-store"])
   .use('./dojos.js')
   .listen();

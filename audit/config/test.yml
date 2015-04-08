@@ -1,4 +1,6 @@
 db:
-  name: 'zen_live_test'
+  name: 'cd-zen-platform-test'
   host: '127.0.0.1'
-  port: 27018
+  port: 5432
+  username: 'postgres'
+  password: 'test
