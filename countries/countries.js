@@ -15,6 +15,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'create'}, cmd_create);
   seneca.add({role: plugin, cmd: 'update'}, cmd_update);
   seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
+  seneca.add({role: plugin, cmd: 'lat_long'}, cmd_lat_long);
   
   function cmd_list(args, done){
     var seneca = this, query;
@@ -36,10 +37,21 @@ module.exports = function (options) {
     });
   }
 
+  function cmd_lat_long(args, done) {
+    var data = require('./data/lat_long.json');
+    async.each(Object.keys(data), function(countryCode, cb) {
+      var temp = data[countryCode];
+      delete data[countryCode];
+      data[countryCode.toUpperCase()] = temp;
+      cb();
+    }, function() {
+      done(null, data);
+    });
+  }
+
   function cmd_load_children(args, done) {
     var seneca = this;
     var geonameId = args.geonameId;
-
     http.get("http://www.geonames.org/childrenJSON?geonameId="+geonameId+"&username=davidc", function(res) {
       var children = '';
       res.setEncoding('utf8');
