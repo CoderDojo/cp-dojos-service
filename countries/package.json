@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "description": "",
   "main": "service.js",
+  "scripts": {
+    "start": "node service.js"
+  },
   "directories": {
     "test": "test"
   },

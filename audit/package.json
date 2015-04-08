@@ -3,6 +3,9 @@
   "version": "0.0.1",
   "description": "Seneca microservice for audits",
   "main": "index.js",
+  "scripts": {
+    "start": "node audit.js"
+  },
   "directories": {
     "test": "test"
   },
