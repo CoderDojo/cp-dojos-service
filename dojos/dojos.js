@@ -67,6 +67,7 @@ module.exports = function (options) {
     dojo.countryName = dojo.country;
 
     delete dojo.country;
+    dojo.creator = createdby;
 
     seneca.make$(ENTITY_NS).save$(dojo, function(err, dojo) {
       if(err) return done(err);
@@ -121,6 +122,7 @@ module.exports = function (options) {
         })
 
       })
+
     });
   }
 
