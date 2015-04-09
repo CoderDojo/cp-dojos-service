@@ -3,13 +3,11 @@
   "version": "0.0.1",
   "description": "Seneca microservice for dojos",
   "main": "service.js",
-  "scripts": {
-    "start": "node service.js"
-  },
   "directories": {
     "test": "test"
   },
   "scripts": {
+    "start": "node service.js",
     "test": "NODE_ENV=test mocha"
   },
   "repository": {
