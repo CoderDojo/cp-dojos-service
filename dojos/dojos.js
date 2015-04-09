@@ -48,8 +48,8 @@ module.exports = function (options) {
   }
 
   function cmd_list(args, done) {
-    var seneca = this;
-    seneca.make(ENTITY_NS).list$(function(err, response) {
+    var seneca = this, query = args.query || {};
+    seneca.make(ENTITY_NS).list$(query, function(err, response) {
       if(err) return done(err);
       var dojosByCountry = {};
       response = _.sortBy(response, 'country_name');
@@ -81,7 +81,6 @@ module.exports = function (options) {
     var userEntity = seneca.make$('sys/user');
     var createdby = args.user;
     dojo.creator = createdby;
-
     seneca.make$(ENTITY_NS).save$(dojo, function(err, dojo) {
       if(err) return done(err);
       userEntity.load$(createdby, function(err, user) {
