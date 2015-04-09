@@ -13,6 +13,7 @@ module.exports = function (options) {
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
+  seneca.add({role: plugin, cmd: 'load'}, cmd_load);
   seneca.add({role: plugin, cmd: 'create'}, cmd_create);
   seneca.add({role: plugin, cmd: 'update'}, cmd_update);
   seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
@@ -73,6 +74,16 @@ module.exports = function (options) {
           done(null, dojosByCountry);
         });
       });
+    });
+  }
+
+  function cmd_load(args, done) {
+    var seneca = this;
+    //TO DO: use correct id type
+    var id = parseInt(args.id);
+    seneca.make(ENTITY_NS).load$(id, function(err, response) {
+      if(err) return done(err);
+      done(null, response);
     });
   }
 
