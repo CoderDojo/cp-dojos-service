@@ -100,10 +100,9 @@ module.exports = function (options) {
   function cmd_delete(args, done){
     var seneca = this;
     var id = args.id;
-    var userId = args.user;
+    var userId = args.user.id;
 
-
-    seneca.make$(ENTITY_NS).remove$(args.id, function(err){
+    seneca.make$(ENTITY_NS).remove$(id, function(err){
       if(err){
         return done(err);
       }
@@ -162,16 +161,18 @@ module.exports = function (options) {
       delete query.sort;
     }
 
-    userObj.user_id = user.id; 
-
-    seneca.make$(USER_DOJO_ENTITY_NS).list$(userObj, function(err, response){
+    seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id}, function(err, response){
       if(err){
         return done(err);
       }
 
-      dojoIds = _.pluck(response, 'dojoId');
+      if(_.isEmpty(response)){
+        return done(null, response);
+      }
 
+      dojoIds = _.pluck(response, 'dojoId');
       query.ids = dojoIds;
+
 
       seneca.make$(ENTITY_NS).list$(query, function(err, response) {
         if(err) return done(err);
