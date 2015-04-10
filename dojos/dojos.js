@@ -14,11 +14,13 @@ module.exports = function (options) {
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
+  seneca.add({role: plugin, cmd: 'load'}, cmd_load);
   seneca.add({role: plugin, cmd: 'create'}, cmd_create);
   seneca.add({role: plugin, cmd: 'update'}, cmd_update);
   seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
   seneca.add({role: plugin, cmd: 'my_dojos_count'}, cmd_my_dojos_count);
   seneca.add({role: plugin, cmd: 'my_dojos_search'}, cmd_my_dojos_search);
+  seneca.add({role: plugin, cmd: 'dojos_country_count'}, cmd_dojos_country_count);
 
 
   function cmd_search(args, done){
@@ -28,10 +30,30 @@ module.exports = function (options) {
     dojos_ent.list$(query, done);
   }
 
-  function cmd_list(args, done) {
+  function cmd_dojos_country_count(args, done) {
     var seneca = this;
-    //Temporarily hard code limit
-    seneca.make(ENTITY_NS).list$({limit$: 1500}, function(err, response) {
+
+    var dojoCountriesCount = [];
+
+    seneca.act({role:plugin, cmd:'list'}, function(err, response) {
+      if(err) return done(err);
+      async.each(Object.keys(response), function(dojoCountryName, cb) {
+        var country = {};
+        var countryCode = response[dojoCountryName].dojos[0].alpha2;
+        country[countryCode] = response[dojoCountryName].dojos.length;
+        dojoCountriesCount.push(country);
+        cb();
+      }, function () {
+        done(null, dojoCountriesCount);
+      });
+      
+    });
+  }
+
+  function cmd_list(args, done) {
+    var seneca = this, query = args.query || {};
+    query.limit$ = 1500;
+    seneca.make(ENTITY_NS).list$(query, function(err, response) {
       if(err) return done(err);
       var dojosByCountry = {};
       response = _.sortBy(response, 'countryName');
@@ -58,6 +80,16 @@ module.exports = function (options) {
     });
   }
 
+  function cmd_load(args, done) {
+    var seneca = this;
+    //TO DO: use correct id type
+    var id = parseInt(args.id);
+    seneca.make(ENTITY_NS).load$(id, function(err, response) {
+      if(err) return done(err);
+      done(null, response);
+    });
+  }
+
   function cmd_create(args, done){
     var seneca = this, dojo = args.dojo;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
@@ -68,7 +100,6 @@ module.exports = function (options) {
 
     delete dojo.country;
     dojo.creator = createdby;
-
     seneca.make$(ENTITY_NS).save$(dojo, function(err, dojo) {
       if(err) return done(err);
       
