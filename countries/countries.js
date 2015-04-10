@@ -3,6 +3,7 @@
 var _ = require('lodash');
 var path = require('path');
 var async = require('async');
+var countriesList = require('countries-list');
 var http = require('http');
 
 module.exports = function (options) {
@@ -15,7 +16,9 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'create'}, cmd_create);
   seneca.add({role: plugin, cmd: 'update'}, cmd_update);
   seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
-  seneca.add({role: plugin, cmd: 'lat_long'}, cmd_lat_long);
+  seneca.add({role: plugin, cmd: 'countries_lat_long'}, cmd_countries_lat_long);
+  seneca.add({role: plugin, cmd: 'continents_lat_long'}, cmd_continents_lat_long);
+  seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
   
   function cmd_list(args, done){
     var seneca = this, query;
@@ -37,8 +40,17 @@ module.exports = function (options) {
     });
   }
 
-  function cmd_lat_long(args, done) {
-    var data = require('./data/lat_long.json');
+  function cmd_countries_continents(args, done) {
+    done(null, countriesList);
+  }
+
+  function cmd_continents_lat_long(args, done) {
+    var data = require('./data/continents_lat_long.json');
+    done(null, data);
+  }
+
+  function cmd_countries_lat_long(args, done) {
+    var data = require('./data/countries_lat_long.json');
     async.each(Object.keys(data), function(countryCode, cb) {
       var temp = data[countryCode];
       delete data[countryCode];

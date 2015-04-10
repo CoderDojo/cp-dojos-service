@@ -10,7 +10,6 @@ module.exports = function (options) {
   var plugin = 'cd-dojos';
   var ENTITY_NS = 'cd/dojos';
 
-
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
   seneca.add({role: plugin, cmd: 'load'}, cmd_load);
@@ -20,13 +19,61 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'my_dojos_count'}, cmd_my_dojos_count);
   seneca.add({role: plugin, cmd: 'my_dojos_search'}, cmd_my_dojos_search);
   seneca.add({role: plugin, cmd: 'dojos_country_count'}, cmd_dojos_country_count);
-
+  seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
 
   function cmd_search(args, done){
     var seneca = this, query = {}, dojos_ent;
     query = args.query;
     dojos_ent = seneca.make$(ENTITY_NS);
     dojos_ent.list$(query, done);
+  }
+
+  function cmd_dojos_count(args, done) {
+    var seneca = this;
+
+    async.waterfall([
+      getDojos,
+      getCountries,
+      getDojoCount
+    ], done);
+
+    function getDojos(done) {
+      var dojos = [];
+      seneca.make(ENTITY_NS).list$(function(err, response) {
+        if(err) return response;
+        async.each(response, function(dojo, cb) {
+          if(dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return cb();
+          dojos.push(dojo);
+          cb();
+        }, function() {
+          done(null, dojos);
+        });
+      });
+    }
+
+    function getCountries(dojos, done) {
+      seneca.act({role:'cd-countries', cmd:'countries_continents'}, function(err, response) {
+        if(err) return done(err);
+        done(null, dojos, response);
+      });
+    }
+
+    function getDojoCount(dojos, countries, done) {
+      var countData = {dojos:{continents:{}}};
+      async.each(dojos, function(dojo, cb) {
+        if(countries.countries[dojo.alpha2]) {
+          var continent = countries.countries[dojo.alpha2].continent;
+          if(!countData.dojos.continents[continent]) countData.dojos.continents[continent] = {total:0, countries:{}};
+          countData.dojos.continents[continent].total += 1;
+          if(!countData.dojos.continents[continent].countries[dojo.alpha2]) countData.dojos.continents[continent].countries[dojo.alpha2] = {total:0};
+          countData.dojos.continents[continent].countries[dojo.alpha2].total += 1;
+          //TO DO: add countries state data
+        }
+        cb();
+      }, function() {
+        done(null, countData);
+      });
+    }
   }
 
   function cmd_dojos_country_count(args, done) {
