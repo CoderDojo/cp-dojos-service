@@ -217,10 +217,16 @@ module.exports = function (options) {
       delete query.sort;
     }
 
-    query._id = {
-      $in: _.map(user.dojos, function(dojoid) { return new ObjectID(dojoid); })
-    };
+    if(query.name !== undefined) {
+      query.name = new RegExp(query.name, 'i');
+    }
 
+    if(!_.isEmpty(user)) {
+      query._id = {
+        $in: _.map(user.dojos, function(dojoid) { return new ObjectID(dojoid); })
+      };
+    }
+    
     seneca.make$(ENTITY_NS).list$(query, function(err, response) {
       if(err) return done(err);
       done(null, response);
