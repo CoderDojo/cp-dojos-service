@@ -11,4 +11,5 @@ seneca.options(config);
 seneca
   .use('mongo-store')
   .use('./countries.js')
+  .use('./geonames.js')
   .listen();
