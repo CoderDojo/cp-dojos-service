@@ -18,14 +18,29 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
   seneca.add({role: plugin, cmd: 'my_dojos_count'}, cmd_my_dojos_count);
   seneca.add({role: plugin, cmd: 'my_dojos_search'}, cmd_my_dojos_search);
-  seneca.add({role: plugin, cmd: 'dojos_country_count'}, cmd_dojos_country_count);
   seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
+  seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
 
   function cmd_search(args, done){
     var seneca = this, query = {}, dojos_ent;
     query = args.query;
     dojos_ent = seneca.make$(ENTITY_NS);
     dojos_ent.list$(query, done);
+  }
+
+  function cmd_dojos_by_country(args, done) {
+    var countries = args.countries;
+    var dojos = [];
+    async.each(Object.keys(countries), function(country, cb) {
+      seneca.act({role:plugin, cmd:'list'}, {query:{alpha2:country}}, function(err, response) {
+        if(err) return done(err);
+        dojos.push(response);
+        cb();
+      });
+    }, function() {
+      dojos = _.sortBy(dojos, function(dojo) { return Object.keys(dojo)[0]; });
+      done(null, dojos);
+    });
   }
 
   function cmd_dojos_count(args, done) {
@@ -74,25 +89,6 @@ module.exports = function (options) {
         done(null, countData);
       });
     }
-  }
-
-  function cmd_dojos_country_count(args, done) {
-    var seneca = this;
-    var dojoCountriesCount = [];
-
-    seneca.act({role:plugin, cmd:'list'}, function(err, response) {
-      if(err) return done(err);
-      async.each(Object.keys(response), function(dojoCountryName, cb) {
-        var country = {};
-        var countryCode = response[dojoCountryName].dojos[0].alpha2;
-        country[countryCode] = response[dojoCountryName].dojos.length;
-        dojoCountriesCount.push(country);
-        cb();
-      }, function () {
-        done(null, dojoCountriesCount);
-      });
-      
-    });
   }
 
   function cmd_list(args, done) {
