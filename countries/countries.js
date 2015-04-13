@@ -60,14 +60,7 @@ module.exports = function (options) {
 
   function cmd_countries_lat_long(args, done) {
     var data = require('./data/countries_lat_long.json');
-    async.each(Object.keys(data), function(countryCode, cb) {
-      var temp = data[countryCode];
-      delete data[countryCode];
-      data[countryCode.toUpperCase()] = temp;
-      cb();
-    }, function() {
-      done(null, data);
-    });
+    done(null, data);
   }
 
   function cmd_create(args, done){
