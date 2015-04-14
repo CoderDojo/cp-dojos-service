@@ -19,6 +19,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'countries_lat_long'}, cmd_countries_lat_long);
   seneca.add({role: plugin, cmd: 'continents_lat_long'}, cmd_continents_lat_long);
   seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
+  seneca.add({role: plugin, cmd: 'county_from_coordinates'}, cmd_county_from_coordinates);
   
   function cmd_list(args, done){
     var seneca = this, query;
@@ -34,6 +35,23 @@ module.exports = function (options) {
         countries = countries.geonames;
         countries = _.sortBy(countries, 'countryName');
         done(null, countries);
+      });
+    }).on('error', function(e) {
+      done(null, []);
+    });
+  }
+
+  function cmd_county_from_coordinates(args, done) {
+    var coordinates = args.coordinates.split(',');
+    http.get("http://api.geonames.org/countrySubdivisionJSON?formatted=true&lang=en&username=davidc&style=full&lat="+coordinates[0]+"&lng="+coordinates[1], function(res) {
+      var county = '';
+      res.setEncoding('utf8');
+      res.on("data", function(chunk) {
+        county += chunk;
+      });
+      res.on('end', function() {
+        county = JSON.parse(county);
+        done(null, county);
       });
     }).on('error', function(e) {
       done(null, []);
