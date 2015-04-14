@@ -31,7 +31,7 @@ module.exports = function (options) {
 
   function cmd_list_countries(args, done){
     var seneca = this;
-    seneca.make(COUNTRY_NS).list$({}, function(err, response) {
+    seneca.make(COUNTRY_NS).list$({sort$:{name:1}}, function(err, response) {
       if(err){
         return done(err);
       } else {
@@ -52,7 +52,7 @@ module.exports = function (options) {
       ],
       country_code: args.countryCode,
       limit$: 100,
-      sort$: { name: 1 }
+      sort$: { asciiname: 1 }
     }
 
     query.feature_class = 'P';
