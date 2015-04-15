@@ -11,4 +11,5 @@ seneca.options(config);
 seneca
   .use('postgresql-store', config["postgresql-store"])
   .use('./dojos.js')
-  .listen();
+  .listen()
+  .client({type: 'web', host: '127.0.0.1', port: 10302, pin: 'role:cd-countries,cmd:*'});

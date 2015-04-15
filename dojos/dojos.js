@@ -11,7 +11,6 @@ module.exports = function (options) {
   var ENTITY_NS = 'cd/dojos';
   var USER_DOJO_ENTITY_NS = "cd/usersdojos";
 
-
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
   seneca.add({role: plugin, cmd: 'load'}, cmd_load);
@@ -20,8 +19,9 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
   seneca.add({role: plugin, cmd: 'my_dojos_count'}, cmd_my_dojos_count);
   seneca.add({role: plugin, cmd: 'my_dojos_search'}, cmd_my_dojos_search);
-  seneca.add({role: plugin, cmd: 'dojos_country_count'}, cmd_dojos_country_count);
-
+  seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
+  seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
+  seneca.add({role: plugin, cmd: 'dojos_county_count'}, cmd_dojos_county_count);
 
   function cmd_search(args, done){
     var seneca = this, query = {}, dojos_ent;
@@ -30,24 +30,92 @@ module.exports = function (options) {
     dojos_ent.list$(query, done);
   }
 
-  function cmd_dojos_country_count(args, done) {
+  function cmd_dojos_county_count(args, done) {
     var seneca = this;
 
-    var dojoCountriesCount = [];
+    var country = args.country;
+    var countData = {};
 
-    seneca.act({role:plugin, cmd:'list'}, function(err, response) {
-      if(err) return done(err);
-      async.each(Object.keys(response), function(dojoCountryName, cb) {
-        var country = {};
-        var countryCode = response[dojoCountryName].dojos[0].alpha2;
-        country[countryCode] = response[dojoCountryName].dojos.length;
-        dojoCountriesCount.push(country);
-        cb();
-      }, function () {
-        done(null, dojoCountriesCount);
+    seneca.make$(ENTITY_NS).list$({alpha2:country}, function(err, response) {
+      countData[country] = {};
+      async.each(response, function(dojo, cb) {
+        if(!dojo.coordinates || dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return cb();
+        seneca.act({role:'cd-countries', cmd:'county_from_coordinates'}, {coordinates:dojo.coordinates}, function(err, response) {
+          if(err) return cb(err);
+          if(!countData[dojo.alpha2][response.adminName1]) countData[dojo.alpha2][response.adminName1] = {total:0};
+          countData[dojo.alpha2][response.adminName1].total += 1;
+          countData[dojo.alpha2][response.adminName1].latitude = dojo.coordinates.split(',')[0];
+          countData[dojo.alpha2][response.adminName1].longitude = dojo.coordinates.split(',')[1];
+          cb();
+        });
+      }, function() {
+        done(null, countData);
       });
-      
     });
+      
+  }
+
+  function cmd_dojos_by_country(args, done) {
+    var countries = args.countries;
+    var dojos = [];
+    async.each(Object.keys(countries), function(country, cb) {
+      seneca.act({role:plugin, cmd:'list'}, {query:{alpha2:country}}, function(err, response) {
+        if(err) return done(err);
+        dojos.push(response);
+        cb();
+      });
+    }, function() {
+      dojos = _.sortBy(dojos, function(dojo) { return Object.keys(dojo)[0]; });
+      done(null, dojos);
+    });
+  }
+
+  function cmd_dojos_count(args, done) {
+    var seneca = this;
+
+    async.waterfall([
+      getDojos,
+      getCountries,
+      getDojoCount
+    ], done);
+
+    function getDojos(done) {
+      var dojos = [];
+      seneca.make(ENTITY_NS).list$(function(err, response) {
+        if(err) return response;
+        async.each(response, function(dojo, cb) {
+          if(dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return cb();
+          dojos.push(dojo);
+          cb();
+        }, function() {
+          done(null, dojos);
+        });
+      });
+    }
+
+    function getCountries(dojos, done) {
+      seneca.act({role:'cd-countries', cmd:'countries_continents'}, function(err, response) {
+        if(err) return done(err);
+        done(null, dojos, response);
+      });
+    }
+
+    function getDojoCount(dojos, countries, done) {
+      var countData = {dojos:{continents:{}}};
+      async.each(dojos, function(dojo, cb) {
+        if(countries.countries[dojo.alpha2]) {
+          var continent = countries.countries[dojo.alpha2].continent;
+          if(!countData.dojos.continents[continent]) countData.dojos.continents[continent] = {total:0, countries:{}};
+          countData.dojos.continents[continent].total += 1;
+          if(!countData.dojos.continents[continent].countries[dojo.alpha2]) countData.dojos.continents[continent].countries[dojo.alpha2] = {total:0};
+          countData.dojos.continents[continent].countries[dojo.alpha2].total += 1;
+          //TO DO: add countries state data 
+        }
+        cb();
+      }, function() {
+        done(null, countData);
+      });
+    }
   }
 
   function cmd_list(args, done) {
@@ -192,10 +260,16 @@ module.exports = function (options) {
       delete query.sort;
     }
 
+
     seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id}, function(err, response){
       if(err){
         return done(err);
       }
+
+      if(query.name !== undefined) {
+        query.name = new RegExp(query.name, 'i');
+      }
+
 
       if(_.isEmpty(response)){
         return done(null, response);
