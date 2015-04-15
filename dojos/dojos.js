@@ -9,6 +9,7 @@ module.exports = function (options) {
   var seneca = this;
   var plugin = 'cd-dojos';
   var ENTITY_NS = 'cd/dojos';
+  var USER_DOJO_ENTITY_NS = "cd/usersdojos";
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
@@ -21,6 +22,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
   seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
   seneca.add({role: plugin, cmd: 'dojos_county_count'}, cmd_dojos_county_count);
+  seneca.add({role: plugin, cmd: 'bulk_update'}, cmd_bulk_update);
 
   function cmd_search(args, done){
     var seneca = this, query = {}, dojos_ent;
@@ -31,6 +33,7 @@ module.exports = function (options) {
 
   function cmd_dojos_county_count(args, done) {
     var seneca = this;
+
     var country = args.country;
     var countData = {};
 
@@ -118,19 +121,20 @@ module.exports = function (options) {
 
   function cmd_list(args, done) {
     var seneca = this, query = args.query || {};
+    query.limit$ = 1500;
     seneca.make(ENTITY_NS).list$(query, function(err, response) {
       if(err) return done(err);
       var dojosByCountry = {};
-      response = _.sortBy(response, 'country_name');
+      response = _.sortBy(response, 'countryName');
       async.each(response, function(dojo, dojoCb) {
         if(dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return dojoCb();
         var id = dojo.id;
-        if(!dojosByCountry[dojo.country_name]) {
-          dojosByCountry[dojo.country_name] = {};
-          dojosByCountry[dojo.country_name].dojos = [];
-          dojosByCountry[dojo.country_name].dojos.push(dojo);
+        if(!dojosByCountry[dojo.countryName]) {
+          dojosByCountry[dojo.countryName] = {};
+          dojosByCountry[dojo.countryName].dojos = [];
+          dojosByCountry[dojo.countryName].dojos.push(dojo);
         } else {
-          dojosByCountry[dojo.country_name].dojos.push(dojo);
+          dojosByCountry[dojo.countryName].dojos.push(dojo);
         }
         dojoCb();
       }, function() {
@@ -157,19 +161,22 @@ module.exports = function (options) {
 
   function cmd_create(args, done){
     var seneca = this, dojo = args.dojo;
-    var userEntity = seneca.make$('sys/user');
+    var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
     var createdby = args.user;
+    var userDojo = {};
+
     dojo.creator = createdby;
     seneca.make$(ENTITY_NS).save$(dojo, function(err, dojo) {
       if(err) return done(err);
-      userEntity.load$(createdby, function(err, user) {
+      
+      userDojo.owner = 1;
+      userDojo.user_id = createdby;
+      userDojo.dojo_id = dojo.id;
+      
+      usersDojosEntity.save$(userDojo, function(err, response) {
         if(err) return done(err);
-        if(!user.dojos) user.dojos = [];
-        user.dojos.push(dojo.id);
-        userEntity.save$(user, function(err, response) {
-          if(err) return done(err);
-          done(null, dojo);
-        });
+
+        done(null, dojo);
       });
     });
   }
@@ -177,6 +184,10 @@ module.exports = function (options) {
   function cmd_update(args, done){
     var seneca = this;
     var dojo = args.dojo;
+
+    dojo.countryName = dojo.country;
+    delete dojo.country;
+
     seneca.make(ENTITY_NS).save$(dojo, function(err, response) {
       if(err) return done(err);
       done(null, response);
@@ -185,39 +196,57 @@ module.exports = function (options) {
 
   function cmd_delete(args, done){
     var seneca = this;
-    var dojoEntity = seneca.make$(ENTITY_NS);
-    var userEntity = seneca.make$('sys/user');
-    
-    dojoEntity.load$(args.id, function(err, dojo) {
-      if(err) return done(err);
-      var createdby = dojo.creator;
-      dojoEntity.remove$(args.id, function(err, dojoRemoved) {
-        if(err) return done(err);
+    var id = args.id;
+    var userId = args.user.id;
 
-        userEntity.load$(createdby, function(err, user) {
-          if(err) return done(err);
-          var dojoToRemove;
-          _.find(user.dojos, function(dojo, index) {
-            if(dojo === args.id) {
-              dojoToRemove = index;
-            }
-          });
-          user.dojos.splice(dojoToRemove, 1);
-          userEntity.save$(user, function(err, response) {
-            if(err) return done(err);
-            done(null, dojoRemoved);
-          });
-        });
-      });
+    seneca.make$(ENTITY_NS).remove$(id, function(err){
+      if(err){
+        return done(err);
+      }
+
+      seneca.make$(USER_DOJO_ENTITY_NS).load$({user_id: userId, dojo_id: id}, function(err, userDojo){
+        if(err){
+          return done(err);
+        }
+
+        seneca.make$(USER_DOJO_ENTITY_NS).remove$(userDojo.id, function(err){
+          if(err){
+            return done(err);
+          }
+
+          done();
+        })
+
+      })
+
     });
+  }
+
+  function cmd_bulk_update(args, done){
+    var seneca = this;
+    var dojos = args.dojos;
+
+    var updateDojo = function(dojo, cb){
+      seneca.act({role: plugin, cmd: 'update', dojo: dojo}, function(err, dojo){
+        if(err){
+          return cb(err);
+        } 
+
+        return cb();
+      });
+    };
+
+    async.each(dojos, updateDojo, done);
   }
 
   function cmd_my_dojos_count(args, done) {
     var seneca = this, query = {};
     var user = args.user;
-    query._id = {$in:user.dojos||[]};
-    seneca.make$(ENTITY_NS).list$(query, function(err, response) {
-      if(err) return done(err);
+    seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: user.id}, function(err, response){
+      if(err){
+        return done(err);
+      }
+
       done(null, response.length);
     });
   }
@@ -225,7 +254,11 @@ module.exports = function (options) {
   function cmd_my_dojos_search(args, done){
     var seneca = this, query = {};
     var user = args.user;
-    query = args.query
+    var userObj = {};
+    var dojoIds = [];
+    
+    query = args.query;
+
 
     if(query.skip !== undefined){
       query.skip$ = query.skip;
@@ -242,21 +275,29 @@ module.exports = function (options) {
       delete query.sort;
     }
 
-    if(query.name !== undefined) {
-      query.name = new RegExp(query.name, 'i');
-    }
+
+    seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id}, function(err, response){
+      if(err){
+        return done(err);
+      }
+
+      if(query.name !== undefined) {
+        query.name = new RegExp(query.name, 'i');
+      }
 
 
+      if(_.isEmpty(response)){
+        return done(null, response);
+      }
 
-    if(!_.isEmpty(user)) {
-      query._id = {
-        $in: _.map(user.dojos, function(dojoid) { return new ObjectID(dojoid); })
-      };
-    }
+      dojoIds = _.pluck(response, 'dojoId');
+      query.ids = dojoIds;
 
-    seneca.make$(ENTITY_NS).list$(query, function(err, response) {
-      if(err) return done(err);
-      done(null, response);
+
+      seneca.make$(ENTITY_NS).list$(query, function(err, response) {
+        if(err) return done(err);
+        done(null, response);
+      });
     });
   }
 
