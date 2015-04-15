@@ -22,6 +22,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
   seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
   seneca.add({role: plugin, cmd: 'dojos_county_count'}, cmd_dojos_county_count);
+  seneca.add({role: plugin, cmd: 'bulk_update'}, cmd_bulk_update);
 
   function cmd_search(args, done){
     var seneca = this, query = {}, dojos_ent;
@@ -222,6 +223,23 @@ module.exports = function (options) {
       })
 
     });
+  }
+
+  function cmd_bulk_update(args, done){
+    var seneca = this;
+    var dojos = args.dojos;
+
+    var updateDojo = function(dojo, cb){
+      seneca.act({role: plugin, cmd: 'update', dojo: dojo}, function(err, dojo){
+        if(err){
+          return cb(err);
+        } 
+
+        return cb();
+      });
+    };
+
+    async.each(dojos, updateDojo, done);
   }
 
   function cmd_my_dojos_count(args, done) {
