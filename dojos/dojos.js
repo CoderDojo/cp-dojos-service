@@ -165,9 +165,6 @@ module.exports = function (options) {
     var createdby = args.user;
     var userDojo = {};
 
-    dojo.countryName = dojo.country;
-
-    delete dojo.country;
     dojo.creator = createdby;
     seneca.make$(ENTITY_NS).save$(dojo, function(err, dojo) {
       if(err) return done(err);
