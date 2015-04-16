@@ -21,7 +21,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'my_dojos_search'}, cmd_my_dojos_search);
   seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
   seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
-  seneca.add({role: plugin, cmd: 'dojos_county_count'}, cmd_dojos_county_count);
+  seneca.add({role: plugin, cmd: 'dojos_state_count'}, cmd_dojos_state_count);
   seneca.add({role: plugin, cmd: 'bulk_update'}, cmd_bulk_update);
 
   function cmd_search(args, done){
@@ -31,24 +31,22 @@ module.exports = function (options) {
     dojos_ent.list$(query, done);
   }
 
-  function cmd_dojos_county_count(args, done) {
+  function cmd_dojos_state_count(args, done) {
     var seneca = this;
 
     var country = args.country;
     var countData = {};
-
-    seneca.make$(ENTITY_NS).list$({alpha2:country}, function(err, response) {
+    
+    seneca.make$(ENTITY_NS).list$({limit$:'NULL', alpha2:country}, function(err, response) {
+      if(err) return done(err);
       countData[country] = {};
       async.each(response, function(dojo, cb) {
         if(!dojo.coordinates || dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return cb();
-        seneca.act({role:'cd-countries', cmd:'county_from_coordinates'}, {coordinates:dojo.coordinates}, function(err, response) {
-          if(err) return cb(err);
-          if(!countData[dojo.alpha2][response.adminName1]) countData[dojo.alpha2][response.adminName1] = {total:0};
-          countData[dojo.alpha2][response.adminName1].total += 1;
-          countData[dojo.alpha2][response.adminName1].latitude = dojo.coordinates.split(',')[0];
-          countData[dojo.alpha2][response.adminName1].longitude = dojo.coordinates.split(',')[1];
-          cb();
-        });
+        if(!countData[dojo.alpha2][dojo.state.toponymName]) countData[dojo.alpha2][dojo.state.toponymName] = {total:0};
+        countData[dojo.alpha2][dojo.state.toponymName].total += 1;
+        countData[dojo.alpha2][dojo.state.toponymName].latitude = dojo.coordinates.split(',')[0];
+        countData[dojo.alpha2][dojo.state.toponymName].longitude = dojo.coordinates.split(',')[1];
+        cb();
       }, function() {
         done(null, countData);
       });
@@ -82,7 +80,8 @@ module.exports = function (options) {
 
     function getDojos(done) {
       var dojos = [];
-      seneca.make(ENTITY_NS).list$(function(err, response) {
+      var query = {limit$:'NULL'};
+      seneca.make(ENTITY_NS).list$(query, function(err, response) {
         if(err) return response;
         async.each(response, function(dojo, cb) {
           if(dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return cb();
