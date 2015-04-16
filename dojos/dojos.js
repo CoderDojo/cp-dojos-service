@@ -36,8 +36,8 @@ module.exports = function (options) {
 
     var country = args.country;
     var countData = {};
-
-    seneca.make$(ENTITY_NS).list$({alpha2:country}, function(err, response) {
+    
+    seneca.make$(ENTITY_NS).list$({limit$:'NULL', alpha2:country}, function(err, response) {
       if(err) return done(err);
       countData[country] = {};
       async.each(response, function(dojo, cb) {
@@ -80,7 +80,8 @@ module.exports = function (options) {
 
     function getDojos(done) {
       var dojos = [];
-      seneca.make(ENTITY_NS).list$(function(err, response) {
+      var query = {limit$:'NULL'};
+      seneca.make(ENTITY_NS).list$(query, function(err, response) {
         if(err) return response;
         async.each(response, function(dojo, cb) {
           if(dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return cb();
