@@ -26,6 +26,7 @@
   "dependencies": {
     "seneca": "0.6.1",
     "seneca-mongo-store": "0.2.0",
+    "seneca-postgresql-store": "0.6.0",
     "config": "1.12.x",
     "js-yaml": "3.2.x",
     "async": "0.9.x",
