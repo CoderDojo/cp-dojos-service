@@ -19,7 +19,7 @@ var seneca = require('seneca')();
 seneca.log.info('using config', JSON.stringify(config, null, 4));
 seneca.options(config);
 
-seneca.use('mongo-store');
+seneca.use('postgresql-store');
 
 seneca.ready(function() {
   run(function(err) {
@@ -47,7 +47,7 @@ function run(cb) {
             name: data[4],
             country_name: data[4],
             continent: data[8],
-            geoid: data[16]
+            geoname_id: data[16]
           });
           next();
         }));

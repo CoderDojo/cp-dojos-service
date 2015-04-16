@@ -21,7 +21,7 @@ var seneca = require('seneca')();
 seneca.log.info('using config', JSON.stringify(config, null, 4));
 seneca.options(config);
 
-seneca.use('mongo-store');
+seneca.use('postgresql-store');
 
 var download_base = 'http://download.geonames.org/export/dump/';
 //var download_base = path.join(__dirname, '../data/geonames_dump/');
@@ -84,7 +84,7 @@ function import_country(country_code, cb) {
     function(done) {
       async.eachLimit(results, 4, function(data, done) {
         var geonames$ = seneca.make$(ENTITY_NS);
-        data.geoid = data._id;
+        data.geoname_id = data._id;
         delete data._id;
         // index administrative entries by code
         if (data.feature_class === 'A' && /^ADM\d/.test(data.feature_code)) {
