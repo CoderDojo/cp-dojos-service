@@ -40,16 +40,15 @@ module.exports = function (options) {
     seneca.make$(ENTITY_NS).list$({limit$:'NULL', alpha2:country}, function(err, response) {
       if(err) return done(err);
       countData[country] = {};
-      async.each(response, function(dojo, cb) {
-        if(!dojo.coordinates || dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return cb();
-        if(!countData[dojo.alpha2][dojo.state.toponymName]) countData[dojo.alpha2][dojo.state.toponymName] = {total:0};
-        countData[dojo.alpha2][dojo.state.toponymName].total += 1;
-        countData[dojo.alpha2][dojo.state.toponymName].latitude = dojo.coordinates.split(',')[0];
-        countData[dojo.alpha2][dojo.state.toponymName].longitude = dojo.coordinates.split(',')[1];
-        cb();
-      }, function() {
-        done(null, countData);
+      _.each(response, function(dojo) {
+        if(dojo.coordinates && dojo.deleted !== 1 && dojo.verified !== 0 && dojo.stage === 2) {
+          if(!countData[dojo.alpha2][dojo.state.toponymName]) countData[dojo.alpha2][dojo.state.toponymName] = {total:0};
+          countData[dojo.alpha2][dojo.state.toponymName].total += 1;
+          countData[dojo.alpha2][dojo.state.toponymName].latitude = dojo.coordinates.split(',')[0];
+          countData[dojo.alpha2][dojo.state.toponymName].longitude = dojo.coordinates.split(',')[1];
+        }
       });
+      done(null, countData);
     });
       
   }
@@ -102,19 +101,16 @@ module.exports = function (options) {
 
     function getDojoCount(dojos, countries, done) {
       var countData = {dojos:{continents:{}}};
-      async.each(dojos, function(dojo, cb) {
+      _.each(dojos, function(dojo) {
         if(countries.countries[dojo.alpha2]) {
           var continent = countries.countries[dojo.alpha2].continent;
           if(!countData.dojos.continents[continent]) countData.dojos.continents[continent] = {total:0, countries:{}};
           countData.dojos.continents[continent].total += 1;
           if(!countData.dojos.continents[continent].countries[dojo.alpha2]) countData.dojos.continents[continent].countries[dojo.alpha2] = {total:0};
           countData.dojos.continents[continent].countries[dojo.alpha2].total += 1;
-          //TO DO: add countries state data 
         }
-        cb();
-      }, function() {
-        done(null, countData);
       });
+      done(null, countData);
     }
   }
 
@@ -125,26 +121,30 @@ module.exports = function (options) {
       if(err) return done(err);
       var dojosByCountry = {};
       response = _.sortBy(response, 'countryName');
-      async.each(response, function(dojo, dojoCb) {
-        if(dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return dojoCb();
-        var id = dojo.id;
-        if(!dojosByCountry[dojo.countryName]) {
-          dojosByCountry[dojo.countryName] = {};
-          dojosByCountry[dojo.countryName].dojos = [];
-          dojosByCountry[dojo.countryName].dojos.push(dojo);
-        } else {
-          dojosByCountry[dojo.countryName].dojos.push(dojo);
+      _.each(response, function(dojo) {
+        if(dojo.deleted !== 1 && dojo.verified !== 0 && dojo.stage === 2) {
+          var id = dojo.id;
+          if(!dojosByCountry[dojo.countryName]) {
+            dojosByCountry[dojo.countryName] = {};
+            dojosByCountry[dojo.countryName].states = {};
+            if(!dojosByCountry[dojo.countryName].states[dojo.admin1Name]) dojosByCountry[dojo.countryName].states[dojo.admin1Name] = [];
+            dojosByCountry[dojo.countryName].states[dojo.admin1Name].push(dojo);
+          } else {
+            if(!dojosByCountry[dojo.countryName].states[dojo.admin1Name]) dojosByCountry[dojo.countryName].states[dojo.admin1Name] = [];
+            dojosByCountry[dojo.countryName].states[dojo.admin1Name].push(dojo);
+          }
         }
-        dojoCb();
-      }, function() {
-        var countries = Object.keys(dojosByCountry);
-        async.eachSeries(countries, function(countryName, cb) {
-          dojosByCountry[countryName].dojos = _.sortBy(dojosByCountry[countryName].dojos, 'name');
-          cb();
-        }, function() {
-          done(null, dojosByCountry);
+      });
+
+      var countries = Object.keys(dojosByCountry);
+      _.each(countries, function(countryName) {
+        var states = Object.keys(dojosByCountry[countryName].states);
+        _.each(states, function(state) {
+          dojosByCountry[countryName].states[state] = _.sortBy(dojosByCountry[countryName].states[state], function(dojo) { return dojo.name; } );
         });
       });
+      
+      done(null, dojosByCountry);
     });
   }
 
