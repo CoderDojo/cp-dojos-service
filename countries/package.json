@@ -13,13 +13,21 @@
   "author": "",
   "license": "BSD",
   "dependencies": {
+    "async": "0.9.x",
+    "config": "1.12.x",
+    "countries-list": "1.0.3",
+    "csv": "^0.4.1",
+    "csv-parse": "^0.1.0",
+    "geonames-stream": "^2.0.3",
+    "js-yaml": "3.2.x",
+    "lodash": "3.6.x",
+    "request": "^2.55.0",
     "seneca": "0.6.1",
     "seneca-mongo-store": "0.2.0",
-    "config": "1.12.x",
-    "js-yaml": "3.2.x",
-    "async": "0.9.x",
-    "lodash": "3.6.x",
-    "countries-list": "1.0.3"
+    "seneca-postgresql-store": "git://github.com/iantocristian/seneca-postgresql-store.git",
+    "split": "^0.3.3",
+    "through2": "^0.6.3",
+    "yargs": "^3.7.0"
   },
   "devDependencies": {
     "mocha": "~2.2.1",
