@@ -24,6 +24,7 @@
     "request": "^2.55.0",
     "seneca": "0.6.1",
     "seneca-mongo-store": "0.2.0",
+    "seneca-postgresql-store": "git://github.com/iantocristian/seneca-postgresql-store.git",
     "split": "^0.3.3",
     "through2": "^0.6.3",
     "yargs": "^3.7.0"

@@ -31,7 +31,7 @@ module.exports = function (options) {
 
   function cmd_list_countries(args, done){
     var seneca = this;
-    seneca.make(COUNTRY_NS).list$({sort$:{name:1}}, function(err, response) {
+    seneca.make(COUNTRY_NS).list$({limit$:'NULL', sort$:{countryName:-1}}, function(err, response) {
       if(err){
         return done(err);
       } else {
@@ -45,24 +45,16 @@ module.exports = function (options) {
 
     var query = {
       feature_class: 'P',
-      $or: [
-        {name: new RegExp('^'+args.search, 'i')},
-        {alternatenames: new RegExp('^'+args.search, 'i')},
-        {asciiname: new RegExp('^'+args.search, 'i')}
-      ],
+      asciiname: new RegExp(''+args.search),
       country_code: args.countryCode,
       limit$: 100,
-      sort$: { asciiname: 1 }
+      sort$: { asciiname: -1 }
     }
-
-    query.feature_class = 'P';
-    query.limit$ = 100;
-    query.sort$ = {};
 
     function getNameWithHierarchy(geo) {
       return _.reduce(['4', '3', '2', '1'], function(key, idx) {
-        if (geo['admin' + idx + '_name']) {
-          return key + ', ' + geo['admin' + idx + '_name'];
+        if (geo['admin' + idx + 'Name']) {
+          return key + ', ' + geo['admin' + idx + 'Name'];
         }
         else {
           return key;
@@ -74,12 +66,11 @@ module.exports = function (options) {
       function(done) {
         seneca.make(GEONAME_NS).list$(query, done)
       },
-      function(geonames) {
+      function(geonames, done) {
         return done(null, _.map(geonames, function(geo) {
-          return {
-            toponymName: getNameWithHierarchy(geo),
-            geonameId: geo.geoid
-          }
+          return _.extend(geo.data$(), {
+            nameWithHierarchy: getNameWithHierarchy(geo)
+          });
         }));
       }
     ], done);
@@ -89,10 +80,10 @@ module.exports = function (options) {
   function cmd_countries_continents(args, done) {
     async.waterfall([
       function(done) {
-        seneca.make(GEONAME_NS).list$({feature_class:'L', feature_code: 'CONT'}, done);
+        seneca.make(GEONAME_NS).list$({limit$:'NULL', featureClass:'L', featureCode: 'CONT'}, done);
       },
       function(continents, done) {
-        seneca.make(COUNTRY_NS).list$({}, _.partialRight(done, continents));
+        seneca.make(COUNTRY_NS).list$({limit$:'NULL'}, _.partialRight(done, continents));
       },
       function(countries, continents, done) {
         return done(null, {
@@ -103,14 +94,13 @@ module.exports = function (options) {
         });
       }
     ], done);
-    done(null, countriesList);
   }
 
 
   function cmd_continents_lat_long(args, done) {
     async.waterfall([
       function(done) {
-        seneca.make(GEONAME_NS).list$({feature_class:'L', feature_code: 'CONT'}, done);
+        seneca.make(GEONAME_NS).list$({limit$:'NULL', featureClass:'L', featureCode: 'CONT'}, done);
       },
       function(continents, done) {
         var response = {};
@@ -123,6 +113,7 @@ module.exports = function (options) {
   }
 
   function cmd_countries_lat_long(args, done) {
+    var data = require('./data/countries_lat_long.json');
     done(null, data);
   }
 
