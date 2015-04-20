@@ -77,10 +77,10 @@ module.exports = function (options) {
       countData[country] = {};
       _.each(response, function(dojo) {
         if(dojo.coordinates && dojo.deleted !== 1 && dojo.verified !== 0 && dojo.stage === 2) {
-          if(!countData[dojo.alpha2][dojo.state.toponymName]) countData[dojo.alpha2][dojo.state.toponymName] = {total:0};
-          countData[dojo.alpha2][dojo.state.toponymName].total += 1;
-          countData[dojo.alpha2][dojo.state.toponymName].latitude = dojo.coordinates.split(',')[0];
-          countData[dojo.alpha2][dojo.state.toponymName].longitude = dojo.coordinates.split(',')[1];
+          if(!countData[dojo.alpha2][dojo.admin1Name]) countData[dojo.alpha2][dojo.admin1Name] = {total:0};
+          countData[dojo.alpha2][dojo.admin1Name].total += 1;
+          countData[dojo.alpha2][dojo.admin1Name].latitude = dojo.coordinates.split(',')[0];
+          countData[dojo.alpha2][dojo.admin1Name].longitude = dojo.coordinates.split(',')[1];
         }
       });
       done(null, countData);
