@@ -16,8 +16,12 @@ coverage
 # Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
 .grunt
 
+# node-waf configuration
+.lock-wscript
+
 # Compiled binary addons (http://nodejs.org/api/addons.html)
 build/Release
+
 
 # Dependency directory
 # Commenting this out is preferred by some people, see
@@ -36,3 +40,4 @@ web/.build
 .DS_Store
 *~
 .idea
+
