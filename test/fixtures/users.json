@@ -1,0 +1,47 @@
+[
+  { 
+    "id": 1000,
+    "username": "test1",
+    "email": "test1@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "ban_reason": null
+  },
+  {
+    "id": 1001,
+    "username": "test2",
+    "email": "test2@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "ban_reason": null
+  },
+  {
+    "id": 1002,
+    "username": "test3",
+    "email": "test3@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "ban_reason": null
+  },
+  {
+    "id": 1003,
+    "username": "test4",
+    "email": "test4@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "ban_reason": null
+  },
+  {
+    "id": 1004,
+    "username": "test5",
+    "email": "test5@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "ban_reason": null
+  }
+]

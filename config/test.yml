@@ -1,0 +1,10 @@
+mongo-store:
+  name: cd-zen-platform-test
+  host: 127.0.0.1
+  port: 27017
+postgresql-store:
+  name: 'cd-zen-platform-test'
+  host: '127.0.0.1'
+  port: 5432
+  username: 'postgres'
+  password: 'test'

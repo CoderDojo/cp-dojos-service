@@ -1,0 +1,36 @@
+{
+  "name": "dojos-service",
+  "version": "0.0.1",
+  "description": "Seneca microservice for dojos",
+  "main": "service.js",
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "start": "node service.js",
+    "test": "NODE_ENV=test mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/CoderDojo/cp-core-services.git"
+  },
+  "author": "",
+  "license": "BSD",
+  "bugs": {
+    "url": "https://github.com/CoderDojo/cp-core-services/issues"
+  },
+  "devDependencies": {
+    "mocha": "~2.2.1",
+    "chai": "~2.2.0"
+  },
+  "dependencies": {
+    "seneca": "0.6.1",
+    "seneca-mongo-store": "0.2.0",
+    "seneca-postgresql-store": "0.6.0",
+    "config": "1.12.x",
+    "js-yaml": "3.2.x",
+    "async": "0.9.x",
+    "lodash": "3.6.x",
+    "mongodb": "1.4.x"
+  }
+}
