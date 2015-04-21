@@ -23,12 +23,47 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
   seneca.add({role: plugin, cmd: 'dojos_state_count'}, cmd_dojos_state_count);
   seneca.add({role: plugin, cmd: 'bulk_update'}, cmd_bulk_update);
+  seneca.add({role: plugin, cmd: 'search_count'}, cmd_search_count);
+  seneca.add({role: plugin, cmd: 'bulk_delete'}, cmd_bulk_delete);
 
   function cmd_search(args, done){
+    
+
     var seneca = this, query = {}, dojos_ent;
     query = args.query;
+
+
+    if(query.skip !== undefined){
+      query.skip$ = query.skip;
+      delete query.skip;
+    }
+
+    if(query.limit !== undefined){
+      query.limit$ = query.limit;
+      delete query.limit;
+    }
+
+    if(query.sort !== undefined){
+      query.sort$ = query.sort;
+      delete query.sort;
+    }
+
     dojos_ent = seneca.make$(ENTITY_NS);
     dojos_ent.list$(query, done);
+  }
+
+  function cmd_search_count(args, done){
+    var seneca = this, query = {}, dojos_ent;
+    query = args.query;
+    query.limit$ = 'NULL';
+    dojos_ent = seneca.make$(ENTITY_NS);
+    dojos_ent.list$(query, function(err, dojos){
+      if(err){
+        return done(err);
+      }
+
+      return done(null, {totalItems: dojos.length});
+    });
   }
 
   function cmd_dojos_state_count(args, done) {
@@ -196,29 +231,42 @@ module.exports = function (options) {
   function cmd_delete(args, done){
     var seneca = this;
     var id = args.id;
-    var userId = args.user.id;
+    var creatorId;
 
-    seneca.make$(ENTITY_NS).remove$(id, function(err){
+    seneca.make$(ENTITY_NS).load$(id, function(err, dojo){
       if(err){
-        return done(err);
+        done(err);
       }
 
-      seneca.make$(USER_DOJO_ENTITY_NS).load$({user_id: userId, dojo_id: id}, function(err, userDojo){
+      creatorId = dojo.creator;
+      
+      seneca.make$(ENTITY_NS).remove$(id, function(err){
         if(err){
           return done(err);
         }
 
-        seneca.make$(USER_DOJO_ENTITY_NS).remove$(userDojo.id, function(err){
+        seneca.make$(USER_DOJO_ENTITY_NS).load$({user_id: creatorId, dojo_id: id}, function(err, userDojo){
           if(err){
             return done(err);
           }
+          if(userDojo && userDojo.id){
+            seneca.make$(USER_DOJO_ENTITY_NS).remove$(userDojo.id, function(err){
+              if(err){
+                return done(err);
+              }
 
-          done();
-        })
+              done();
+            });
+          }
+          else {
+            done();
+          }
 
-      })
+        });
 
+      });
     });
+
   }
 
   function cmd_bulk_update(args, done){
@@ -236,6 +284,24 @@ module.exports = function (options) {
     };
 
     async.each(dojos, updateDojo, done);
+  }
+
+  function cmd_bulk_delete(args, done){
+    var seneca = this;
+    var dojos = args.dojos;
+
+
+    function deleteDojo(dojo, cb){
+      seneca.act({role: plugin, cmd: 'delete', id: dojo.id, creatorId: dojo.creator}, function(err){
+        if(err){
+          return cb(err);
+        }
+
+        cb();
+      });
+    }
+
+    async.each(dojos, deleteDojo, done);
   }
 
   function cmd_my_dojos_count(args, done) {
