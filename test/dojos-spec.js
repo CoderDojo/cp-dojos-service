@@ -193,7 +193,7 @@ describe('Dojo Microservice test', function(){
       seneca.ready(function(){
         seneca.act({role: role, cmd: 'my_dojos_search', user: users[0], query: {}}, function(err, dojos){
           
-          seneca.act({role: role, cmd: 'delete', id: dojos[0].id, user: users[0]}, function(err){
+          seneca.act({role: role, cmd: 'delete', id: dojos[0].id}, function(err){
             if(err){
               return done(err);
             }

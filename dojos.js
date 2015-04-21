@@ -231,34 +231,42 @@ module.exports = function (options) {
   function cmd_delete(args, done){
     var seneca = this;
     var id = args.id;
-    //var userId = args.user.id;
-    var creatorId = args.creatorId;
+    var creatorId;
 
-    seneca.make$(ENTITY_NS).remove$(id, function(err){
+    seneca.make$(ENTITY_NS).load$(id, function(err, dojo){
       if(err){
-        return done(err);
+        done(err);
       }
 
-      seneca.make$(USER_DOJO_ENTITY_NS).load$({user_id: creatorId, dojo_id: id}, function(err, userDojo){
+      creatorId = dojo.creator;
+      
+      seneca.make$(ENTITY_NS).remove$(id, function(err){
         if(err){
           return done(err);
         }
-        if(userDojo && userDojo.id){
-          seneca.make$(USER_DOJO_ENTITY_NS).remove$(userDojo.id, function(err){
-            if(err){
-              return done(err);
-            }
 
+        seneca.make$(USER_DOJO_ENTITY_NS).load$({user_id: creatorId, dojo_id: id}, function(err, userDojo){
+          if(err){
+            return done(err);
+          }
+          if(userDojo && userDojo.id){
+            seneca.make$(USER_DOJO_ENTITY_NS).remove$(userDojo.id, function(err){
+              if(err){
+                return done(err);
+              }
+
+              done();
+            });
+          }
+          else {
             done();
-          });
-        }
-        else {
-          done();
-        }
+          }
+
+        });
 
       });
-
     });
+
   }
 
   function cmd_bulk_update(args, done){
