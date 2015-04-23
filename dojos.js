@@ -10,6 +10,7 @@ module.exports = function (options) {
   var plugin = 'cd-dojos';
   var ENTITY_NS = 'cd/dojos';
   var USER_DOJO_ENTITY_NS = "cd/usersdojos";
+  var STATS_ENTITY_NS = "cd/stats";
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
@@ -25,6 +26,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'bulk_update'}, cmd_bulk_update);
   seneca.add({role: plugin, cmd: 'search_count'}, cmd_search_count);
   seneca.add({role: plugin, cmd: 'bulk_delete'}, cmd_bulk_delete);
+  seneca.add({role: plugin, cmd: 'get_stats'}, cmd_get_stats);
 
   function cmd_search(args, done){
     
@@ -363,6 +365,29 @@ module.exports = function (options) {
         if(err) return done(err);
         done(null, response);
       });
+    });
+  }
+
+  function cmd_get_stats(args, done){
+    var seneca = this;
+
+    seneca.make(STATS_ENTITY_NS).list$({limit$: 'NULL'}, function(err, dojos){
+      if(err){
+        return done(err);
+      }
+
+      var dojoMappedByContinent = {};
+
+      _.forEach(dojos, function(dojo){
+        if(!dojoMappedByContinent[dojo.continent]){
+          dojoMappedByContinent[dojo.continent] = [];
+        } 
+        
+        dojoMappedByContinent[dojo.continent].push(dojo);
+      });
+
+      done(null, dojoMappedByContinent);
+
     });
   }
 
