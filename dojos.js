@@ -88,7 +88,7 @@ module.exports = function (options) {
 
     var country = args.country;
     var countData = {};
-    
+
     seneca.make$(ENTITY_NS).list$({limit$:'NULL', alpha2:country}, function(err, response) {
       if(err) return done(err);
       countData[country] = {};
@@ -102,7 +102,7 @@ module.exports = function (options) {
       });
       done(null, countData);
     });
-      
+
   }
 
   function cmd_dojos_by_country(args, done) {
@@ -196,7 +196,7 @@ module.exports = function (options) {
           dojosByCountry[countryName].states[state] = _.sortBy(dojosByCountry[countryName].states[state], function(dojo) { return dojo.name; } );
         });
       });
-      
+
       done(null, dojosByCountry);
     });
   }
@@ -240,11 +240,11 @@ module.exports = function (options) {
 
     seneca.make$(ENTITY_NS).save$(dojo, function(err, dojo) {
       if(err) return done(err);
-      
+
       userDojo.owner = 1;
       userDojo.user_id = createdby;
       userDojo.dojo_id = dojo.id;
-      
+
       usersDojosEntity.save$(userDojo, function(err, response) {
         if(err) return done(err);
 
@@ -277,7 +277,7 @@ module.exports = function (options) {
       }
 
       creatorId = dojo.creator;
-      
+
       seneca.make$(ENTITY_NS).remove$(id, function(err){
         if(err){
           return done(err);
@@ -371,8 +371,8 @@ module.exports = function (options) {
       _.forEach(dojos, function(dojo){
         if(!dojoMappedByContinent[dojo.continent]){
           dojoMappedByContinent[dojo.continent] = [];
-        } 
-        
+        }
+
         dojoMappedByContinent[dojo.continent].push(dojo);
       });
 

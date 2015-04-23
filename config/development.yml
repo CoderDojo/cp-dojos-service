@@ -1,0 +1,8 @@
+postgresql-store:
+  host: '192.168.59.103'
+  username: 'postgres'
+  password: ''
+
+elasticsearch:
+  connection:
+    host : '192.168.59.103:9200'
