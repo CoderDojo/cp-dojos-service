@@ -31,29 +31,8 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
 
   function cmd_search(args, done){
-    
-
-    var seneca = this, query = {}, dojos_ent;
-    query = args.query;
-
-
-    if(query.skip !== undefined){
-      query.skip$ = query.skip;
-      delete query.skip;
-    }
-
-    if(query.limit !== undefined){
-      query.limit$ = query.limit;
-      delete query.limit;
-    }
-
-    if(query.sort !== undefined){
-      query.sort$ = query.sort;
-      delete query.sort;
-    }
-
-    dojos_ent = seneca.make$(ENTITY_NS);
-    dojos_ent.list$(query, done);
+    var seneca = this;
+    seneca.act('role:cd-dojos-elasticsearch,cmd:search', args, done);
   }
 
   function cmd_search_count(args, done){
