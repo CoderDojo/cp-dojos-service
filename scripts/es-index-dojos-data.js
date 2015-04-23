@@ -34,7 +34,8 @@ function run(cb) {
     }
 
     async.eachSeries(list, function (dojo, done) {
-      var data = _.omit(dojo.data$(), 'entity$');
+      var data = dojo.data$();
+      data.entity$ = '-/' + data.entity$.base + '/' + data.entity$.name;
       seneca.act({
         role: 'search',
         cmd: 'save',

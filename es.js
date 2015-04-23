@@ -10,6 +10,9 @@ function Elasticsearch() {
 function cmd_search(args, done) {
   var seneca = this;
 
+  if(!args.type){
+    args.type = 'cd_dojos';
+  }
   seneca.act('role:search,cmd:search', args, function(err, results) {
     if(err) {
       return done(err);
