@@ -1,9 +1,7 @@
 'use strict';
 
 var _ = require('lodash');
-var path = require('path');
 var async = require('async');
-var ObjectID = require('mongodb').ObjectID;
 
 module.exports = function (options) {
   var seneca = this;
@@ -15,6 +13,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
   seneca.add({role: plugin, cmd: 'load'}, cmd_load);
+  seneca.add({role: plugin, cmd: 'find'}, cmd_find);
   seneca.add({role: plugin, cmd: 'create'}, cmd_create);
   seneca.add({role: plugin, cmd: 'update'}, cmd_update);
   seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
@@ -156,6 +155,7 @@ module.exports = function (options) {
     query.limit$ = 1500;
     seneca.make(ENTITY_NS).list$(query, function(err, response) {
       if(err) return done(err);
+
       var dojosByCountry = {};
       response = _.sortBy(response, 'countryName');
       _.each(response, function(dojo) {
@@ -187,9 +187,15 @@ module.exports = function (options) {
 
   function cmd_load(args, done) {
     var seneca = this;
-    //TO DO: use correct id type
-    var id = parseInt(args.id);
-    seneca.make(ENTITY_NS).load$(id, function(err, response) {
+    seneca.make(ENTITY_NS).load$(args.id, function(err, response) {
+      if(err) return done(err);
+      done(null, response);
+    });
+  }
+
+  function cmd_find(args, done) {
+    var seneca = this;
+    seneca.make(ENTITY_NS).load$(args.query, function(err, response) {
       if(err) return done(err);
       done(null, response);
     });
