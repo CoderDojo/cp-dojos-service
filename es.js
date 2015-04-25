@@ -13,11 +13,11 @@ function cmd_search(args, done) {
   if(!args.type){
     args.type = 'cd_dojos';
   }
-  seneca.act('role:search,cmd:search', args, function(err, results) {
+  seneca.act('role:search,cmd:search', args, function(err, result) {
     if(err) {
       return done(err);
     }
-    return results;
+    return done(null, result.hits);
   });
 }
 
