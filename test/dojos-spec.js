@@ -135,7 +135,7 @@ describe('Dojo Microservice test', function(){
   describe('List all my dojos', function(){
     it('Should list all my dojos', function(done){
       seneca.ready(function(){
-        seneca.act({role: role, cmd: 'my_dojos_search', user: users[1], query: {skip: 0, limit: 10}}, function(err, dojos){
+        seneca.act({role: role, cmd: 'my_dojos', user: users[1], query: {skip: 0, limit: 10}}, function(err, dojos){
           if(err){
             return done(err);
           }
@@ -148,24 +148,10 @@ describe('Dojo Microservice test', function(){
     })
   });
 
-  describe('Count all my dojos', function(){
-    it('Should count all my dojos', function(done){
-      seneca.ready(function(){
-        seneca.act({role: role, cmd: 'my_dojos_count', user: users[1]}, function(err, noOfDojos){
-          if(err){
-            return done(err);
-          }
-          expect(noOfDojos).to.be.equal(1);
-          done();
-        })
-      });
-    })
-  });
-
   describe('Update', function(){
     it('Should return json', function(done){
       seneca.ready(function(){
-        seneca.act({role: role, cmd: 'my_dojos_search', user: users[0], query: {}}, function(err, dojos){
+        seneca.act({role: role, cmd: 'my_dojos', user: users[0], query: {}}, function(err, dojos){
           if(err){
             return done(err);
           }
@@ -191,14 +177,14 @@ describe('Dojo Microservice test', function(){
       var dojo = dojos[0];
 
       seneca.ready(function(){
-        seneca.act({role: role, cmd: 'my_dojos_search', user: users[0], query: {}}, function(err, dojos){
+        seneca.act({role: role, cmd: 'my_dojos', user: users[0], query: {}}, function(err, dojos){
           
           seneca.act({role: role, cmd: 'delete', id: dojos[0].id}, function(err){
             if(err){
               return done(err);
             }
 
-            seneca.act({role: role, cmd: 'my_dojos_search', user: users[0], query: {}}, function(err, dojos){
+            seneca.act({role: role, cmd: 'my_dojos', user: users[0], query: {}}, function(err, dojos){
               if(err){
                 return done(err);
               }

@@ -24,13 +24,15 @@
     "chai": "~2.2.0"
   },
   "dependencies": {
-    "seneca": "0.6.1",
-    "seneca-mongo-store": "0.2.0",
-    "seneca-postgresql-store": "0.6.0",
+    "async": "0.9.x",
     "config": "1.12.x",
     "js-yaml": "3.2.x",
-    "async": "0.9.x",
     "lodash": "3.6.x",
-    "mongodb": "1.4.x"
+    "mongodb": "1.4.x",
+    "seneca": "0.6.1",
+    "seneca-elasticsearch": "git://github.com/iantocristian/seneca-elasticsearch.git",
+    "seneca-mongo-store": "0.2.0",
+    "seneca-postgresql-store": "git://github.com/iantocristian/seneca-postgresql-store.git",
+    "yargs": "3.7.2"
   }
 }

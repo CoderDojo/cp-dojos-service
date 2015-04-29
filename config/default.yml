@@ -8,6 +8,11 @@ postgresql-store:
   port: 5432
   username: 'platform'
   password: 'QdYx3D5y'
+elasticsearch:
+  connection:
+    host : '127.0.0.1:9200'
+    index: 'cd-zen-platform-development'
+    sniffOnStart: false
 transport:
   type: web
   web:
