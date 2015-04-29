@@ -9,6 +9,7 @@ module.exports = function (options) {
   var ENTITY_NS = 'cd/dojos';
   var USER_DOJO_ENTITY_NS = "cd/usersdojos";
   var STATS_ENTITY_NS = "cd/stats";
+  var DOJO_LEADS_ENTITY_NS = "cd/dojoleads";
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
@@ -26,6 +27,8 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'search_count'}, cmd_search_count);
   seneca.add({role: plugin, cmd: 'bulk_delete'}, cmd_bulk_delete);
   seneca.add({role: plugin, cmd: 'get_stats'}, cmd_get_stats);
+  seneca.add({role: plugin, cmd: 'save_dojo_lead'}, cmd_save_dojo_lead);
+  seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
 
   function cmd_search(args, done){
     
@@ -394,6 +397,29 @@ module.exports = function (options) {
 
       done(null, dojoMappedByContinent);
 
+    });
+  }
+
+  function cmd_save_dojo_lead(args, done) {
+    var seneca = this;
+    var dojoLeadEntity = seneca.make(DOJO_LEADS_ENTITY_NS);
+    var dojoLead = args.dojoLead;
+
+    dojoLeadEntity.save$(dojoLead, function(err, response) {
+      if(err) return done(err);
+      done(null, response);
+    });
+
+  }
+
+  function cmd_load_user_dojo_lead(args, done) {
+    var seneca = this;
+    var dojoLeadEntity = seneca.make(DOJO_LEADS_ENTITY_NS);
+    var userId = args.id;
+
+    dojoLeadEntity.load$({userId:userId}, function(err, response) {
+      if(err) return done(err);
+      done(null, response);
     });
   }
 
