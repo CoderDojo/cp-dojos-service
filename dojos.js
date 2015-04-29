@@ -24,28 +24,62 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
   seneca.add({role: plugin, cmd: 'dojos_state_count'}, cmd_dojos_state_count);
   seneca.add({role: plugin, cmd: 'bulk_update'}, cmd_bulk_update);
-  seneca.add({role: plugin, cmd: 'search_count'}, cmd_search_count);
   seneca.add({role: plugin, cmd: 'bulk_delete'}, cmd_bulk_delete);
   seneca.add({role: plugin, cmd: 'get_stats'}, cmd_get_stats);
   seneca.add({role: plugin, cmd: 'save_dojo_lead'}, cmd_save_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
 
-  function cmd_search(args, done){
+  function cmd_search(args, done) {
     var seneca = this;
-    seneca.act('role:cd-dojos-elasticsearch,cmd:search', args, done);
-  }
-
-  function cmd_search_count(args, done){
-    var seneca = this, query = {}, dojos_ent;
-    query = args.query;
-    query.limit$ = 'NULL';
-    dojos_ent = seneca.make$(ENTITY_NS);
-    dojos_ent.list$(query, function(err, dojos){
-      if(err){
-        return done(err);
+    async.waterfall([
+      function(done) {
+        seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search}, done);
+      },
+      function(searchResult, done) {
+        var userIds = _.chain(searchResult.hits).pluck('_source').pluck('creator').uniq().value();
+        async.waterfall([
+          function(done) {
+            seneca.act({role:'cd-users', cmd:'list', ids: userIds}, done);
+          },
+          function(users, done) {
+            users = _.indexBy(users, 'id');
+            _.each(_.pluck(searchResult.hits, '_source'), function(dojo) {
+              if (dojo.creator && users[dojo.creator]) {
+                dojo.creatorEmail = users[dojo.creator].email;
+              }
+            });
+            return done(null, searchResult);
+          }
+        ], done);
+      },
+      function(searchResult, done) {
+        var userIds = _.chain(searchResult.hits).pluck('_source').pluck('creator').uniq().value();
+        async.waterfall([
+          function(done) {
+            seneca.act({role:'cd-agreements', cmd:'list', userIds: userIds}, done);
+          },
+          function(agreements, done) {
+            agreements = _.indexBy(agreements, 'userId');
+            _.each(_.pluck(searchResult.hits, '_source'), function(dojo) {
+              if (dojo.creator && agreements[dojo.creator]) {
+                dojo.agreements = agreements[dojo.creator].agreements;
+              }
+            });
+            return done(null, searchResult);
+          }
+        ], done);
+      },
+      function(searchResult, done) {
+        return done(null, {
+          total: searchResult.total,
+          records: _.pluck(searchResult.hits, '_source')
+        });
       }
-
-      return done(null, {totalItems: dojos.length});
+    ], function(err, res) {
+      if (err) {
+        debugger;
+      }
+      return done(err, res);
     });
   }
 
