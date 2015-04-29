@@ -18,8 +18,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'create'}, cmd_create);
   seneca.add({role: plugin, cmd: 'update'}, cmd_update);
   seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
-  seneca.add({role: plugin, cmd: 'my_dojos_count'}, cmd_my_dojos_count);
-  seneca.add({role: plugin, cmd: 'my_dojos_search'}, cmd_my_dojos_search);
+  seneca.add({role: plugin, cmd: 'my_dojos'}, cmd_my_dojos);
   seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
   seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
   seneca.add({role: plugin, cmd: 'dojos_state_count'}, cmd_dojos_state_count);
@@ -295,99 +294,53 @@ module.exports = function (options) {
 
   function cmd_bulk_update(args, done){
     var seneca = this;
-    var dojos = args.dojos;
-
-    var updateDojo = function(dojo, cb){
-      seneca.act({role: plugin, cmd: 'update', dojo: dojo}, function(err, dojo){
-        if(err){
-          return cb(err);
-        } 
-
-        return cb();
-      });
-    };
-
-    async.each(dojos, updateDojo, done);
+    async.each(args.dojos, function(dojo, done) {
+      seneca.act({role: plugin, cmd: 'update', dojo: dojo}, done);
+    }, done);
   }
 
   function cmd_bulk_delete(args, done){
     var seneca = this;
-    var dojos = args.dojos;
+    async.each(args.dojos, function(dojo, done) {
+      seneca.act({role: plugin, cmd: 'delete', id: dojo.id, creatorId: dojo.creator}, done);
+    }, done);
+  }
 
+  function cmd_my_dojos(args, done){
+    var seneca = this;
 
-    function deleteDojo(dojo, cb){
-      seneca.act({role: plugin, cmd: 'delete', id: dojo.id, creatorId: dojo.creator}, function(err){
-        if(err){
-          return cb(err);
+    async.waterfall([
+      function(done) {
+        seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id, limit$: 'NULL'}, done);
+      },
+      function(userDojos, done) {
+        if (!userDojos || !userDojos.length) {
+          return done(null ,[], []);
         }
 
-        cb();
-      });
-    }
+        var dojoIds = _.pluck(userDojos, 'dojoId');
+        var query = {ids:dojoIds};
 
-    async.each(dojos, deleteDojo, done);
-  }
+        var search = args.search;
+        if (search.from){
+          query.skip$ = search.from;
+        }
+        if (search.size){
+          query.limit$ = search.size;
+        }
+        if (search.sort){
+          query.sort$ = search.sort;
+        }
 
-  function cmd_my_dojos_count(args, done) {
-    var seneca = this, query = {};
-    var user = args.user;
-    seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: user.id}, function(err, response){
-      if(err){
-        return done(err);
+        seneca.make$(ENTITY_NS).list$(query, _.partialRight(done, userDojos));
+      },
+      function(dojos, userDojos, done) {
+        return done(null, {
+          total: userDojos.length,
+          records: dojos
+        });
       }
-
-      done(null, response.length);
-    });
-  }
-
-  function cmd_my_dojos_search(args, done){
-    var seneca = this, query = {};
-    var user = args.user;
-    var userObj = {};
-    var dojoIds = [];
-    
-    query = args.query;
-
-
-    if(query.skip !== undefined){
-      query.skip$ = query.skip;
-      delete query.skip;
-    }
-
-    if(query.limit !== undefined){
-      query.limit$ = query.limit;
-      delete query.limit;
-    }
-
-    if(query.sort !== undefined){
-      query.sort$ = query.sort;
-      delete query.sort;
-    }
-
-
-    seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id}, function(err, response){
-      if(err){
-        return done(err);
-      }
-
-      if(query.name !== undefined) {
-        query.name = new RegExp(query.name, 'i');
-      }
-
-
-      if(_.isEmpty(response)){
-        return done(null, response);
-      }
-
-      dojoIds = _.pluck(response, 'dojoId');
-      query.ids = dojoIds;
-
-
-      seneca.make$(ENTITY_NS).list$(query, function(err, response) {
-        if(err) return done(err);
-        done(null, response);
-      });
-    });
+    ], done);
   }
 
   function cmd_get_stats(args, done){
