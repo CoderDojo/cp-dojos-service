@@ -36,13 +36,33 @@ function run(cb) {
     async.eachSeries(list, function (dojo, done) {
       var data = dojo.data$();
       data.entity$ = '-/' + data.entity$.base + '/' + data.entity$.name;
-      seneca.act({
-        role: 'search',
-        cmd: 'save',
-        index: config["elasticsearch"].connection.index,
-        type: 'cd_dojos',
-        data: data
-      }, done);
+      if (!data.geoPoint && data.coordinates) {
+        var pair = _.trim(data.coordinates, '@').split(',').map(parseFloat);
+        if (pair.length === 2 && _.isFinite(pair[0]) && _.isFinite(pair[1])) {
+          data.geoPoint = {
+            lat: pair[0],
+            lon: pair[1]
+          }
+        }
+      }
+      console.log(data.coordinates, data.geoPoint);
+
+      async.series([
+        function(done) {
+          seneca.act({
+            role: 'search',
+            cmd: 'save',
+            index: config["elasticsearch"].connection.index,
+            type: 'cd_dojos',
+            data: data
+          }, done);
+        },
+        function(done) {
+          dojo.geoPoint = data.geoPoint;
+          dojo.save$(done);
+        }
+      ], done);
+
     }, cb);
   });
 }
