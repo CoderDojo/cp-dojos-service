@@ -27,7 +27,6 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'get_stats'}, cmd_get_stats);
   seneca.add({role: plugin, cmd: 'save_dojo_lead'}, cmd_save_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
-  seneca.add({role: plugin, cmd: 'update_dojo_lead'}, cmd_update_dojo_lead);
 
   function cmd_search(args, done) {
     var seneca = this;
@@ -385,16 +384,6 @@ module.exports = function (options) {
     var userId = args.id;
 
     dojoLeadEntity.load$({userId:userId}, function(err, response) {
-      if(err) return done(err);
-      done(null, response);
-    });
-  }
-
-  function cmd_update_dojo_lead(args, done) {
-    var seneca = this;
-    var dojoLeadEntity = seneca.make(DOJO_LEADS_ENTITY_NS);
-    var dojoLead = args.dojoLead;
-    seneca.make(dojoLeadEntity).save$(dojoLead, function(err, response) {
       if(err) return done(err);
       done(null, response);
     });
