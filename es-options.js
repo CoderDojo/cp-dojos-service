@@ -24,6 +24,9 @@ module.exports = {
       'place': true,
       'location': true,
       'coordinates': true,
+      'geoPoint': {
+        type: 'geo_point'
+      },
       'notes': true,
       'email': true,
       'website': true,
