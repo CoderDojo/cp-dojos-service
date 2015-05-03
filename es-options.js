@@ -1,5 +1,20 @@
 module.exports = {
   refreshOnSave : true,
+  indexConfig :{
+    settings: {
+      index: {
+        analysis :{
+          analyzer: {
+            email: {
+              type : 'custom',
+              tokenizer : 'uax_url_email',
+              'filter' : ['standard', 'lowercase', 'stop']
+            }
+          }
+        }
+      }
+    }
+  },
   entities: [{
     base: 'cd',
     name: 'dojos',
@@ -28,7 +43,10 @@ module.exports = {
         type: 'geo_point'
       },
       'notes': true,
-      'email': true,
+      'email': {
+        'analyzer': 'email',
+        'type': 'string'
+      },
       'website': true,
       'twitter': true,
       'google_group': true,
