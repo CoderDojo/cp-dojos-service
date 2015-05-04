@@ -23,7 +23,12 @@ module.exports = {
         type: 'string',
         index: 'not_analyzed'
       },
-      'name': true,
+      'name': {
+        'type': 'string',
+        'fields': {
+          'raw': {'type': 'string', index: 'not_analyzed'}
+        }
+      },
       'creator': true,
       'created': true,
       'verifiedAt': true,
