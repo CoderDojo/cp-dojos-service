@@ -8,7 +8,12 @@ module.exports = {
             email: {
               type : 'custom',
               tokenizer : 'uax_url_email',
-              'filter' : ['standard', 'lowercase', 'stop']
+              filter : ['standard', 'lowercase', 'stop']
+            },
+            sort: {
+              type: 'custom',
+              tokenizer: 'keyword',
+              filter: 'lowercase'
             }
           }
         }
@@ -26,7 +31,7 @@ module.exports = {
       'name': {
         'type': 'string',
         'fields': {
-          'raw': {'type': 'string', index: 'not_analyzed'}
+          'raw': {'type': 'string', analyzer: 'sort'}
         }
       },
       'creator': true,
