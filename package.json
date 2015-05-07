@@ -25,7 +25,6 @@
   },
   "dependencies": {
     "async": "0.9.x",
-    "config": "1.12.x",
     "js-yaml": "3.2.x",
     "lodash": "3.6.x",
     "mongodb": "1.4.x",
