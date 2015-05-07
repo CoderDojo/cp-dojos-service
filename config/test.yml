@@ -6,8 +6,8 @@ postgresql-store:
   name: 'cd-zen-platform-test'
   host: '127.0.0.1'
   port: 5432
-  username: 'postgres'
-  password: 'test'
+  username: 'platform'
+  password: 'QdYx3D5y'
 elasticsearch:
   connection:
     host : '127.0.0.1:9200'
