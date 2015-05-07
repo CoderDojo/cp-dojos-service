@@ -1,3 +1,3 @@
 #!/bin/bash
 
-node scripts/es-index-dojos-data.js
+./start.sh scripts/es-index-dojos-data.js development

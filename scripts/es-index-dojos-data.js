@@ -3,7 +3,7 @@ var async = require('async');
 
 var ENTITY_NS = 'cd/dojos';
 
-var config = require('config');
+var config = require('../config/config.js')();
 var ESOptions = require('../es-options.js');
 
 var args = require('yargs')
@@ -76,5 +76,3 @@ function loadAllDojos(cb) {
     cb(err, list);
   });
 }
-
-
