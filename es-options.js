@@ -1,5 +1,25 @@
 module.exports = {
   refreshOnSave : true,
+  indexConfig :{
+    settings: {
+      index: {
+        analysis :{
+          analyzer: {
+            email: {
+              type : 'custom',
+              tokenizer : 'uax_url_email',
+              filter : ['standard', 'lowercase', 'stop']
+            },
+            sort: {
+              type: 'custom',
+              tokenizer: 'keyword',
+              filter: 'lowercase'
+            }
+          }
+        }
+      }
+    }
+  },
   entities: [{
     base: 'cd',
     name: 'dojos',
@@ -8,7 +28,12 @@ module.exports = {
         type: 'string',
         index: 'not_analyzed'
       },
-      'name': true,
+      'name': {
+        'type': 'string',
+        'fields': {
+          'raw': {'type': 'string', analyzer: 'sort'}
+        }
+      },
       'creator': true,
       'created': true,
       'verifiedAt': true,
@@ -28,7 +53,10 @@ module.exports = {
         type: 'geo_point'
       },
       'notes': true,
-      'email': true,
+      'email': {
+        'analyzer': 'email',
+        'type': 'string'
+      },
       'website': true,
       'twitter': true,
       'google_group': true,
