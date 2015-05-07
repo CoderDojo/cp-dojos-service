@@ -27,6 +27,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'get_stats'}, cmd_get_stats);
   seneca.add({role: plugin, cmd: 'save_dojo_lead'}, cmd_save_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
+  seneca.add({role: plugin, cmd: 'load_dojo_lead'}, cmd_load_dojo_lead);
 
   function cmd_search(args, done) {
     var seneca = this;
@@ -223,6 +224,20 @@ module.exports = function (options) {
     var userDojo = {};
 
     dojo.creator = createdby;
+    dojo.created = new Date();
+
+    if(dojo.needMentors) {
+      dojo.needMentors = 1;
+    } else {
+      dojo.needMentors = 0;
+    }
+
+    if(dojo.mailingList) {
+      dojo.mailingList = 1;
+    } else {
+      dojo.mailingList = 0;
+    }
+
     seneca.make$(ENTITY_NS).save$(dojo, function(err, dojo) {
       if(err) return done(err);
       
@@ -384,6 +399,17 @@ module.exports = function (options) {
     var userId = args.id;
 
     dojoLeadEntity.load$({userId:userId}, function(err, response) {
+      if(err) return done(err);
+      done(null, response);
+    });
+  }
+
+  function cmd_load_dojo_lead(args, done) {
+    var seneca = this;
+    var dojoLeadEntity = seneca.make(DOJO_LEADS_ENTITY_NS);
+
+    //TO-DO: use seneca-perm to restrict this action to cdf-admin users.
+    dojoLeadEntity.load$(args.id, function(err, response) {
       if(err) return done(err);
       done(null, response);
     });
