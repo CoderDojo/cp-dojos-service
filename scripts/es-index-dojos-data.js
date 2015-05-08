@@ -23,7 +23,9 @@ seneca.ready(function() {
     if (err) {
       seneca.log.error(err);
     }
-    seneca.close();
+    seneca.close(function() {
+      process.exit();
+    });
   });
 });
 
