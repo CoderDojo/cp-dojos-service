@@ -23,6 +23,8 @@ seneca.ready(function() {
     if (err) {
       seneca.log.error(err);
     }
+
+    //TODO: remove seneca.close callback once issues are fixed(probably with seneca-elasticsearch)
     seneca.close(function() {
       process.exit();
     });
