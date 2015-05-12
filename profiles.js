@@ -3,6 +3,7 @@
 module.exports = function(options){
   var seneca = this;
 
+
   var plugin = 'cd-profiles';
   var ENTITY_NS = 'cd/profiles';
 
@@ -12,7 +13,6 @@ module.exports = function(options){
     var profiles_ent, seneca = this;
 
     var query = args.query ? args.query : {};
-
     profiles_ent = seneca.make(ENTITY_NS);
 
     profiles_ent.list$(query, function(err, profile){
