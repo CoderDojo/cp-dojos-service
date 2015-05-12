@@ -41,32 +41,34 @@ module.exports = function (options) {
         seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search}, done);
       },
       function(searchResult, done) {      
-        async.waterfall([
-          function(done) {
+        var dojos = _.pluck(searchResult.hits, '_source');
 
-            _.each(_.pluck(searchResult.hits, '_source'), function(dojo){
-              
-              seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojo.id, owner: 1}},
-                function(err, userDojos){
-                  if(err){
-                    return done(err);
-                  }
+        async.each(dojos, function(dojo, cb){
+          
+          seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojo.id, owner: 1}},
+            function(err, userDojos){
+              if(err){
+                return cb(err);
+              }
 
-                  var userIds = _.pluck(userDojos, 'userId');
+              var userIds = _.pluck(userDojos, 'userId');
 
-                  seneca.act({role: 'cd-users', cmd: 'list', ids: userIds}, function(err, users){
-                    if(err){
-                      return err;
-                    }
+              seneca.act({role: 'cd-users', cmd: 'list', ids: userIds}, function(err, users){
+                if(err){
+                  return cb(err);
+                }
 
-                    dojo.creatorEmails = _.pluck(users, 'email');
-                  });
-                });
+                dojo.creatorEmails = _.pluck(users, 'email');
+                cb(null, dojo);
+              });
             });
+          }, function(err) { 
+            if(err){
+              return done(err);
+            }
 
             return done(null, searchResult);
-          }
-        ], done);
+          });
       },
       function(searchResult, done) {
         var userIds = _.chain(searchResult.hits).pluck('_source').pluck('creator').uniq().value();
