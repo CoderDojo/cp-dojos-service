@@ -10,6 +10,7 @@ module.exports = function (options) {
   var USER_DOJO_ENTITY_NS = "cd/usersdojos";
   var STATS_ENTITY_NS = "cd/stats";
   var DOJO_LEADS_ENTITY_NS = "cd/dojoleads";
+  var setupDojoSteps = require('./data/setup_dojo_steps');
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
@@ -28,6 +29,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'save_dojo_lead'}, cmd_save_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_dojo_lead'}, cmd_load_dojo_lead);
+  seneca.add({role: plugin, cmd: 'load_setup_dojo_steps'}, cmd_load_setup_dojo_steps);
 
   function cmd_search(args, done) {
     var seneca = this;
@@ -413,6 +415,10 @@ module.exports = function (options) {
       if(err) return done(err);
       done(null, response);
     });
+  }
+
+  function cmd_load_setup_dojo_steps(args, done) {
+    done(null, setupDojoSteps);
   }
 
   return {
