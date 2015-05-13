@@ -267,19 +267,19 @@ module.exports = function (options) {
 
     async.waterfall([
       function(cb){
-        seneca.make$(ENTITY_NS).list$({urlSlug: baseSlug},function(err, dojos){
+        seneca.make$(ENTITY_NS).list$({urlSlug: new RegExp('^' + baseSlug,  'i')},function(err, dojos){
           if(err){
             return cb(err);
           }
           var urlSlugs = {};
           
-          if(!_.isEmpty(dojos)){
+          if(_.isEmpty(dojos)){
             return cb(null, baseSlug);
           }
 
           urlSlugs = _.pluck(dojos, 'urlSlug');
           var urlSlug = baseSlug;
-          for (var idx = 1; urlSlugs[urlSlug]; urlSlug = baseSlug + '-' + idx, idx++);
+          for (var idx = 1; urlSlugs.indexOf(urlSlug) !=  -1; urlSlug = baseSlug + '-' + idx, idx++);
           
           cb(null, urlSlug);
         }); 
