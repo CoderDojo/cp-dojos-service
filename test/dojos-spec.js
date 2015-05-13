@@ -23,8 +23,8 @@ seneca
   .use(__dirname + '/../dojos.js')
   // .use(__dirname + '/../es.js');
 
-// seneca
-//   .client({type: 'web', host: '127.0.0.1', port: 10302, pin: 'role:cd-countries,cmd:*'})
+seneca
+  .client({type: 'web', host: '127.0.0.1', port: 10302, pin: 'role:cd-countries,cmd:*'})
 //   .client({type: 'web', host: '127.0.0.1', port: 10303, pin: 'role:cd-users,cmd:*'})
 //   .client({type: 'web', host: '127.0.0.1', port: 10303, pin: 'role:cd-agreements,cmd:*'});
 
@@ -89,24 +89,110 @@ describe('Dojo Microservice test', function(){
 
   before(function(done){
     seneca.ready(function(){
-      seneca.act({role: role, cmd: 'create', dojo: dojos[1], user: users[1].id},
-      function(err, dojo){
-        if(err) return done(err);
 
+      seneca.util.recurse(4, function( index, next ){
+        seneca.act({role: role, cmd: 'create', dojo: dojos[index], user: users[index].id},
+        function(err, dojo){
+          if(err) return done(err);
+          next();
+        });
+      }, done);
+    });
+  });
+
+  describe('Search *TODO', function(){
+    it('???', function(done){
+      seneca.ready(function(){
+        // TODO
         done();
       });
     });
   });
 
-  describe('Save', function(){
-    it('respond with json', function(done){      
+  describe('List', function(){
+    it('list all from db', function(done){
+      seneca.ready(function(){
+        seneca.act({role: role, cmd: 'list'}, function(err, dojos){
+          if(err) return done(err);
+
+          expect(dojos).to.exist;
+          // console.log('dojos: ' + util.inspect(dojos));
+
+          var dojosNo = 0;
+          _.each(dojos, function(element){
+            expect(element).to.be.ok;
+            dojosNo += 1;
+          })
+
+          expect(dojosNo).to.be.equal(4);
+
+          done();
+        });
+      });
+    });
+  });
+
+  describe('Load', function(){
+    it('load from db based on id', function(done){
+      seneca.ready(function(){
+        dojosEnt.list$(function(err, dojos){
+          
+          // console.log('dojos: ' + util.inspect(dojos));
+          // console.log('dojos[0].id: ' + util.inspect(dojos[0].id));
+
+          expect(dojos[0].id).to.exist;
+          expect(dojos[0].id).to.be.ok;
+          
+          seneca.act({role: role, cmd: 'load', id: dojos[0].id}, function(err, dojoFound){
+            if(err) return done(err);
+
+            // console.log('dojoFound: ' + util.inspect(dojoFound));
+
+            expect(dojoFound).to.exist;
+            expect(dojoFound).to.be.ok;
+
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  describe('Find', function(){
+    it('load from db based on query', function(done){
+      seneca.ready(function(){
+        dojosEnt.list$(function(err, dojos){
+          
+          // console.log('dojos: ' + util.inspect(dojos));
+          // console.log('dojos[0].id: ' + util.inspect(dojos[0].id));
+
+          expect(dojos[0].id).to.exist;
+          expect(dojos[0].id).to.be.ok;
+          
+          seneca.act({role: role, cmd: 'find', query: { id: dojos[0].id }}, function(err, dojoFound){
+            if(err) return done(err);
+
+            // console.log('dojoFound: ' + util.inspect(dojoFound));
+
+            expect(dojoFound).to.exist;
+            expect(dojoFound).to.be.ok;
+
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  describe('Create', function(){
+    it('save to db', function(done){      
       seneca.ready(function(){
 
-        seneca.act({role: role, cmd: 'create', dojo:  dojos[0], user: users[0].id}, 
+        seneca.act({role: role, cmd: 'create', dojo:  dojos[4], user: users[4].id}, 
         function(err, savedDojo){
           if(err) return done(err);
 
-          dojosEnt.list$({creator: users[0].id}, function(err, listedDojos){
+          dojosEnt.list$({creator: users[4].id}, function(err, listedDojos){
             if(err) return done(err);
 
             // console.log('saved: ' + util.inspect(savedDojo));
@@ -123,75 +209,37 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Listing', function(){
-    it('Should respond with json', function(done){
-      seneca.ready(function(){
-        seneca.act({role: role, cmd: 'list'}, function(err, dojos){
-          if(err) return done(err);
+  describe('Delete', function(){
+    it('delete dojo from db', function(done){
+      var dojo = dojos[0];
 
+      seneca.ready(function(){
+        seneca.act({role: role, cmd: 'my_dojos', user: users[4], search: {from:0, size:100}}, function(err, dojos){
+          
           expect(dojos).to.exist;
-          // console.log('dojos: ' + util.inspect(dojos));
+          expect(dojos.total).to.be.equal(1);
+          expect(dojos.records[0]).to.be.ok;
 
-          var dojosNo = 0;
-          _.each(dojos, function(element){
-            expect(element).to.be.ok;
-            dojosNo += 1;
-          })
-
-          expect(dojosNo).to.be.equal(2);
-
-          done();
-        });
-      });
-    });
-  });
-
-  describe('Load', function(){
-    it('Should respond with json', function(done){
-      seneca.ready(function(){
-        dojosEnt.list$(function(err, dojos){
-          
-          // console.log('dojos: ' + util.inspect(dojos));
-
-          expect(dojos[0].id).to.exist;
-          expect(dojos[0].id).to.be.ok;
-          
-          seneca.act({role: role, cmd: 'load', id:dojos[0].id}, function(err, dojoFound){
+          seneca.act({role: role, cmd: 'delete', id: dojos.records[0].id}, function(err){
             if(err) return done(err);
 
-            // console.log('dojoFound: ' + util.inspect(dojoFound));
+              seneca.act({role: role, cmd: 'my_dojos', user: users[4], search: {from:0, size:100}}, function(err, dojos){
+              if(err) return done(err);
 
-            expect(dojoFound).to.exist;
-            expect(dojoFound).to.be.ok;
+              expect(dojos).to.exist;
+              expect(dojos.total).to.be.equal(0);
+              expect(dojos.records[0]).to.be.undefined;
 
-            done();
+              done();
+            });
           });
         });
       });
     });
   });
 
-
-  describe('List all my dojos', function(){
-    it('Should list all my dojos', function(done){
-      seneca.ready(function(){
-        seneca.act({role: role, cmd: 'my_dojos', user: users[1], search: {from:0, size:100}}, function(err, dojos){
-          if(err) return done(err);
-
-          // console.log('dojos: ' + util.inspect(dojos))
-
-          expect(dojos).to.exist;
-          expect(dojos.total).to.be.equal(1);
-          expect(dojos.records[0]).to.be.ok;
-
-          done();
-        })
-      });
-    })
-  });
-
   describe('Update', function(){
-    it('Should return json', function(done){
+    it('update dojo field', function(done){
       seneca.ready(function(){
         seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {from:0, size:100}}, function(err, dojos){
           if(err) return done(err);
@@ -210,37 +258,129 @@ describe('Dojo Microservice test', function(){
             done();
           });
         });
-      })
-    })
+      });
+    });
   });
 
-  describe('Delete', function(){
-    it('Should delete dojo from database', function(done){
-      var dojo = dojos[0];
-
+  describe('My dojos', function(){
+    it('list all dojos related to user', function(done){
       seneca.ready(function(){
         seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {from:0, size:100}}, function(err, dojos){
-          
+          if(err) return done(err);
+
+          // console.log('dojos: ' + util.inspect(dojos))
+
           expect(dojos).to.exist;
           expect(dojos.total).to.be.equal(1);
           expect(dojos.records[0]).to.be.ok;
 
-          seneca.act({role: role, cmd: 'delete', id: dojos.records[0].id}, function(err){
-            if(err) return done(err);
-
-              seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {from:0, size:100}}, function(err, dojos){
-              if(err) return done(err);
-
-              expect(dojos).to.exist;
-              expect(dojos.total).to.be.equal(0);
-              expect(dojos.records[0]).to.be.undefined;
-
-              done();
-            });
-          });
+          done();
         });
-      })
+      });
     })
+  });
+
+  describe('Dojos count (req countries)', function(){
+    it('list dojos count by continent/country/state', function(done){
+      seneca.ready(function(){
+        seneca.act({role: role, cmd: 'dojos_count'}, function(err, dojos){
+          if(err) return done(err);
+          dojos = dojos.dojos;
+
+          // console.log('dojos: ' + util.inspect(dojos.continents));
+
+          expect(dojos.continents).to.exist;
+          expect(dojos.continents).to.include.keys(['EU', 'NA', 'SA']);
+          expect(dojos.continents.EU.countries).to.include.keys(['RO', 'RU']);
+          expect(dojos.continents.NA.countries).to.include.keys(['US']);
+          expect(dojos.continents.SA.countries).to.include.keys(['BR']);
+
+          var total = 0;
+          _.each(dojos.continents, function(element){
+            // console.log('countries: ' + util.inspect(element));
+
+            expect(element.total).to.exist;
+            total += element.total;
+          });
+
+          expect(total).to.be.equal(4);
+
+          done();
+        });
+      });
+    });
+  });
+
+  describe('Dojos by country *TODO', function(){
+    it('???', function(done){
+      seneca.ready(function(){
+        // TODO
+        done();
+      });
+    });
+  });
+
+  describe('Dojos state count *TODO', function(){
+    it('???', function(done){
+      seneca.ready(function(){
+        // TODO
+        done();
+      });
+    });
+  });
+
+  describe('Bulk update *TODO', function(){
+    it('???', function(done){
+      seneca.ready(function(){
+        // TODO
+        done();
+      });
+    });
+  });
+
+  describe('Bulk delete *TODO', function(){
+    it('???', function(done){
+      seneca.ready(function(){
+        // TODO
+        done();
+      });
+    });
+  });
+
+  describe('Get stats *TODO', function(){
+    it('???', function(done){
+      seneca.ready(function(){
+        // TODO
+        done();
+      });
+    });
+  });
+
+  describe('Save dojo lead *TODO', function(){
+    it('???', function(done){
+      seneca.ready(function(){
+        // TODO
+        done();
+      });
+    });
+  });
+
+  describe('Load user dojo lead *TODO', function(){
+    it('???', function(done){
+      seneca.ready(function(){
+        // TODO
+        done();
+      });
+    });
+  });
+
+  describe('Load dojo lead *TODO', function(){
+    it('???', function(done){
+      seneca.ready(function(){
+        // TODO
+        done();
+      });
+    });
   });
 
 });
