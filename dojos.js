@@ -2,6 +2,7 @@
 
 var _ = require('lodash');
 var async = require('async');
+var slug = require('slug');
 
 module.exports = function (options) {
   var seneca = this;
@@ -236,7 +237,7 @@ module.exports = function (options) {
   }
 
   function cmd_create(args, done){
-    var seneca = this, dojo = args.dojo;
+    var seneca = this, dojo = args.dojo, baseSlug;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
     var createdby = args.user;
     var userDojo = {};
@@ -256,19 +257,43 @@ module.exports = function (options) {
       dojo.mailingList = 0;
     }
 
-    seneca.make$(ENTITY_NS).save$(dojo, function(err, dojo) {
-      if(err) return done(err);
+    var slugify = function(name) {
+      return slug(name);
+    };
 
-      userDojo.owner = 1;
-      userDojo.user_id = createdby;
-      userDojo.dojo_id = dojo.id;
+    baseSlug = _.chain([
+      dojo.alpha2, dojo.admin1Name, dojo.placeName, dojo.name
+    ]).compact().map(slugify).value().join('/').toLowerCase();
 
-      usersDojosEntity.save$(userDojo, function(err, response) {
-        if(err) return done(err);
+    async.waterfall([
+      function(cb){
+        seneca.make$(ENTITY_NS).list$({urlSlug: new RegExp('^' + baseSlug,  'i')},function(err, dojos){
+          if(err){
+            return cb(err);
+          }
+          var urlSlugs = {};
+          
+          if(_.isEmpty(dojos)){
+            return cb(null, baseSlug);
+          }
 
-        done(null, dojo);
-      });
-    });
+          urlSlugs = _.pluck(dojos, 'urlSlug');
+          var urlSlug = baseSlug;
+          for (var idx = 1; urlSlugs.indexOf(urlSlug) !=  -1; urlSlug = baseSlug + '-' + idx, idx++);
+          
+          cb(null, urlSlug);
+        }); 
+      }, function(urlSlug, cb){
+        dojo.urlSlug = urlSlug;
+
+        seneca.make$(ENTITY_NS).save$(dojo, cb);
+      }, function(dojo, cb){
+        userDojo.owner = 1;
+        userDojo.user_id = createdby;
+        userDojo.dojo_id = dojo.id;
+
+        usersDojosEntity.save$(userDojo, cb);
+      }], done);
   }
 
   function cmd_update(args, done){
