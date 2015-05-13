@@ -30,29 +30,45 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_dojo_lead'}, cmd_load_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_setup_dojo_steps'}, cmd_load_setup_dojo_steps);
+  seneca.add({role: plugin, cmd: 'load_usersdojos'}, cmd_load_users_dojos);
+
 
   function cmd_search(args, done) {
     var seneca = this;
+    var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
     async.waterfall([
       function(done) {
         seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search}, done);
       },
-      function(searchResult, done) {
-        var userIds = _.chain(searchResult.hits).pluck('_source').pluck('creator').uniq().value();
-        async.waterfall([
-          function(done) {
-            seneca.act({role:'cd-users', cmd:'list', ids: userIds}, done);
-          },
-          function(users, done) {
-            users = _.indexBy(users, 'id');
-            _.each(_.pluck(searchResult.hits, '_source'), function(dojo) {
-              if (dojo.creator && users[dojo.creator]) {
-                dojo.creatorEmail = users[dojo.creator].email;
+      function(searchResult, done) {      
+        var dojos = _.pluck(searchResult.hits, '_source');
+
+        async.each(dojos, function(dojo, cb){
+          
+          seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojo.id, owner: 1}},
+            function(err, userDojos){
+              if(err){
+                return cb(err);
               }
+
+              var userIds = _.pluck(userDojos, 'userId');
+
+              seneca.act({role: 'cd-users', cmd: 'list', ids: userIds}, function(err, users){
+                if(err){
+                  return cb(err);
+                }
+
+                dojo.creatorEmails = _.pluck(users, 'email');
+                cb(null, dojo);
+              });
             });
+          }, function(err) { 
+            if(err){
+              return done(err);
+            }
+
             return done(null, searchResult);
-          }
-        ], done);
+          });
       },
       function(searchResult, done) {
         var userIds = _.chain(searchResult.hits).pluck('_source').pluck('creator').uniq().value();
@@ -417,8 +433,23 @@ module.exports = function (options) {
     });
   }
 
+
   function cmd_load_setup_dojo_steps(args, done) {
     done(null, setupDojoSteps);
+  }
+
+  function cmd_load_users_dojos(args, done){
+    var usersdojos_ent, seneca = this;
+    var query = args.query ? args.query : {};
+
+    usersdojos_ent = seneca.make(USER_DOJO_ENTITY_NS);
+
+    usersdojos_ent.list$(query, function(err, usersDojos){
+      if(err){
+        return done(err);
+      }
+      done(null, usersDojos);
+    });
   }
 
   return {
