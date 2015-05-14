@@ -12,9 +12,9 @@ seneca.options(config);
 
 seneca.use('postgresql-store', config["postgresql-store"]);
 seneca.use('elasticsearch', _.defaults(config["elasticsearch"], ESOptions));
+seneca.use(require('./es.js'));
 seneca.use(require('./dojos.js'));
 seneca.use(require('./profiles.js'));
-seneca.use(require('./es.js'));
 
 seneca.listen()
   .client({type: 'web', host: process.env.TARGETIP || '127.0.0.1', port: 10302, pin: 'role:cd-countries,cmd:*'})
