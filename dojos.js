@@ -45,11 +45,15 @@ module.exports = function (options) {
         var dojos = _.pluck(searchResult.hits, '_source');
 
         async.each(dojos, function(dojo, cb){
-          
           seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojo.id, owner: 1}},
             function(err, userDojos){
+
               if(err){
                 return cb(err);
+              }
+
+              if(userDojos.length < 1){
+                return cb();
               }
 
               var userIds = _.pluck(userDojos, 'userId');
@@ -59,7 +63,10 @@ module.exports = function (options) {
                   return cb(err);
                 }
 
-                dojo.creatorEmails = _.pluck(users, 'email');
+                dojo.creators = _.map(users, function(user){
+                  return {email: user.email, id: user.id};
+                });
+
                 cb(null, dojo);
               });
             });
@@ -72,7 +79,7 @@ module.exports = function (options) {
           });
       },
       function(searchResult, done) {
-        var userIds = _.chain(searchResult.hits).pluck('_source').pluck('creator').uniq().value();
+        var userIds = _.chain(searchResult.hits).pluck('_source').pluck('creators').flatten().pluck('id').uniq().value();
         async.waterfall([
           function(done) {
             seneca.act({role:'cd-agreements', cmd:'list', userIds: userIds}, done);
@@ -80,9 +87,13 @@ module.exports = function (options) {
           function(agreements, done) {
             agreements = _.indexBy(agreements, 'userId');
             _.each(_.pluck(searchResult.hits, '_source'), function(dojo) {
-              if (dojo.creator && agreements[dojo.creator]) {
-                dojo.agreements = agreements[dojo.creator].agreements;
-              }
+              dojo.agreements = [];
+              _.each(dojo.creators, function(creator){              
+                creator.agreements = [];
+                if (agreements[creator.id]) {
+                  creator.agreements = agreements[creator.id].agreements;
+                }
+              });
             });
             return done(null, searchResult);
           }
@@ -96,9 +107,9 @@ module.exports = function (options) {
       }
     ], function(err, res) {
       if (err) {
-        debugger;
+        return done(err);
       }
-      return done(err, res);
+      return done(null, res);
     });
   }
 
