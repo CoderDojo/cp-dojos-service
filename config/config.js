@@ -8,7 +8,7 @@ module.exports = function() {
     if (process.env.DOCKER_HOST) {
       return require('url').parse(process.env.DOCKER_HOST).hostname;
     }
-    if (process.evn.TARGETIP) {
+    if (process.env.TARGETIP) {
       return process.env.TARGETIP;
     }	
     return '127.0.0.1';
