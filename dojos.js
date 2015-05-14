@@ -45,11 +45,15 @@ module.exports = function (options) {
         var dojos = _.pluck(searchResult.hits, '_source');
 
         async.each(dojos, function(dojo, cb){
-          
           seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojo.id, owner: 1}},
             function(err, userDojos){
+
               if(err){
                 return cb(err);
+              }
+
+              if(userDojos.length < 1){
+                return cb();
               }
 
               var userIds = _.pluck(userDojos, 'userId');
@@ -85,8 +89,9 @@ module.exports = function (options) {
             _.each(_.pluck(searchResult.hits, '_source'), function(dojo) {
               dojo.agreements = [];
               _.each(dojo.creators, function(creator){              
+                creator.agreements = [];
                 if (agreements[creator.id]) {
-                  dojo.agreements.push(agreements[creator.id].agreements);
+                  creator.agreements = agreements[creator.id].agreements;
                 }
               });
             });
@@ -102,9 +107,9 @@ module.exports = function (options) {
       }
     ], function(err, res) {
       if (err) {
-        debugger;
+        return done(err);
       }
-      return done(err, res);
+      return done(null, res);
     });
   }
 
