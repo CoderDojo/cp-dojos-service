@@ -59,7 +59,10 @@ module.exports = function (options) {
                   return cb(err);
                 }
 
-                dojo.creatorEmails = _.pluck(users, 'email');
+                dojo.creators = _.map(users, function(user){
+                  return {email: user.email, id: user.id};
+                });
+
                 cb(null, dojo);
               });
             });
@@ -72,7 +75,7 @@ module.exports = function (options) {
           });
       },
       function(searchResult, done) {
-        var userIds = _.chain(searchResult.hits).pluck('_source').pluck('creator').uniq().value();
+        var userIds = _.chain(searchResult.hits).pluck('_source').pluck('creators').flatten().pluck('id').uniq().value();
         async.waterfall([
           function(done) {
             seneca.act({role:'cd-agreements', cmd:'list', userIds: userIds}, done);
@@ -80,9 +83,12 @@ module.exports = function (options) {
           function(agreements, done) {
             agreements = _.indexBy(agreements, 'userId');
             _.each(_.pluck(searchResult.hits, '_source'), function(dojo) {
-              if (dojo.creator && agreements[dojo.creator]) {
-                dojo.agreements = agreements[dojo.creator].agreements;
-              }
+              dojo.agreements = [];
+              _.each(dojo.creators, function(creator){              
+                if (agreements[creator.id]) {
+                  dojo.agreements.push(agreements[creator.id].agreements);
+                }
+              });
             });
             return done(null, searchResult);
           }
