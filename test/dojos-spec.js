@@ -2,7 +2,6 @@
 
 var seneca = require('seneca')(),
     config = require(__dirname + '/../config/config.js')(),
-    // ESOptions = require(__dirname + '/../es-options.js'),
     fs     = require('fs'),
     expect = require('chai').expect,
     util   = require('util'),
@@ -11,34 +10,73 @@ var seneca = require('seneca')(),
 
 var role  = "cd-dojos";
 
-var users     = JSON.parse(fs.readFileSync('./test/fixtures/users.json', 'utf8'));
-var dojos     = JSON.parse(fs.readFileSync('./test/fixtures/dojos.json', 'utf8'));
-var dojoleads = JSON.parse(fs.readFileSync('./test/fixtures/dojoleads.json', 'utf8'));
+var users     = JSON.parse(fs.readFileSync(__dirname + '/fixtures/users.json', 'utf8'));
+var dojos     = JSON.parse(fs.readFileSync(__dirname + '/fixtures/dojos.json', 'utf8'));
+var dojoleads = JSON.parse(fs.readFileSync(__dirname + '/fixtures/dojoleads.json', 'utf8'));
 
 console.log('using configuration', JSON.stringify(config, null, 4));
 seneca.options(config);
 
 seneca
-  .use('postgresql-store', config["postgresql-store"])
-  // .use('elasticsearch', _.defaults(config["elasticsearch"], ESOptions))
-  .use(__dirname + '/../dojos.js')
-  // .use(__dirname + '/../es.js');
+  .use(__dirname + '/countries-mockup.js')
+  .use(__dirname + '/../dojos.js');
 
-seneca
-  .client({type: 'web', host: '127.0.0.1', port: 10302, pin: 'role:cd-countries,cmd:*'})
-//   .client({type: 'web', host: '127.0.0.1', port: 10303, pin: 'role:cd-users,cmd:*'})
-//   .client({type: 'web', host: '127.0.0.1', port: 10303, pin: 'role:cd-agreements,cmd:*'});
+var using_postgres = false;
+if (using_postgres) seneca.use('postgresql-store', config["postgresql-store"]);
+
+var usersEnt      = seneca.make$("sys/user"),
+    dojosEnt      = seneca.make$("cd/dojos"),
+    usersDojosEnt = seneca.make$("cd/usersdojos"),
+    dojoLeadsEnt  = seneca.make$("cd/dojoleads");
+
+// this is unusually necessary
+process.on('SIGINT', function() {
+  process.exit(0);
+});
 
 // NOTE: all tests are very basic
 //       no stretching is taking place
 //       they just follow the happy scenario for each exposed action
 
-describe('Dojo Microservice test', function(){
+function create_dojo (obj, creator, done){
 
-  var usersEnt = seneca.make$("sys/user"),
-  dojosEnt = seneca.make$("cd/dojos"),
-  usersDojosEnt = seneca.make$("cd/usersdojos"),
-  dojoLeadsEnt = seneca.make$("cd/dojoleads");
+  // looks like postgres generates this field while other stores don't
+  if (!using_postgres) obj.user_id = creator.id;
+
+  seneca.act({role: role, cmd: 'create', dojo: obj, user: creator.id},
+  function(err, savedDojo){
+    if(err) return done(err);
+
+    // console.log('savedDojo:' + savedDojo);
+    expect(savedDojo.id).to.be.ok;
+
+    if (!using_postgres) {
+      usersDojosEnt.load$({dojo_id: savedDojo.id}, function(err, loadedDojo){
+        if(err) return done(err);
+
+        // console.log('loadedDojo:' + loadedDojo);
+        expect(loadedDojo).to.be.ok;
+
+        loadedDojo.dojoId = loadedDojo.dojo_id;
+
+        usersDojosEnt.save$(loadedDojo, function(err, updatedDojo){
+          if(err) return done(err);
+
+        // console.log('updatedDojo:' + updatedDojo);
+
+        expect(updatedDojo).to.be.ok;
+        expect(updatedDojo.dojoId).to.equal(loadedDojo.dojo_id);
+
+          done(null, updatedDojo);
+        });
+      });
+    }
+    else done(null, savedDojo);
+  });
+}
+
+
+describe('Dojo Microservice test', function(){
 
   // Empty Tables
   before(function(done){
@@ -98,20 +136,18 @@ describe('Dojo Microservice test', function(){
     seneca.ready(function(){
 
       seneca.util.recurse(4, function( index, next ){
-        seneca.act({role: role, cmd: 'create', dojo: dojos[index], user: users[index].id},
-        function(err, dojo){
-          if(err) return done(err);
-          next();
-        });
+        // looks like postgres generates this field while other stores don't
+        if (!using_postgres) dojos[index].user_id = users[index].id
+        create_dojo(dojos[index], users[index], next);
       }, done);
     });
   });
 
   describe('Search *TODO', function(){
-    it('???', function(done){
+    it('Not implemented', function(done){
       seneca.ready(function(){
         // TODO
-        done();
+        done(new Error('Not implemented'));
       });
     });
   });
@@ -199,7 +235,7 @@ describe('Dojo Microservice test', function(){
     it('save dojo to db', function(done){      
       seneca.ready(function(){
 
-        seneca.act({role: role, cmd: 'create', dojo:  dojos[4], user: users[4].id}, 
+        create_dojo(dojos[4], users[4],
         function(err, savedDojo){
           if(err) return done(err);
 
@@ -226,21 +262,21 @@ describe('Dojo Microservice test', function(){
       var dojo = dojos[0];
 
       seneca.ready(function(){
-        seneca.act({role: role, cmd: 'my_dojos', user: users[4], search: {from:0, size:100}}, function(err, dojos){
+        dojosEnt.list$({creator: users[4].id}, function(err, dojos){
           
-          expect(dojos).to.exist;
-          expect(dojos.total).to.be.equal(1);
-          expect(dojos.records[0]).to.be.ok;
+          // console.log('dojos: ' + util.inspect(dojos));
 
-          seneca.act({role: role, cmd: 'delete', id: dojos.records[0].id}, function(err){
+          expect(dojos).to.exist;
+          expect(dojos.length).to.be.equal(1);
+          expect(dojos[0]).to.be.ok;
+
+          seneca.act({role: role, cmd: 'delete', id: dojos[0].id}, function(err){
             if(err) return done(err);
 
-              seneca.act({role: role, cmd: 'my_dojos', user: users[4], search: {from:0, size:100}}, function(err, dojos){
+            dojosEnt.list$({creator: users[4].id}, function(err, dojos){
               if(err) return done(err);
 
-              expect(dojos).to.exist;
-              expect(dojos.total).to.be.equal(0);
-              expect(dojos.records[0]).to.be.undefined;
+              expect(dojos).to.be.empty;
 
               done();
             });
@@ -253,14 +289,14 @@ describe('Dojo Microservice test', function(){
   describe('Update', function(){
     it('update dojo field', function(done){
       seneca.ready(function(){
-        seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {from:0, size:100}}, function(err, dojos){
+            dojosEnt.list$({creator: users[0].id}, function(err, dojos){
           if(err) return done(err);
 
           expect(dojos).to.exist;
-          expect(dojos.total).to.be.equal(1);
-          expect(dojos.records[0]).to.be.ok;
+          expect(dojos.length).to.be.equal(1);
+          expect(dojos[0]).to.be.ok;
 
-          var dojo = dojos.records[0];
+          var dojo = dojos[0];
           dojo.notes = "updated";
 
           seneca.act({role: role, cmd: 'update', dojo: dojo}, function(err, updatedDojo){
@@ -277,22 +313,29 @@ describe('Dojo Microservice test', function(){
   describe('My dojos', function(){
     it('list all dojos related to user', function(done){
       seneca.ready(function(){
-        seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {from:0, size:100}}, function(err, dojos){
-          if(err) return done(err);
 
-          // console.log('dojos: ' + util.inspect(dojos))
+        if (using_postgres) {
+          seneca.act({role: role, cmd: 'my_dojos', user: users[0], search:{}}, function(err, dojos){
+            if(err) return done(err);
 
-          expect(dojos).to.exist;
-          expect(dojos.total).to.be.equal(1);
-          expect(dojos.records[0]).to.be.ok;
+            // console.log('dojos: ' + util.inspect(dojos))
 
-          done();
-        });
+            expect(dojos).to.exist;
+            expect(dojos.total).to.be.equal(1);
+            expect(dojos.records[0]).to.be.ok;
+
+            done();
+          });
+        }
+        else {
+          var err = new Error('POSTGRES SPECIFIC: dojos.js makes postgres-specific query which is not supported in other stores: query:{ids:array_of_ids} in cmd_my_dojos');
+          done(err);
+        }
       });
     })
   });
 
-  describe('Dojos count (req countries)', function(){
+  describe('Dojos count (uses countries-mockup)', function(){
     it('list dojos count per geographical location', function(done){
       seneca.ready(function(){
         seneca.act({role: role, cmd: 'dojos_count'}, function(err, dojos){
@@ -344,7 +387,7 @@ describe('Dojo Microservice test', function(){
       seneca.ready(function(){
 
         seneca.util.recurse(2, function( index, next ){
-          seneca.act({role: role, cmd: 'create', dojo: dojos[4+index], user: users[index].id},
+        create_dojo(dojos[4+index], users[index],
           function(err, dojo){
             if(err) return done(err);
             expect(dojo).to.exist;
@@ -427,25 +470,33 @@ describe('Dojo Microservice test', function(){
   describe('Get stats', function(){
     it('list each dojo stats', function(done){
       seneca.ready(function(){
-        seneca.act({role: role, cmd: 'get_stats'}, function(err, dojos){
-          if(err) return done(err);
 
-          // console.log('dojos: ' + util.inspect(dojos));
+        if (using_postgres) {
+          seneca.act({role: role, cmd: 'get_stats'}, function(err, dojos){
+            if(err) return done(err);
 
-          expect(dojos).not.to.be.empty;
-          expect(dojos.EU).to.exist;
-          expect(dojos.EU.length).to.equal(2);
-          expect(dojos.EU.toString()).to.contain('Romania');
-          expect(dojos.EU.toString()).to.contain('Russia');
-          expect(dojos.NA).to.exist;
-          expect(dojos.NA.length).to.equal(1);
-          expect(dojos.NA.toString()).to.contain('America');
-          expect(dojos.SA).to.exist;
-          expect(dojos.SA.length).to.equal(1);
-          expect(dojos.SA.toString()).to.contain('Brazil');
+            // console.log('dojos: ' + util.inspect(dojos));
 
-          done();
-        });
+            expect(dojos).not.to.be.empty;
+            expect(dojos.EU).to.exist;
+            expect(dojos.EU.length).to.equal(2);
+            expect(dojos.EU.toString()).to.contain('Romania');
+            expect(dojos.EU.toString()).to.contain('Russia');
+            expect(dojos.NA).to.exist;
+            expect(dojos.NA.length).to.equal(1);
+            expect(dojos.NA.toString()).to.contain('America');
+            expect(dojos.SA).to.exist;
+            expect(dojos.SA.length).to.equal(1);
+            expect(dojos.SA.toString()).to.contain('Brazil');
+
+            done();
+          });
+        }
+        else
+        {
+          var err = new Error('POSTGRES SPECIFIC: cd/stat is a postgres view - a feature unavailable in other stores');
+          done(err);
+        }
       });
     });
   });
@@ -460,6 +511,8 @@ describe('Dojo Microservice test', function(){
         seneca.act({role: role, cmd: 'save_dojo_lead', dojoLead: dojoleads[0]}, function(err, savedLead){
           if(err) return done(err);
 
+          // console.log('savedLead: ' + util.inspect(savedLead));
+
           expect(savedLead).to.exist;
           expect(savedLead.user_id).to.be.ok;
           expect(savedLead.email).to.be.ok;
@@ -468,13 +521,14 @@ describe('Dojo Microservice test', function(){
           dojoLeadsEnt.load$({user_id:dojoleads[0].user_id}, function(err, loadedLead){
             if(err) return done(err);
 
-            // console.log('savedLead: ' + util.inspect(savedLead));
             // console.log('loadedLead: ' + util.inspect(loadedLead));
 
+            var id_field = using_postgres ? 'userId' : 'user_id';
+
             expect(loadedLead).to.exist;
-            expect(loadedLead.userId).to.be.ok;
+            expect(loadedLead[id_field]).to.be.ok;
             expect(loadedLead.email).to.be.ok;
-            expect(loadedLead.userId).to.equal(savedLead.user_id.toString());
+            expect(loadedLead[id_field].toString()).to.equal(savedLead.user_id.toString());
 
             done();
           });
@@ -489,19 +543,22 @@ describe('Dojo Microservice test', function(){
 
         dojoLeadsEnt.list$(function(err, dojoLeads){
 
+        // console.log('expectedLead: ' + util.inspect(dojoLeads[0]));
+
+        var id_field = using_postgres ? 'userId' : 'user_id';
+
         expect(dojoLeads).not.to.be.empty;
-        expect(dojoLeads[0].userId).to.be.ok;
+        expect(dojoLeads[0][id_field]).to.be.ok;
 
           seneca.act({role: role, cmd: 'load_user_dojo_lead', id: dojoLeads[0].userId}, function(err, loadedLead){
             if(err) return done(err);
 
-            // console.log('expectedLead: ' + util.inspect(dojoLeads[0]));
             // console.log('loadedLead: ' + util.inspect(loadedLead));
 
             expect(loadedLead).to.exist;
-            expect(loadedLead.userId).to.be.ok;
+            expect(loadedLead[id_field]).to.be.ok;
             expect(loadedLead.email).to.be.ok;
-            expect(loadedLead.userId).to.equal(dojoLeads[0].userId);
+            expect(loadedLead[id_field]).to.equal(dojoLeads[0][id_field]);
 
             done();
           });
@@ -516,17 +573,20 @@ describe('Dojo Microservice test', function(){
 
         dojoLeadsEnt.list$(function(err, dojoLeads){
 
+            // console.log('expectedLead: ' + util.inspect(dojoLeads[0]));
+
         expect(dojoLeads).not.to.be.empty;
         expect(dojoLeads[0].id).to.be.ok;
 
           seneca.act({role: role, cmd: 'load_dojo_lead', id: dojoLeads[0].id}, function(err, loadedLead){
             if(err) return done(err);
 
-            // console.log('expectedLead: ' + util.inspect(dojoLeads[0]));
             // console.log('loadedLead: ' + util.inspect(loadedLead));
 
+            var id_field = using_postgres ? 'userId' : 'user_id';
+
             expect(loadedLead).to.exist;
-            expect(loadedLead.userId).to.be.ok;
+            expect(loadedLead[id_field]).to.be.ok;
             expect(loadedLead.email).to.be.ok;
             expect(loadedLead.id).to.equal(dojoLeads[0].id);
 
