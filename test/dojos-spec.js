@@ -1,12 +1,12 @@
 'use strict';
 
-var seneca = require('seneca')(),
-    config = require(__dirname + '/../config/config.js')(),
-    fs     = require('fs'),
-    expect = require('chai').expect,
-    util   = require('util'),
-    _      = require('lodash'),
-    async  = require('async');
+var seneca    = require('seneca')(),
+    config    = require(__dirname + '/../config/config.js')(),
+    fs        = require('fs'),
+    expect    = require('chai').expect,
+    util      = require('util'),
+    _         = require('lodash'),
+    async     = require('async');
 
 var role  = "cd-dojos";
 
@@ -18,10 +18,10 @@ console.log('using configuration', JSON.stringify(config, null, 4));
 seneca.options(config);
 
 seneca
-  .use(__dirname + '/countries-mockup.js')
+  .use(__dirname + '/mockups/cd-countries.mockup.js')
   .use(__dirname + '/../dojos.js');
 
-var using_postgres = false;
+var using_postgres = false; // can be set to true for debugging
 if (using_postgres) seneca.use('postgresql-store', config["postgresql-store"]);
 
 var usersEnt      = seneca.make$("sys/user"),
@@ -128,10 +128,9 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Search *TODO', function(){
-    it('Not implemented', function(done){
+  describe('Search', function(){
+    it('Not Implemented', function(done){
       seneca.ready(function(){
-        // TODO
         done(new Error('Not implemented'));
       });
     });
@@ -164,8 +163,8 @@ describe('Dojo Microservice test', function(){
     it('load dojo from db based on id', function(done){
       seneca.ready(function(){
         dojosEnt.list$(function(err, dojos){
-            if(err) return done(err);
-            expect(dojos).not.to.be.empty;
+          if(err) return done(err);
+          expect(dojos).not.to.be.empty;
           
           // console.log('dojos: ' + util.inspect(dojos));
           // console.log('dojos[0].id: ' + util.inspect(dojos[0].id));

@@ -25,7 +25,7 @@ module.exports = function (options) {
   }
 
   function cmd_countries_continents(args, done) {
-    var response = JSON.parse(fs.readFileSync(__dirname + '/fixtures/countries_continents.json', 'utf8'));
+    var response = JSON.parse(fs.readFileSync(__dirname + '/../fixtures/countries_continents.json', 'utf8'));
     done(null, response)
   }
 
