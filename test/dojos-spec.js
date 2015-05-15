@@ -40,9 +40,6 @@ process.on('SIGINT', function() {
 
 function create_dojo (obj, creator, done){
 
-  // looks like postgres generates this field while other stores don't
-  if (!using_postgres) obj.user_id = creator.id;
-
   seneca.act({role: role, cmd: 'create', dojo: obj, user: creator.id},
   function(err, savedDojo){
     if(err) return done(err);
@@ -51,24 +48,12 @@ function create_dojo (obj, creator, done){
     expect(savedDojo.id).to.be.ok;
 
     if (!using_postgres) {
-      usersDojosEnt.load$({dojo_id: savedDojo.id}, function(err, loadedDojo){
+      usersDojosEnt.list$({dojo_id: savedDojo.dojo_id}, function(err, loadedDojo){
         if(err) return done(err);
 
         // console.log('loadedDojo:' + loadedDojo);
-        expect(loadedDojo).to.be.ok;
 
-        loadedDojo.dojoId = loadedDojo.dojo_id;
-
-        usersDojosEnt.save$(loadedDojo, function(err, updatedDojo){
-          if(err) return done(err);
-
-        // console.log('updatedDojo:' + updatedDojo);
-
-        expect(updatedDojo).to.be.ok;
-        expect(updatedDojo.dojoId).to.equal(loadedDojo.dojo_id);
-
-          done(null, updatedDojo);
-        });
+        done(null, loadedDojo);
       });
     }
     else done(null, savedDojo);
@@ -573,7 +558,7 @@ describe('Dojo Microservice test', function(){
 
         dojoLeadsEnt.list$(function(err, dojoLeads){
 
-            // console.log('expectedLead: ' + util.inspect(dojoLeads[0]));
+        // console.log('expectedLead: ' + util.inspect(dojoLeads[0]));
 
         expect(dojoLeads).not.to.be.empty;
         expect(dojoLeads[0].id).to.be.ok;
@@ -591,6 +576,82 @@ describe('Dojo Microservice test', function(){
             expect(loadedLead.id).to.equal(dojoLeads[0].id);
 
             done();
+          });
+        });
+      });
+    });
+  });
+
+  describe('Load setup dojo steps', function(){
+    it('???', function(done){
+      seneca.ready(function(){
+
+        seneca.act({role: role, cmd: 'load_setup_dojo_steps'}, function(err, dojoSteps){
+          if(err) return done(err);
+
+          // console.log('dojoSteps: ' + util.inspect(dojoSteps));
+          expect(dojoSteps).to.not.be.empty;
+
+          var all_keys = [];
+          _.each(dojoSteps, function(element){
+            var obj_keys = Object.keys(element);
+            all_keys = _.union(all_keys, obj_keys); // append all fields to a list, no duplicates
+
+            // check for all fields to be ok
+            _.each(obj_keys, function(key){
+              expect(element[key]).to.be.ok;
+            });
+          });
+
+          // console.log('all_keys: ' + util.inspect(all_keys));
+
+          // TODO: find a way to feed array into include assertion
+          expect(all_keys).to.include('title')
+          expect(all_keys).to.include('checkboxes')
+
+          done();
+        });
+      });
+    });
+  });
+
+  describe('Load users dojos', function(){
+    it('load usersDojo based on query', function(done){
+      seneca.ready(function(){
+
+        seneca.util.recurse(2, function( index, next ){
+        create_dojo(dojos[4+index], users[index],
+          function(err, dojo){
+            if(err) return done(err);
+            expect(dojo).to.exist;
+            next();
+          });
+        }, function(err, data) {
+
+          usersDojosEnt.list$(function(err, dojos){
+
+          // console.log('allDojos: ' + util.inspect(dojos));
+
+          expect(dojos).not.to.be.empty;
+          expect(dojos[0].id).to.be.ok;
+
+            var id_field = using_postgres ? 'userId' : 'user_id';
+
+            // there should be two usersDojos with user_id 1001
+            seneca.act({role: role, cmd: 'load_usersdojos', query: {user_id: dojos[1][id_field]}},
+            function(err, loadedDojos){
+              if(err) return done(err);
+
+              // console.log('loadedDojos: ' + util.inspect(loadedDojos));
+
+              expect(loadedDojos).to.exist;
+              expect(loadedDojos.length).to.equal(2);
+              expect(loadedDojos[0][id_field]).to.be.ok;
+              expect(loadedDojos[1][id_field]).to.be.ok;
+              expect(loadedDojos[0][id_field]).to.equal(loadedDojos[1][id_field]);
+
+              done();
+            });
           });
         });
       });
