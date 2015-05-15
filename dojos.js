@@ -33,7 +33,6 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_setup_dojo_steps'}, cmd_load_setup_dojo_steps);
   seneca.add({role: plugin, cmd: 'load_usersdojos'}, cmd_load_users_dojos);
 
-
   function cmd_search(args, done) {
     var seneca = this;
     var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
@@ -41,7 +40,7 @@ module.exports = function (options) {
       function(done) {
         seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search}, done);
       },
-      function(searchResult, done) {      
+      function(searchResult, done) {   
         var dojos = _.pluck(searchResult.hits, '_source');
 
         async.each(dojos, function(dojo, cb){
@@ -261,13 +260,7 @@ module.exports = function (options) {
     } else {
       dojo.needMentors = 0;
     }
-
-    if(dojo.mailingList) {
-      dojo.mailingList = 1;
-    } else {
-      dojo.mailingList = 0;
-    }
-
+    
     var slugify = function(name) {
       return slug(name);
     };
