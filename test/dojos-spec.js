@@ -212,11 +212,18 @@ describe('Dojo Microservice test', function(){
 
           expect(loadedDojo).to.exist;
           expect(loadedDojo).to.be.ok;
-          // include seems to not accept arrays so had to do it this way
-          expect(Object.keys(loadedDojo)).to.include.all('id', 'admin1Name', 'alpha2', 'alpha3', 'continent',
-            'coordinates', 'country', 'countryName', 'countryNumber', 'deleted', 'ebId', 'email', 'location',
-            'mailingList', 'mysqlDojoId', 'name', 'needMentors', 'notes', 'place', 'placeGeonameId', 'placeName',
-            'private', 'state', 'time', 'verified', 'stage');
+
+          var expectedFields = [  'admin1Code', 'admin1Name', 'alpha2', 'alpha3', 'continent',
+                                  'coordinates', 'country', 'countryName', 'countryNumber',
+                                  'county', 'deleted', 'email', 'location', 'mailingList',
+                                  'mysqlDojoId', 'name', 'needMentors', 'notes', 'place',
+                                  'placeGeonameId', 'placeName', 'private', 'state', 'time',
+                                  'twitter', 'website', 'verified', 'stage', 'creator', 'created',
+                                  'urlSlug', 'id' ];
+          var actualFields = Object.keys(loadedDojo);
+          _.each(expectedFields, function(field){
+            expect(actualFields).to.include(field);
+          })
           
           done();
         });
