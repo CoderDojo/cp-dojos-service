@@ -30,12 +30,12 @@ var usersEnt      = seneca.make$("sys/user"),
     dojoLeadsEnt  = seneca.make$("cd/dojoleads");
 
 // this is unusually necessary
+// when interrupted, node doesn't stop without this
 process.on('SIGINT', function() {
   process.exit(0);
 });
 
-// NOTE: all tests are very basic
-//       no stretching is taking place
+// NOTE: all tests are basic
 //       they just follow the happy scenario for each exposed action
 
 function create_dojo (obj, creator, done){
