@@ -18,7 +18,7 @@ console.log('using configuration', JSON.stringify(config, null, 4));
 seneca.options(config);
 
 seneca
-  .use(__dirname + '/mockups/cd-countries.mockup.js')
+  .use(__dirname + '/mocks/cd-countries.js')
   .use(__dirname + '/../dojos.js');
 
 var using_postgres = false; // can be set to true for debugging
@@ -64,7 +64,7 @@ describe('Dojo Microservice test', function(){
 
   // Empty Tables
   before(function(done){
-    dojosEnt.remove$({all$: 1}, function(err){
+    dojosEnt.remove$({all$: true}, function(err){
       if(err) return done(err); 
 
       done();
@@ -72,7 +72,7 @@ describe('Dojo Microservice test', function(){
   });
 
   before(function(done){
-    usersEnt.remove$({all$: 1}, function(err){
+    usersEnt.remove$({all$: true}, function(err){
       if(err) return done(err);
 
       done();
@@ -80,7 +80,7 @@ describe('Dojo Microservice test', function(){
   });
 
   before(function(done){
-    usersDojosEnt.remove$({all$: 1}, function(err){
+    usersDojosEnt.remove$({all$: true}, function(err){
       if(err) return done(err);
 
       done();
@@ -88,7 +88,7 @@ describe('Dojo Microservice test', function(){
   });
 
   before(function(done){
-    dojoLeadsEnt.remove$({all$: 1}, function(err){
+    dojoLeadsEnt.remove$({all$: true}, function(err){
       if(err) return done(err);
 
       done();
