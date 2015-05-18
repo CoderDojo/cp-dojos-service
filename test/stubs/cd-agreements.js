@@ -15,12 +15,12 @@ module.exports = function(options) {
 
     function get_user_agreements(userId, done) {
       // probably should return: []
-      done(new Error('action not mocked!'), null)
+      done(new Error('action not stubbed!'), null)
     }
   }
 
   function cmd_count(args, done){
-    done(new Error('action not mocked!'), null)
+    done(new Error('action not stubbed!'), null)
   }
 
   return {

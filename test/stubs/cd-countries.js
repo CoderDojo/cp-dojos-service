@@ -17,11 +17,11 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'county_from_coordinates'}, cmd_county_from_coordinates);
   
   function cmd_list(args, done){
-    done(new Error('action not mocked!'), null)
+    done(new Error('action not stubbed!'), null)
   }
 
   function cmd_county_from_coordinates(args, done) {
-    done(new Error('action not mocked!'), null)
+    done(new Error('action not stubbed!'), null)
   }
 
   function cmd_countries_continents(args, done) {
@@ -30,23 +30,23 @@ module.exports = function (options) {
   }
 
   function cmd_continents_lat_long(args, done) {
-    done(new Error('action not mocked!'), null)
+    done(new Error('action not stubbed!'), null)
   }
 
   function cmd_countries_lat_long(args, done) {
-    done(new Error('action not mocked!'), null)
+    done(new Error('action not stubbed!'), null)
   }
 
   function cmd_create(args, done){
-    done(new Error('action not mocked!'), null)
+    done(new Error('action not stubbed!'), null)
   }
 
   function cmd_update(args, done){
-    done(new Error('action not mocked!'), null)
+    done(new Error('action not stubbed!'), null)
   }
 
   function cmd_delete(args, done){
-    done(new Error('action not mocked!'), null)
+    done(new Error('action not stubbed!'), null)
   }
 
   return {

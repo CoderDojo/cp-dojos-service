@@ -18,7 +18,7 @@ console.log('using configuration', JSON.stringify(config, null, 4));
 seneca.options(config);
 
 seneca
-  .use(__dirname + '/mocks/cd-countries.js')
+  .use(__dirname + '/stubs/cd-countries.js')
   .use(__dirname + '/../dojos.js');
 
 var using_postgres = false; // can be set to true for debugging
@@ -295,7 +295,7 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Dojos count (uses countries-mockup)', function(){
+  describe('Dojos count (uses countries-stub)', function(){
     it('list dojos count per geographical location', function(done){
       seneca.act({role: role, cmd: 'dojos_count'}, function(err, dojos){
         if(err) return done(err);
