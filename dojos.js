@@ -3,6 +3,7 @@
 var _ = require('lodash');
 var async = require('async');
 var slug = require('slug');
+var shortid = require('shortid');
 
 module.exports = function (options) {
   var seneca = this;
@@ -32,6 +33,10 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_dojo_lead'}, cmd_load_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_setup_dojo_steps'}, cmd_load_setup_dojo_steps);
   seneca.add({role: plugin, cmd: 'load_usersdojos'}, cmd_load_users_dojos);
+  seneca.add({role: plugin, cmd: 'load_dojo_users'}, cmd_load_dojo_users);
+  seneca.add({role: plugin, cmd: 'send_email'}, cmd_send_email);
+  seneca.add({role: plugin, cmd: 'generate_mentor_invite_token'}, cmd_generate_mentor_invite_token);
+  seneca.add({role: plugin, cmd: 'accept_mentor_invite'}, cmd_accept_mentor_invite);
 
   function cmd_search(args, done) {
     var seneca = this;
@@ -304,7 +309,7 @@ module.exports = function (options) {
     var seneca = this;
     var dojo = args.dojo;
 
-    dojo.countryName = dojo.country;
+    dojo.countryName = dojo.country.countryName;
     delete dojo.country;
 
     seneca.make(ENTITY_NS).save$(dojo, function(err, response) {
@@ -478,6 +483,88 @@ module.exports = function (options) {
         return done(err);
       }
       done(null, usersDojos);
+    });
+  }
+
+  function cmd_load_dojo_users(args, done) {
+    var seneca = this;
+    var dojoId = args.id;
+  
+    seneca.act({role:plugin, cmd:'load_usersdojos', query: { dojoId:dojoId }}, function (err, response) {
+      if(err) return done(err);
+      var userIds = _.pluck(response, 'userId');
+      seneca.act({role:'cd-users', cmd:'list', ids:userIds}, function (err, response) {
+        if(err) return done(err);
+        done(null, response); 
+      });
+    });
+  }
+
+  function cmd_send_email(args, done) {
+    var payload = args.payload;
+    var to = payload.to;
+    var content = payload.content;
+    var emailCode = payload.code;
+    seneca.act({role:'email-notifications', cmd: 'send', to:to, content:content, code:emailCode}, done);
+  }
+
+  function cmd_generate_mentor_invite_token(args, done) {
+    var inviteEmail = args.email;
+    var dojoId = args.dojoId;
+    var inviteToken = shortid.generate();
+    
+    async.waterfall([
+      getDojo,
+      generateInviteToken,
+      sendEmail
+    ], done);
+
+    function getDojo(done) {
+      seneca.act({role:plugin, cmd:'load', id:dojoId}, function(err, response) {
+        if(err) return done(err);
+        done(null, response);
+      });
+    }
+
+    function generateInviteToken(dojo, done) {
+      
+      var mentorInvite = {id:inviteToken, email:inviteEmail};
+      if(!dojo.mentorInvites) dojo.mentorInvites = [];
+      dojo.mentorInvites.push(mentorInvite);
+      dojo.mentorInvites = _.uniq(dojo.mentorInvites, function(mentorInvite) { return mentorInvite.email; });
+      seneca.act({role:plugin, cmd:'update', dojo:dojo}, function (err, response) {
+        if(err) return done(err);
+        done(null, response);
+      });
+    }
+
+    function sendEmail(dojo, done) {
+      var payload = {to:inviteEmail, code:'invite-mentor', content:{link:'http://localhost:8000/accept_dojo_mentor_invitation/'+dojo.id+'/'+inviteToken}};
+      seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
+    }
+  }
+
+  function cmd_accept_mentor_invite(args, done) {
+    var data = args.data;
+    var dojoId = data.dojoId;
+    var inviteToken = data.inviteToken;
+    var currentUserEmail = data.currentUserEmail;
+    var currentUserId = data.currentUserId;
+
+    seneca.act({role:plugin, cmd:'load'}, {id:dojoId}, function(err, response) {
+      if(err) return done(err);
+      var dojo = response;
+      var mentorInvites = dojo.mentorInvites;
+
+      var inviteFound = _.find(mentorInvites, function(mentorInvite){ if(mentorInvite.id === inviteToken && mentorInvite.email === currentUserEmail) { return mentorInvite; } });
+      if(inviteFound) {
+        seneca.act({role:'cd-users', cmd:'promote', id:currentUserId, roles:['mentor']}, function(err, response) {
+          if(err) return done(err);
+          done(null, response);
+        });
+      } else {
+        done(null, response);
+      }
     });
   }
 
