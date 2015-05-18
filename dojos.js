@@ -40,10 +40,11 @@ module.exports = function (options) {
       function(done) {
         seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search}, done);
       },
-      function(searchResult, done) {   
+      function(searchResult, done) {
         var dojos = _.pluck(searchResult.hits, '_source');
 
         async.each(dojos, function(dojo, cb){
+
           seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojo.id, owner: 1}},
             function(err, userDojos){
 
@@ -69,7 +70,7 @@ module.exports = function (options) {
                 cb(null, dojo);
               });
             });
-          }, function(err) { 
+          }, function(err) {
             if(err){
               return done(err);
             }
@@ -87,7 +88,7 @@ module.exports = function (options) {
             agreements = _.indexBy(agreements, 'userId');
             _.each(_.pluck(searchResult.hits, '_source'), function(dojo) {
               dojo.agreements = [];
-              _.each(dojo.creators, function(creator){              
+              _.each(dojo.creators, function(creator){
                 creator.agreements = [];
                 if (agreements[creator.id]) {
                   creator.agreements = agreements[creator.id].agreements;
@@ -260,7 +261,7 @@ module.exports = function (options) {
     } else {
       dojo.needMentors = 0;
     }
-    
+
     var slugify = function(name) {
       return slug(name);
     };
@@ -276,7 +277,7 @@ module.exports = function (options) {
             return cb(err);
           }
           var urlSlugs = {};
-          
+
           if(_.isEmpty(dojos)){
             return cb(null, baseSlug);
           }
@@ -284,9 +285,9 @@ module.exports = function (options) {
           urlSlugs = _.pluck(dojos, 'urlSlug');
           var urlSlug = baseSlug;
           for (var idx = 1; urlSlugs.indexOf(urlSlug) !=  -1; urlSlug = baseSlug + '-' + idx, idx++);
-          
+
           cb(null, urlSlug);
-        }); 
+        });
       }, function(urlSlug, cb){
         dojo.urlSlug = urlSlug;
 
@@ -427,6 +428,21 @@ module.exports = function (options) {
     });
   }
 
+  function updateSalesForce(dojoLead) {
+    var lead = {
+      LastName: dojoLead.application.championDetails.name,
+    };
+
+    if( dojoLead.application.dojoListing && dojoLead.application.dojoListing.name) {
+      lead.Company = dojoLead.application.dojoListing.name;
+    }
+
+    seneca.act('role:cd-salesforce,cmd:create_lead', {lead: lead}, function (err, res){
+      if (err) return seneca.log.error('Error creating lead in SalesForce!', err);
+      seneca.log.info('Created lead in SalesForce', lead, res);
+    });
+  }
+
   function cmd_save_dojo_lead(args, done) {
     var seneca = this;
     var dojoLeadEntity = seneca.make(DOJO_LEADS_ENTITY_NS);
@@ -434,9 +450,12 @@ module.exports = function (options) {
 
     dojoLeadEntity.save$(dojoLead, function(err, response) {
       if(err) return done(err);
+      if(process.env.SALESFORCE_ENABLED === true || process.env.SALESFORCE_ENABLED === 'true') {
+        // Note: updating SalesForce is slow, ideally this would go on a work queue
+        process.nextTick(updateSalesForce(dojoLead));
+      };
       done(null, response);
     });
-
   }
 
   function cmd_load_user_dojo_lead(args, done) {
