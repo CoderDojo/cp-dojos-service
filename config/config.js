@@ -29,7 +29,8 @@ module.exports = function() {
       connection: {
         host : localhost() + ':9200',
         index: process.env.ES_INDEX,
-        sniffOnStart: false
+        sniffOnStart: false,
+        sniffInterval: false
       }
     };
   }
