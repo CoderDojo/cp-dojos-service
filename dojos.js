@@ -118,7 +118,7 @@ module.exports = function (options) {
     var country = args.country;
     var countData = {};
 
-    seneca.make$(ENTITY_NS).list$({limit$:null, alpha2:country}, function(err, response) {
+    seneca.make$(ENTITY_NS).list$({limit$:'NULL', alpha2:country}, function(err, response) {
       if(err) return done(err);
       countData[country] = {};
       _.each(response, function(dojo) {
@@ -160,7 +160,7 @@ module.exports = function (options) {
 
     function getDojos(done) {
       var dojos = [];
-      var query = {limit$:null};
+      var query = {limit$:'NULL'};
       seneca.make(ENTITY_NS).list$(query, function(err, response) {
         if(err) return response;
         async.each(response, function(dojo, cb) {
@@ -373,7 +373,7 @@ module.exports = function (options) {
 
     async.waterfall([
       function(done) {
-        seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id, limit$: null}, done);
+        seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id, limit$: 'NULL'}, done);
       },
       function(userDojos, done) {
         if (!userDojos || !userDojos.length) {
@@ -407,7 +407,7 @@ module.exports = function (options) {
   function cmd_get_stats(args, done){
     var seneca = this;
 
-    seneca.make(STATS_ENTITY_NS).list$({limit$: null}, function(err, dojos){
+    seneca.make(STATS_ENTITY_NS).list$({limit$: 'NULL'}, function(err, dojos){
       if(err){
         return done(err);
       }
