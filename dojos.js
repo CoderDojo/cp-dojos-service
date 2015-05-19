@@ -37,6 +37,9 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'send_email'}, cmd_send_email);
   seneca.add({role: plugin, cmd: 'generate_mentor_invite_token'}, cmd_generate_mentor_invite_token);
   seneca.add({role: plugin, cmd: 'accept_mentor_invite'}, cmd_accept_mentor_invite);
+  seneca.add({role: plugin, cmd: 'request_mentor_invite'}, cmd_request_mentor_invite);
+  seneca.add({role: plugin, cmd: 'load_dojo_champion'}, cmd_load_dojo_champion);
+  seneca.add({role: plugin, cmd: 'accept_mentor_request'}, cmd_accept_mentor_request);
 
   function cmd_search(args, done) {
     var seneca = this;
@@ -488,9 +491,9 @@ module.exports = function (options) {
 
   function cmd_load_dojo_users(args, done) {
     var seneca = this;
-    var dojoId = args.id;
+    var query  = args.query;
   
-    seneca.act({role:plugin, cmd:'load_usersdojos', query: { dojoId:dojoId }}, function (err, response) {
+    seneca.act({role:plugin, cmd:'load_usersdojos', query: query}, function (err, response) {
       if(err) return done(err);
       var userIds = _.pluck(response, 'userId');
       seneca.act({role:'cd-users', cmd:'list', ids:userIds}, function (err, response) {
@@ -527,11 +530,14 @@ module.exports = function (options) {
     }
 
     function generateInviteToken(dojo, done) {
-      
-      var mentorInvite = {id:inviteToken, email:inviteEmail};
+      var timestamp = new Date();
+      var mentorInvite = {id:inviteToken, email:inviteEmail, timestamp:timestamp};
       if(!dojo.mentorInvites) dojo.mentorInvites = [];
       dojo.mentorInvites.push(mentorInvite);
+      dojo.mentorInvites = _.sortBy(dojo.mentorInvites, function(mentorInvite) { return mentorInvite.timestamp; });
+      dojo.mentorInvites.reverse();
       dojo.mentorInvites = _.uniq(dojo.mentorInvites, function(mentorInvite) { return mentorInvite.email; });
+
       seneca.act({role:plugin, cmd:'update', dojo:dojo}, function (err, response) {
         if(err) return done(err);
         done(null, response);
@@ -550,6 +556,7 @@ module.exports = function (options) {
     var inviteToken = data.inviteToken;
     var currentUserEmail = data.currentUserEmail;
     var currentUserId = data.currentUserId;
+    var requestSuccessStatus = 0;
 
     seneca.act({role:plugin, cmd:'load'}, {id:dojoId}, function(err, response) {
       if(err) return done(err);
@@ -560,12 +567,189 @@ module.exports = function (options) {
       if(inviteFound) {
         seneca.act({role:'cd-users', cmd:'promote', id:currentUserId, roles:['mentor']}, function(err, response) {
           if(err) return done(err);
-          done(null, response);
+          requestSuccessStatus = 1;
+          //Add user to dojo users if not already added.
+          seneca.act({role:plugin, cmd:'load_usersdojos', query:{userId:currentUserId, dojoId:dojoId}}, function (err, response) {
+            if(err) return done(err);
+            if(_.isEmpty(response)) {
+              var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
+              var userDojo = {};
+              userDojo.owner = 0;
+              userDojo.user_id = currentUserId;
+              userDojo.dojo_id = dojoId;
+              usersDojosEntity.save$(userDojo, function (err, response) {
+                if(err) return done(err);
+                done(null, {status:requestSuccessStatus});
+              });
+            } else {
+              done(null, {status:requestSuccessStatus});
+            }
+          });
+
         });
       } else {
-        done(null, response);
+        done(null, {status:requestSuccessStatus});
       }
     });
+  }
+
+  function cmd_request_mentor_invite(args, done) {
+    var seneca = this;
+    var inviteToken = shortid.generate();
+    var data = args.data;
+    var user = data.user;
+    var dojoId = data.dojoId;
+
+    async.waterfall([
+      getDojo,
+      getDojoChampion,
+      generateInviteToken,
+      sendEmail
+    ], done);
+
+    function getDojo (done) {
+      seneca.act({role:plugin, cmd:'load', id:dojoId}, function (err, response) {
+        if(err) return done(err);
+        done(null, response);
+      });
+    }
+
+    function getDojoChampion (dojo, done) {
+      seneca.act({role:plugin,cmd:'load_dojo_champion', id:dojoId}, function (err, response) {
+        if(err) return done(err);
+        //TO-DO: currently we just use the first champion returned from the load_dojo_champion action.
+        //Further checking should be done to pick a specific champion of this dojo.
+        //e.g Use the first champion of this Dojo.
+        var champion = response[0];
+        done(null, champion, dojo);
+      });
+    }
+
+    function generateInviteToken (champion, dojo, done) {
+      var timestamp = new Date();
+      var mentorRequest = {id:inviteToken, dojoId:dojoId, championId:champion.id, timestamp:timestamp};
+      if(!user.mentorRequests) user.mentorRequests = [];
+      user.mentorRequests.push(mentorRequest);
+      user.mentorRequests = _.chain(user.mentorRequests)
+      .sortBy(function(mentorRequest) { return mentorRequest.timestamp; })
+      .reverse()
+      .uniq(true, function(mentorRequest) { return mentorRequest.dojoId; });
+
+      seneca.act({role:'cd-users', cmd:'update', user:user}, function (err, response) {
+        if(err) return done(err);
+        done(null, champion, dojo);
+      });
+    }
+
+    function sendEmail (champion, dojo, done) {
+      if(!champion) return done();
+      var championEmail = champion.email;
+      var content = {
+        link:'http://localhost:8000/accept_dojo_mentor_request/'+user.id+'/'+inviteToken,
+        name:user.name,
+        email:user.email,
+        dojoName:dojo.name
+      };
+      var code = 'mentor-request-to-join';
+      var payload = {to:championEmail, code:code, content:content};
+      seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
+    }
+    
+  }
+
+  function cmd_load_dojo_champion(args, done) {
+    var seneca = this;
+    var dojoId = args.id;
+    var query  = {dojoId:dojoId};
+    var champions = [];
+    seneca.act({role:plugin, cmd:'load_dojo_users', query: query}, function (err, response) {
+      if(err) return done(err);
+      var champion = _.each(response, function(user) { 
+        _.find(user.roles, function(role) { 
+          if(role === 'champion') { 
+            // return user;
+            champions.push(user); 
+          }
+        }
+      )});
+      done(null, champions);
+    });
+  }
+
+  function cmd_accept_mentor_request(args, done) {
+    var seneca = this;
+    var tokenData = args.data;
+    var currentUserId = tokenData.currentUserId;
+    var currentUserEmail = tokenData.currentUserEmail;
+    var inviteTokenId = tokenData.inviteToken;
+    var requestedByUser = tokenData.requestedByUser;
+    var dojoId;
+    var requestSuccessStatus = 0;
+
+    async.waterfall([
+      loadUser,
+      verifyMentorRequest,
+      updateUser
+    ], function () {
+      done(null, {status:requestSuccessStatus});
+    });
+
+    function loadUser(done) {
+      seneca.act({role:'cd-users', cmd:'load', id:requestedByUser}, function (err, response) {
+        if(err) return done(err);
+        var user = response;
+        var mentorRequests = user.mentorRequests;
+        var validRequestFound = _.find(mentorRequests, function (mentorRequest) { 
+          if (mentorRequest.id === inviteTokenId && mentorRequest.championId === currentUserId) {
+            return mentorRequest; 
+          }
+        }); 
+        done(null, validRequestFound);
+      });
+    }
+
+    function verifyMentorRequest(validRequestFound, done) {
+      var championFound;
+      if(validRequestFound) {
+        //Check if the current user is a champion of this dojo.
+        var mentorRequest = validRequestFound;
+        dojoId = mentorRequest.dojoId;
+        seneca.act({role:plugin, cmd:'load_dojo_champion', id:dojoId}, function (err, response) {
+          if(err) return done(err);
+          var dojoChampions = response;
+          championFound = _.find(dojoChampions, function (dojoChampion) { if(dojoChampion.id === currentUserId) return dojoChampion; });
+          done(null, championFound);
+        });
+      } else {
+        done(null, championFound);
+      }
+    }
+
+    function updateUser(championFound, done) {
+      if(championFound) {
+        //Promote user to mentor role.
+        seneca.act({role:'cd-users', cmd:'promote', id:requestedByUser, roles:['mentor']}, function (err, response) {
+          if(err) return done(err);
+          requestSuccessStatus = 1;
+          //Add user to dojo users if not already added.
+          seneca.act({role:plugin, cmd:'load_usersdojos', query:{userId:requestedByUser, dojoId:dojoId}}, function (err, response) {
+            if(err) return done(err);
+            if(_.isEmpty(response)) {
+              var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
+              var userDojo = {};
+              userDojo.owner = 0;
+              userDojo.user_id = requestedByUser;
+              userDojo.dojo_id = dojoId;
+              usersDojosEntity.save$(userDojo, done);
+            } else {
+              done();
+            }
+          });
+        });
+      } else {
+        done();
+      }
+    }
   }
 
   return {

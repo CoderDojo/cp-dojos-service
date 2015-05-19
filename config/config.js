@@ -43,6 +43,9 @@ module.exports = function() {
       email: {
         'invite-mentor':{
           subject:'New Dojo Mentor Invitation'
+        },
+        'mentor-request-to-join':{
+          subject:'New Mentor Request to Join your Dojo'
         }
       }
     },
