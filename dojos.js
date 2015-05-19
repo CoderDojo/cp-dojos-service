@@ -1,5 +1,6 @@
 'use strict';
 
+var util = require('util');
 var _ = require('lodash');
 var async = require('async');
 var slug = require('slug');
@@ -428,16 +429,21 @@ module.exports = function (options) {
     });
   }
 
-  function updateSalesForce(dojoLead) {
+  function updateSalesForce(userId, dojoLead) {
     var lead = {
-      LastName: dojoLead.application.championDetails.name,
+      PlatformId__c: userId,
+      // TODO - need to link to users profile in the platform here when it's ready
+      PlatformUrl__c: 'https://zen.coderdojo.com/TODO-users/' + userId
     };
 
-    if( dojoLead.application.dojoListing && dojoLead.application.dojoListing.name) {
+    if (dojoLead.application && dojoLead.application.championDetails && dojoLead.application.championDetails.name)
+      lead.LastName = dojoLead.application.championDetails.name;
+    if (dojoLead.application && dojoLead.application.dojoListing && dojoLead.application.dojoListing.name)
       lead.Company = dojoLead.application.dojoListing.name;
-    }
+    if (dojoLead.email) lead.Email = dojoLead.email;
+    if (dojoLead.phone) lead.Phone = dojoLead.phone;
 
-    seneca.act('role:cd-salesforce,cmd:create_lead', {lead: lead}, function (err, res){
+    seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
       if (err) return seneca.log.error('Error creating lead in SalesForce!', err);
       seneca.log.info('Created lead in SalesForce', lead, res);
     });
@@ -452,7 +458,7 @@ module.exports = function (options) {
       if(err) return done(err);
       if(process.env.SALESFORCE_ENABLED === true || process.env.SALESFORCE_ENABLED === 'true') {
         // Note: updating SalesForce is slow, ideally this would go on a work queue
-        process.nextTick(updateSalesForce(dojoLead));
+        process.nextTick(function() { updateSalesForce(args.user, dojoLead); });
       };
       done(null, response);
     });
