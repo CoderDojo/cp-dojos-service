@@ -12,6 +12,8 @@ seneca.options(config);
 
 seneca.use('postgresql-store', config["postgresql-store"]);
 seneca.use('elasticsearch', _.defaults(config["elasticsearch"], ESOptions));
+seneca.use('mail', config["mail"]);
+seneca.use(require('./email-notifications.js'));
 seneca.use(require('./es.js'));
 seneca.use(require('./dojos.js'));
 seneca.use(require('./profiles.js'));

@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "async": "0.9.x",
+    "ejs": "^1.0.0",
     "js-yaml": "3.2.x",
     "lodash": "3.6.x",
     "mongodb": "1.4.x",
@@ -34,7 +35,9 @@
     "seneca-elasticsearch": "git://github.com/sigismondm/seneca-elasticsearch.git",
     "seneca-mongo-store": "0.2.0",
     "seneca-postgresql-store": "git://github.com/iantocristian/seneca-postgresql-store.git",
+    "seneca-mail": "git://github.com/iantocristian/seneca-mail.git#0.1.6",
     "slug": "^0.9.1",
-    "yargs": "3.7.2"
+    "yargs": "3.7.2",
+    "shortid": "2.2.2"
   }
 }

@@ -1,4 +1,4 @@
-
+var path = require('path');
 module.exports = function() {
 
   // Utility function for local development running with boot2docker
@@ -38,6 +38,36 @@ module.exports = function() {
   return {
     'postgresql-store': pgConfig(),
     elasticsearch: esConfig(),
+    'email-notifications': {
+      sendemail:true,
+      email: {
+        'invite-mentor':{
+          subject:'New Dojo Mentor Invitation'
+        },
+        'mentor-request-to-join':{
+          subject:'New Mentor Request to join your Dojo'
+        }
+      }
+    },
+    mail: {
+      folder: path.resolve(__dirname + '/../email-templates'),
+      mail: {
+        from:'no-reply@coderdojo.com'
+      },
+      config: {
+        host: process.env.MAIL_HOST,
+        port: process.env.MAIL_PORT,
+        auth: {
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS
+        }
+        // service: 'Gmail',
+        // auth: {
+        //   user: 'youremail@example.com',
+        //   pass: 'yourpass'
+        // }
+      }
+    },
     transport: {
       type: 'web',
       web: {
