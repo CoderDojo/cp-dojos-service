@@ -40,6 +40,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'request_mentor_invite'}, cmd_request_mentor_invite);
   seneca.add({role: plugin, cmd: 'load_dojo_champion'}, cmd_load_dojo_champion);
   seneca.add({role: plugin, cmd: 'accept_mentor_request'}, cmd_accept_mentor_request);
+  seneca.add({role: plugin, cmd: 'dojos_for_user'}, cmd_dojos_for_user);
 
   function cmd_search(args, done) {
     var seneca = this;
@@ -759,6 +760,28 @@ module.exports = function (options) {
         done();
       }
     }
+  }
+
+  function cmd_dojos_for_user(args, done) {
+    var seneca = this;
+    var userId = args.id;
+    var usersDojosEntity = seneca.make(USER_DOJO_ENTITY_NS);
+    var dojosEntity = seneca.make(ENTITY_NS);
+    var query = {userId:userId};
+    var dojos = [];
+    seneca.act({role:plugin, cmd:'load_usersdojos', query:query}, function (err, response) {
+      if(err) return done(err);
+      async.each(response, function (userDojoLink, cb) {
+        seneca.act({role:plugin, cmd:'load', id:userDojoLink.dojoId}, function (err, response) {
+          if(err) return cb(err);
+          dojos.push(response);
+          cb();
+        });
+      }, function (err) {
+        if(err) return  done(err);
+        done(null, dojos);
+      });
+    });
   }
 
   return {
