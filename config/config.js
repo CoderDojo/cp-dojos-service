@@ -45,7 +45,7 @@ module.exports = function() {
           subject:'New Dojo Mentor Invitation'
         },
         'mentor-request-to-join':{
-          subject:'New Mentor Request to Join your Dojo'
+          subject:'New Mentor Request to join your Dojo'
         }
       }
     },
@@ -55,11 +55,11 @@ module.exports = function() {
         from:'no-reply@coderdojo.com'
       },
       config: {
-        host: "mailtrap.io",
-        port: 2525,
+        host: process.env.MAIL_HOST,
+        port: process.env.MAIL_PORT,
         auth: {
-          user: "3549359982ed10489",
-          pass: "979ef86b786a46"
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS
         }
         // service: 'Gmail',
         // auth: {
