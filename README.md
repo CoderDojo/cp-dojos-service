@@ -14,5 +14,5 @@ Ensure configuration file for the running environment exists and has the correct
 
 Start Server:
 
-`./start.sh ./service.js development`
+`./start.sh development ./service.js`
 
