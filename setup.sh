@@ -49,7 +49,7 @@ psql --single-transaction -h $PG_HOST -U $POSTGRES_USERNAME -d $POSTGRES_NAME -f
 
 psql --single-transaction -h $PG_HOST -U $POSTGRES_USERNAME -d $POSTGRES_NAME -f $DIR/scripts/database/pg/populate-dojos.sql --port $PG_PORT
 
-$DIR/start.sh "scripts/es-index-dojos-data.js" $1
+$DIR/start.sh $1 "scripts/es-index-dojos-data.js"
 
 echo "-------------------------------------------------------"
 echo "----------Finished initializating dojos DB & ES--------"
