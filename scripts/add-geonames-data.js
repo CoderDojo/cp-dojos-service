@@ -187,9 +187,7 @@ seneca.ready(function() {
                 },
                 function(done) {
                   if (dojo.placeGeonameId) {
-                    seneca.make('cd/geonames').load({geonameId: dojo.placeGeonameId}, function(err, done){
-                      done();
-                    });
+                    seneca.act(seneca.util.argprops( {geonameId: dojo.placeGeonameId}, {role:'cd-geonames', cmd: 'load'} ), done);
                   }
                   else {
                     return done(null, null);

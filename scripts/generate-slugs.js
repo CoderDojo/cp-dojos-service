@@ -9,14 +9,12 @@ var seneca = require('seneca')({
   timeout: 10 * 60 * 1000
 });
 
-var env = process.env.NODE_ENV || 'development';
-
 var args = require('yargs')
   .usage('generate slugs')
   .argv;
 
-var options = require('../web/options.' + env + '.js');
-seneca.options(options);
+var config = require('../config/config.js')();
+seneca.options(config);
 
 seneca.use('postgresql-store');
 

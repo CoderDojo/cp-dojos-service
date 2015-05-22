@@ -49,6 +49,10 @@ psql --single-transaction -h $PG_HOST -U $POSTGRES_USERNAME -d $POSTGRES_NAME -f
 
 psql --single-transaction -h $PG_HOST -U $POSTGRES_USERNAME -d $POSTGRES_NAME -f $DIR/scripts/database/pg/populate-dojos.sql --port $PG_PORT
 
+$DIR/start.sh $1 "scripts/add-geonames-data.js"
+
+$DIR/start.sh $1 "scripts/generate-slugs.js"
+
 $DIR/start.sh $1 "scripts/es-index-dojos-data.js"
 
 echo "-------------------------------------------------------"
