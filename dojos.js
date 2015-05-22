@@ -30,6 +30,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'bulk_delete'}, cmd_bulk_delete);
   seneca.add({role: plugin, cmd: 'get_stats'}, cmd_get_stats);
   seneca.add({role: plugin, cmd: 'save_dojo_lead'}, cmd_save_dojo_lead);
+  seneca.add({role: plugin, cmd: 'update_dojo_lead'}, cmd_save_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_dojo_lead'}, cmd_load_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_setup_dojo_steps'}, cmd_load_setup_dojo_steps);
@@ -42,6 +43,10 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_dojo_champion'}, cmd_load_dojo_champion);
   seneca.add({role: plugin, cmd: 'accept_mentor_request'}, cmd_accept_mentor_request);
   seneca.add({role: plugin, cmd: 'dojos_for_user'}, cmd_dojos_for_user);
+  seneca.add({role: plugin, cmd: 'save_usersdojos'}, cmd_save_usersdojos);
+  seneca.add({role: plugin, cmd: 'remove_usersdojos'}, cmd_remove_usersdojos);
+  seneca.add({role: plugin, cmd: 'get_user_types'}, cmd_get_user_types);
+  seneca.add({role: plugin, cmd: 'get_user_permissions'}, cmd_get_user_permissions);
 
   function cmd_search(args, done) {
     var seneca = this;
@@ -788,6 +793,38 @@ module.exports = function (options) {
         done(null, dojos);
       });
     });
+  }
+
+  function cmd_save_usersdojos(args, done) {
+    var seneca = this;
+    var userDojo = args.userDojo;
+    var usersDojosEntity = seneca.make(USER_DOJO_ENTITY_NS);
+
+    userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
+    usersDojosEntity.save$(userDojo, done);
+  }
+
+  function cmd_remove_usersdojos(args, done) {
+    var seneca = this;
+    var userId = args.userId;
+    var dojoId = args.dojoId;
+    var usersDojosEntity = seneca.make(USER_DOJO_ENTITY_NS);
+
+    usersDojosEntity.remove$({userId:userId, dojoId:dojoId}, done);
+  }
+
+  function cmd_get_user_types(args, done) {
+    var userTypes = ['attendee-u13', 'attendee-o13', 'parent-guardian' , 'mentor', 'champion'];
+    done(null, userTypes);
+  }
+
+  function cmd_get_user_permissions(args, done) {
+    var userPermissions = [
+      {title:'Dojo Admin', name:'dojo-admin'},
+      {title:'Ticketing Admin',name:'ticketing-admin'}, 
+      {title:'Forum Admin', name:'forum-admin'}
+    ];
+    done(null, userPermissions);
   }
 
   return {
