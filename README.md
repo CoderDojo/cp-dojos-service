@@ -1,7 +1,6 @@
 # dojos core-service
 
 ## Install:
-
 ```
 npm install
 ```
