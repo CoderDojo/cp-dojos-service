@@ -27,13 +27,14 @@
     "mocha": "~2.2.1",
     "chai": "~2.2.0",
     "istanbul": "0.3.14",
-    "pre-commit": "1.0.x"    
+    "pre-commit": "1.0.x"
   },
   "dependencies": {
     "async": "0.9.x",
     "js-yaml": "3.2.x",
     "lodash": "3.6.x",
     "mongodb": "1.4.x",
+    "request": "^2.55.0",
     "seneca": "0.6.1",
     "seneca-elasticsearch": "git://github.com/sigismondm/seneca-elasticsearch.git",
     "seneca-mongo-store": "0.2.0",
