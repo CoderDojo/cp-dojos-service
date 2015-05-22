@@ -1,9 +1,8 @@
 #! /bin/bash
-
 DIR=$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd );
-FILE="$DIR/config/$2".env
-START=$DIR"/"$1
-USAGE="Usage: ./start.sh <startscript> <config>"
+FILE="$DIR/config/$1".env && shift
+START="$DIR/$1" && shift
+USAGE="Usage: ./start.sh <config> <startscript> [startscript_opts]..."
 
 if [ ! -r $FILE ] ; then
   echo "config file not found"
@@ -19,4 +18,4 @@ fi
 
 source $FILE
 
-exec node $START
+exec node $START $@

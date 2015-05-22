@@ -11,6 +11,9 @@
     "test": "bash -c 'source ./config/development.env; NODE_ENV=test; istanbul cover node_modules/.bin/_mocha -- -u exports -R spec'",
     "covrep": "bash test/covrep.sh"
   },
+  "pre-commit": [
+    "test"
+  ],
   "repository": {
     "type": "git",
     "url": "git://github.com/CoderDojo/cp-core-services.git"
@@ -23,7 +26,8 @@
   "devDependencies": {
     "mocha": "~2.2.1",
     "chai": "~2.2.0",
-    "istanbul": "0.3.14"
+    "istanbul": "0.3.14",
+    "pre-commit": "1.0.x"    
   },
   "dependencies": {
     "async": "0.9.x",
