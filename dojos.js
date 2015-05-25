@@ -335,21 +335,33 @@ module.exports = function (options) {
       if(_.isEmpty(response)) {
         return cb('User is not a member of this Dojo');
       } else {
+        // TODO - need to check user_permissions field for the dojo-admin permission
         return cb();
       }
     });
   }
 
+  function checkDojoExists(dojoId, cb) {
+    seneca.make(ENTITY_NS).load$(dojoId, function(err, ent) {
+      if(err) return cb(err);
+      return cb(null, ent !== null);
+    });
+  }
+
   function cmd_delete(args, done){
     var seneca = this;
+    checkDojoExists(args.id, function(err, exists) {
+      if (err) return done(err);
+      if (!exists) return done(null, {ok: false, why: 'Dojo does not exist: ' + args.id, code: 404});
 
-    checkUserDojoPermissions(args.id, args.user, function(err) {
-      if (err) return done(null, {ok: false, why: err});
+      checkUserDojoPermissions(args.id, args.user, function(err) {
+        if (err) return done(null, {ok: false, why: err, code: 403});
 
-      // TODO - there must be other data to remove if we delete a dojo??
-      seneca.make$(ENTITY_NS).remove$(args.id, function(err){
-        if(err) return done(err);
-        seneca.make$(USER_DOJO_ENTITY_NS).remove$({dojo_id: args.id}, done);
+        // TODO - there must be other data to remove if we delete a dojo??
+        seneca.make$(ENTITY_NS).remove$(args.id, function(err){
+          if(err) return done(err);
+          seneca.make$(USER_DOJO_ENTITY_NS).remove$({dojo_id: args.id}, done);
+        });
       });
     });
   }
