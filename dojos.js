@@ -13,6 +13,7 @@ module.exports = function (options) {
   var USER_DOJO_ENTITY_NS = "cd/usersdojos";
   var STATS_ENTITY_NS = "cd/stats";
   var DOJO_LEADS_ENTITY_NS = "cd/dojoleads";
+  var CDF_ADMIN = 'cdf-admin';
   var setupDojoSteps = require('./data/setup_dojo_steps');
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
@@ -20,7 +21,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load'}, cmd_load);
   seneca.add({role: plugin, cmd: 'find'}, cmd_find);
   seneca.add({role: plugin, cmd: 'create'}, cmd_create);
-  seneca.add({role: plugin, cmd: 'update'}, cmd_update);
+  seneca.add({role: plugin, cmd: 'update'}, wrapDojoExists(wrapDojoPermissions(cmd_update)));
   seneca.add({role: plugin, cmd: 'delete'}, wrapDojoExists(wrapDojoPermissions(cmd_delete)));
   seneca.add({role: plugin, cmd: 'my_dojos'}, cmd_my_dojos);
   seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
@@ -320,6 +321,7 @@ module.exports = function (options) {
     var seneca = this;
     var dojo = args.dojo;
 
+    // TODO - this seems a bit hacky..
     dojo.countryName = dojo.country.countryName;
     delete dojo.country;
 
@@ -331,7 +333,7 @@ module.exports = function (options) {
 
   function checkUserDojoPermissions(dojoId, user, cb) {
     // first check user is an admin
-    if (_.contains(user.roles, 'cdf-admin')) {
+    if (_.contains(user.roles, CDF_ADMIN)) {
       return cb();
     }
 
