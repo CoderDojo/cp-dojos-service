@@ -29,7 +29,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'dojos_state_count'}, cmd_dojos_state_count);
   seneca.add({role: plugin, cmd: 'bulk_update'}, cmd_bulk_update);
   seneca.add({role: plugin, cmd: 'bulk_delete'}, cmd_bulk_delete);
-  seneca.add({role: plugin, cmd: 'get_stats'}, cmd_get_stats);
+  seneca.add({role: plugin, cmd: 'get_stats'}, wrapCheckCDFAdmin(cmd_get_stats));
   seneca.add({role: plugin, cmd: 'save_dojo_lead'}, cmd_save_dojo_lead);
   seneca.add({role: plugin, cmd: 'update_dojo_lead'}, cmd_save_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
@@ -356,6 +356,16 @@ module.exports = function (options) {
     });
   }
 
+  function wrapCheckCDFAdmin(f) {
+    return function(args, done) {
+      var user = args.user;
+      if (!_.contains(user.roles, CDF_ADMIN)) {
+        return done(null, {ok:false, why: 'You must be a CDF Admin user'});
+      }
+      return f(args, done);
+    };
+  };
+
   function wrapDojoExists(f) {
     return function(args, done) {
       checkDojoExists(args.id, function(err, exists) {
@@ -435,8 +445,6 @@ module.exports = function (options) {
   }
 
   function cmd_get_stats(args, done){
-    var seneca = this;
-
     seneca.make(STATS_ENTITY_NS).list$({limit$: 'NULL'}, function(err, dojos){
       if(err){
         return done(err);
@@ -453,7 +461,6 @@ module.exports = function (options) {
       });
 
       done(null, dojoMappedByContinent);
-
     });
   }
 
