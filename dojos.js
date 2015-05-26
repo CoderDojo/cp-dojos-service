@@ -21,7 +21,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'find'}, cmd_find);
   seneca.add({role: plugin, cmd: 'create'}, cmd_create);
   seneca.add({role: plugin, cmd: 'update'}, cmd_update);
-  seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
+  seneca.add({role: plugin, cmd: 'delete'}, wrapDojoExists(wrapDojoPermissions(cmd_delete)));
   seneca.add({role: plugin, cmd: 'my_dojos'}, cmd_my_dojos);
   seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
   seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
@@ -329,8 +329,14 @@ module.exports = function (options) {
     });
   }
 
-  function checkUserDojoPermissions(dojoId, userId, cb) {
-    seneca.act({role:plugin, cmd:'load_usersdojos', query:{userId: userId, dojoId: dojoId}}, function (err, response) {
+  function checkUserDojoPermissions(dojoId, user, cb) {
+    // first check user is an admin
+    if (_.contains(user.roles, 'cdf-admin')) {
+      return cb();
+    }
+
+    // check user is a member of this dojo
+    seneca.act({role:plugin, cmd:'load_usersdojos', query:{userId: user.id, dojoId: dojoId}}, function (err, response) {
       if(err) return done(err);
       if(_.isEmpty(response)) {
         return cb('User is not a member of this Dojo');
@@ -348,21 +354,30 @@ module.exports = function (options) {
     });
   }
 
-  function cmd_delete(args, done){
-    var seneca = this;
-    checkDojoExists(args.id, function(err, exists) {
-      if (err) return done(err);
-      if (!exists) return done(null, {ok: false, why: 'Dojo does not exist: ' + args.id, code: 404});
+  function wrapDojoExists(f) {
+    return function(args, done) {
+      checkDojoExists(args.id, function(err, exists) {
+        if (err) return done(err);
+        if (!exists) return done(null, {ok: false, why: 'Dojo does not exist: ' + args.id, code: 404});
+        return f(args, done);
+      });
+    }
+  }
 
+  function wrapDojoPermissions(f) {
+    return function(args, done) {
       checkUserDojoPermissions(args.id, args.user, function(err) {
         if (err) return done(null, {ok: false, why: err, code: 403});
-
-        // TODO - there must be other data to remove if we delete a dojo??
-        seneca.make$(ENTITY_NS).remove$(args.id, function(err){
-          if(err) return done(err);
-          seneca.make$(USER_DOJO_ENTITY_NS).remove$({dojo_id: args.id}, done);
-        });
+        return f(args, done);
       });
+    }
+  }
+
+  function cmd_delete(args, done){
+    // TODO - there must be other data to remove if we delete a dojo??
+    seneca.make$(ENTITY_NS).remove$(args.id, function(err){
+      if(err) return done(err);
+      seneca.make$(USER_DOJO_ENTITY_NS).remove$({dojo_id: args.id}, done);
     });
   }
 
