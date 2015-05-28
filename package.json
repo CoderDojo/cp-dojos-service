@@ -36,7 +36,7 @@
     "lodash": "3.6.x",
     "mongodb": "1.4.x",
     "request": "^2.55.0",
-    "seneca": "0.6.1",
+    "seneca": "git://github.com/rjrodger/seneca.git",
     "seneca-elasticsearch": "git://github.com/sigismondm/seneca-elasticsearch.git",
     "seneca-mongo-store": "0.2.0",
     "seneca-postgresql-store": "git://github.com/iantocristian/seneca-postgresql-store.git",
