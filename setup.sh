@@ -46,6 +46,7 @@ echo "Deleting '$ES_INDEX' index" ;
 curl -XDELETE 'http://'$LOCAL_HOST':9200/'$ES_INDEX'?pretty'
 
 $DIR/start.sh $1 scripts/migrate-psql-db.js
+if [[ $? != 0 ]]; then exit 1; fi
 
 psql --single-transaction -h $PG_HOST -U $POSTGRES_USERNAME -d $POSTGRES_NAME -f $DIR/scripts/database/pg/populate-dojos.sql --port $PG_PORT
 
