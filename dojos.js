@@ -20,7 +20,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
   seneca.add({role: plugin, cmd: 'load'}, cmd_load);
   seneca.add({role: plugin, cmd: 'find'}, cmd_find);
-  seneca.add({role: plugin, cmd: 'create'}, cmd_create);
+  seneca.add({role: plugin, cmd: 'create'}, wrapCheckRateLimitCreateDojo(cmd_create));
   seneca.add({role: plugin, cmd: 'update'}, wrapDojoExists(wrapDojoPermissions(cmd_update)));
   seneca.add({role: plugin, cmd: 'delete'}, wrapDojoExists(wrapDojoPermissions(cmd_delete)));
   seneca.add({role: plugin, cmd: 'my_dojos'}, cmd_my_dojos);
@@ -263,13 +263,26 @@ module.exports = function (options) {
     });
   }
 
+  // user can only create X number of dojos
+  function wrapCheckRateLimitCreateDojo(f) {
+    return function(args, done) {
+      seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id}, function(err, data) {
+        if (err) return done(err);
+        if (data.length >= options.limits.maxUserDojos) {
+          return done(null, {ok: false, why: 'Rate limit exceeded, you have already created ' + data.length + ' dojos, the maximum allowed is ' + options.limits.maxUserDojos});
+        }
+        return f(args, done);
+      });
+    }
+  };
+
   function cmd_create(args, done){
     var seneca = this, dojo = args.dojo, baseSlug;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-    var createdby = args.user;
+    var user = args.user;
     var userDojo = {};
 
-    dojo.creator = createdby;
+    dojo.creator = user.id;
     dojo.created = new Date();
 
     if(dojo.needMentors) {
@@ -288,12 +301,12 @@ module.exports = function (options) {
 
     async.waterfall([
       function(cb){
-        seneca.make$(ENTITY_NS).list$({urlSlug: new RegExp('^' + baseSlug,  'i')},function(err, dojos){
+        var urlSlug = {urlSlug: new RegExp('^' + baseSlug,  'i')};
+        seneca.make$(ENTITY_NS).list$(urlSlug,function(err, dojos){
           if(err){
             return cb(err);
           }
           var urlSlugs = {};
-
           if(_.isEmpty(dojos)){
             return cb(null, baseSlug);
           }
@@ -306,13 +319,11 @@ module.exports = function (options) {
         });
       }, function(urlSlug, cb){
         dojo.urlSlug = urlSlug;
-
         seneca.make$(ENTITY_NS).save$(dojo, cb);
       }, function(dojo, cb){
         userDojo.owner = 1;
-        userDojo.user_id = createdby;
+        userDojo.user_id = user.id;
         userDojo.dojo_id = dojo.id;
-
         usersDojosEntity.save$(userDojo, cb);
       }], done);
   }
