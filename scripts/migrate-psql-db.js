@@ -12,14 +12,11 @@ postgrator.setConfig({
 });
 
 postgrator.migrate('max', function (err, migrations) {
-  if (err) {
-    console.error('error:', err);
-    postgrator.endConnection(function () {
+  postgrator.endConnection(function () {
+    if (err) {
+      console.error('error:', err);
       process.exit(1);
-    });
-
-  } else {
+    }
     console.log('Done');
-    postgrator.endConnection(function () {});
-  }
+  });
 });
