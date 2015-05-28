@@ -13,11 +13,13 @@ postgrator.setConfig({
 
 postgrator.migrate('max', function (err, migrations) {
   if (err) {
-    console.log(err)
+    console.error('error:', err);
+    postgrator.endConnection(function () {
+      process.exit(1);
+    });
+
   } else {
-    console.log(migrations)
+    console.log('Done');
+    postgrator.endConnection(function () {});
   }
-  postgrator.endConnection(function () {
-    // connection is closed, or will close in the case of SQL Server
-  });
 });
