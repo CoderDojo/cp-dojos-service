@@ -504,7 +504,7 @@ module.exports = function (options) {
       if(err) return done(err);
       if(process.env.SALESFORCE_ENABLED === true || process.env.SALESFORCE_ENABLED === 'true') {
         // Note: updating SalesForce is slow, ideally this would go on a work queue
-        process.nextTick(function() { updateSalesForce(args.user, dojoLead); });
+        process.nextTick(function() { updateSalesForce(args.user.id, dojoLead); });
       };
       done(null, response);
     });
@@ -838,7 +838,7 @@ module.exports = function (options) {
 
   function cmd_remove_usersdojos(args, done) {
     var seneca = this;
-    var userId = args.userId;
+    var userId = args.user.id;
     var dojoId = args.dojoId;
     var usersDojosEntity = seneca.make(USER_DOJO_ENTITY_NS);
 
