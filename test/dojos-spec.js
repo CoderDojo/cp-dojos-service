@@ -19,7 +19,7 @@ seneca.options(config);
 
 seneca
   .use(__dirname + '/stubs/cd-countries.js')
-  .use(__dirname + '/../dojos.js');
+  .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}});
 
 var using_postgres = false; // can be set to true for debugging
 if (using_postgres) seneca.use('postgresql-store', config["postgresql-store"]);
@@ -39,10 +39,9 @@ process.on('SIGINT', function() {
 //       they just follow the happy scenario for each exposed action
 
 function create_dojo (obj, creator, done){
-  seneca.act({role: role, cmd: 'create', dojo: obj, user: creator.id},
+  seneca.act({role: role, cmd: 'create', dojo: obj, user: {id: creator.id, roles: ['cdf-admin']}},
   function(err, savedDojo){
     if(err) return done(err);
-
     // console.log('savedDojo: ' + util.inspect(savedDojo));
     expect(savedDojo.id).to.be.ok;
 
@@ -65,7 +64,7 @@ describe('Dojo Microservice test', function(){
   // Empty Tables
   before(function(done){
     dojosEnt.remove$({all$: true}, function(err){
-      if(err) return done(err); 
+      if(err) return done(err);
 
       done();
     });
@@ -149,13 +148,13 @@ describe('Dojo Microservice test', function(){
       dojosEnt.list$(function(err, dojos){
         if(err) return done(err);
         expect(dojos).not.to.be.empty;
-        
+
         // console.log('dojos: ' + util.inspect(dojos));
         // console.log('dojos[0].id: ' + util.inspect(dojos[0].id));
 
         expect(dojos[0].id).to.exist;
         expect(dojos[0].id).to.be.ok;
-        
+
         seneca.act({role: role, cmd: 'load', id: dojos[0].id}, function(err, dojoFound){
           if(err) return done(err);
 
@@ -175,13 +174,13 @@ describe('Dojo Microservice test', function(){
       dojosEnt.list$(function(err, dojos){
         if(err) return done(err);
         expect(dojos).not.to.be.empty;
-        
+
         // console.log('dojos: ' + util.inspect(dojos));
         // console.log('dojos[0].id: ' + util.inspect(dojos[0].id));
 
         expect(dojos[0].id).to.exist;
         expect(dojos[0].id).to.be.ok;
-        
+
         seneca.act({role: role, cmd: 'find', query: { id: dojos[0].id }}, function(err, dojoFound){
           if(err) return done(err);
 
@@ -224,7 +223,7 @@ describe('Dojo Microservice test', function(){
           _.each(expectedFields, function(field){
             expect(actualFields).to.include(field);
           })
-          
+
           done();
         });
       });
@@ -236,16 +235,15 @@ describe('Dojo Microservice test', function(){
       var dojo = dojos[0];
 
       dojosEnt.list$({creator: users[4].id}, function(err, dojos){
-        
-        // console.log('dojos: ' + util.inspect(dojos));
+
+        console.log('dojos: ' + util.inspect(dojos));
 
         expect(dojos).to.exist;
         expect(dojos.length).to.be.equal(1);
         expect(dojos[0]).to.be.ok;
 
-        seneca.act({role: role, cmd: 'delete', id: dojos[0].id}, function(err){
+        seneca.act({role: role, cmd: 'delete', id: dojos[0].id, user: {roles: ['cdf-admin']}}, function(err, output){
           if(err) return done(err);
-
           dojosEnt.list$({creator: users[4].id}, function(err, dojos){
             if(err) return done(err);
 
@@ -270,7 +268,7 @@ describe('Dojo Microservice test', function(){
         var dojo = dojos[0];
         dojo.notes = "updated";
 
-        seneca.act({role: role, cmd: 'update', dojo: dojo}, function(err, updatedDojo){
+        seneca.act({role: role, cmd: 'update', dojo: dojo, user:{roles:['cdf-admin']}}, function(err, updatedDojo){
           if(err) return done(err);
 
           expect(updatedDojo.notes).to.be.equal("updated");
@@ -390,7 +388,7 @@ describe('Dojo Microservice test', function(){
             next();
           });
         }, function(err, data) {
-    
+
         dojosEnt.list$({alpha2:'UK'}, function(err, dojos){
           if(err) return done(err);
           // console.log('dojos: ' + util.inspect(dojos));
@@ -401,7 +399,7 @@ describe('Dojo Microservice test', function(){
             element.notes = value;
           });
 
-          seneca.act({role: role, cmd: 'bulk_update', dojos:dojos}, function(err, dojos){
+          seneca.act({role: role, cmd: 'bulk_update', dojos:dojos, user: {roles: ['cdf-admin']}}, function(err, dojos){
             if(err) return done(err);
 
             dojosEnt.list$({alpha2:'UK'}, function(err, dojos){
@@ -427,7 +425,7 @@ describe('Dojo Microservice test', function(){
         // console.log('dojos: ' + util.inspect(dojos));
         expect(dojos).not.to.be.empty;
 
-        seneca.act({role: role, cmd: 'bulk_delete', dojos:dojos}, function(err, dojos){
+        seneca.act({role: role, cmd: 'bulk_delete', dojos:dojos, user: {roles: ['cdf-admin']}}, function(err, dojos){
           if(err) return done(err);
 
           dojosEnt.list$({alpha2:'UK'}, function(err, dojos){
