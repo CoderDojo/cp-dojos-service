@@ -10,7 +10,7 @@ module.exports = function() {
     }
     if (process.env.TARGETIP) {
       return process.env.TARGETIP;
-    }	
+    }
     return '127.0.0.1';
   }
 
@@ -74,6 +74,9 @@ module.exports = function() {
         host: '0.0.0.0',
         port: 10301
       }
+    },
+    limits: {
+      maxUserDojos: process.env.LIMITS_MAX_USER_DOJOS || 10
     }
   };
 }
