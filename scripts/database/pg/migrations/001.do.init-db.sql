@@ -93,22 +93,6 @@ WITH (
   OIDS=FALSE
 );
 
-DROP TABLE IF EXISTS cd_profiles CASCADE;
-
-CREATE TABLE cd_profiles(
-  id character varying NOT NULL,
-  role int,
-  dojo_id character varying,
-  user_id character varying,
-  mysql_user_id int,
-  mysql_dojo_id character varying,
-  CONSTRAINT pk_cd_profiles PRIMARY KEY (id)
-)
-
-WITH (
-  OIDS=FALSE
-);
-
 
 DROP TABLE IF EXISTS cd_dojoleads CASCADE;
 
