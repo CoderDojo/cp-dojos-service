@@ -325,7 +325,7 @@ module.exports = function (options) {
 
   function cmd_update(args, done){
     var dojo = args.dojo;
-console.log("ARGS", args);
+
     // TODO - this seems a bit hacky..
     dojo.countryName = dojo.country.countryName;
     delete dojo.country;
