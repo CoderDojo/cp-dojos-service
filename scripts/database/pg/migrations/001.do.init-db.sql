@@ -84,23 +84,9 @@ CREATE TABLE cd_usersdojos(
   owner smallint,
   user_id character varying,
   dojo_id character varying,
+  user_types json[],
+  user_permissions json[],
   CONSTRAINT pk_cd_userdojos PRIMARY KEY (id)
-)
-
-WITH (
-  OIDS=FALSE
-);
-
-DROP TABLE IF EXISTS cd_profiles CASCADE;
-
-CREATE TABLE cd_profiles(
-  id character varying NOT NULL,
-  role int,
-  dojo_id character varying,
-  user_id character varying,
-  mysql_user_id int,
-  mysql_dojo_id character varying,
-  CONSTRAINT pk_cd_profiles PRIMARY KEY (id)
 )
 
 WITH (

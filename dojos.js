@@ -13,22 +13,23 @@ module.exports = function (options) {
   var USER_DOJO_ENTITY_NS = "cd/usersdojos";
   var STATS_ENTITY_NS = "cd/stats";
   var DOJO_LEADS_ENTITY_NS = "cd/dojoleads";
+  var CDF_ADMIN = 'cdf-admin';
   var setupDojoSteps = require('./data/setup_dojo_steps');
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
   seneca.add({role: plugin, cmd: 'load'}, cmd_load);
   seneca.add({role: plugin, cmd: 'find'}, cmd_find);
-  seneca.add({role: plugin, cmd: 'create'}, cmd_create);
-  seneca.add({role: plugin, cmd: 'update'}, cmd_update);
-  seneca.add({role: plugin, cmd: 'delete'}, cmd_delete);
+  seneca.add({role: plugin, cmd: 'create'}, wrapCheckRateLimitCreateDojo(cmd_create));
+  seneca.add({role: plugin, cmd: 'update'}, wrapDojoExists(wrapDojoPermissions(cmd_update)));
+  seneca.add({role: plugin, cmd: 'delete'}, wrapDojoExists(wrapDojoPermissions(cmd_delete)));
   seneca.add({role: plugin, cmd: 'my_dojos'}, cmd_my_dojos);
   seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
   seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
   seneca.add({role: plugin, cmd: 'dojos_state_count'}, cmd_dojos_state_count);
   seneca.add({role: plugin, cmd: 'bulk_update'}, cmd_bulk_update);
   seneca.add({role: plugin, cmd: 'bulk_delete'}, cmd_bulk_delete);
-  seneca.add({role: plugin, cmd: 'get_stats'}, cmd_get_stats);
+  seneca.add({role: plugin, cmd: 'get_stats'}, wrapCheckCDFAdmin(cmd_get_stats));
   seneca.add({role: plugin, cmd: 'save_dojo_lead'}, cmd_save_dojo_lead);
   seneca.add({role: plugin, cmd: 'update_dojo_lead'}, cmd_save_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
@@ -49,7 +50,6 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'get_user_permissions'}, cmd_get_user_permissions);
 
   function cmd_search(args, done) {
-    var seneca = this;
     var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
     async.waterfall([
       function(done) {
@@ -129,8 +129,6 @@ module.exports = function (options) {
   }
 
   function cmd_dojos_state_count(args, done) {
-    var seneca = this;
-
     var country = args.country;
     var countData = {};
 
@@ -166,8 +164,6 @@ module.exports = function (options) {
   }
 
   function cmd_dojos_count(args, done) {
-    var seneca = this;
-
     async.waterfall([
       getDojos,
       getCountries,
@@ -177,7 +173,7 @@ module.exports = function (options) {
     function getDojos(done) {
       var dojos = [];
       var query = {limit$:'NULL'};
-      seneca.make(ENTITY_NS).list$(query, function(err, response) {
+      seneca.make$(ENTITY_NS).list$(query, function(err, response) {
         if(err) return response;
         async.each(response, function(dojo, cb) {
           if(dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return cb();
@@ -212,9 +208,9 @@ module.exports = function (options) {
   }
 
   function cmd_list(args, done) {
-    var seneca = this, query = args.query || {};
+    var query = args.query || {};
     query.limit$ = 1500;
-    seneca.make(ENTITY_NS).list$(query, function(err, response) {
+    seneca.make$(ENTITY_NS).list$(query, function(err, response) {
       if(err) return done(err);
 
       var dojosByCountry = {};
@@ -247,28 +243,41 @@ module.exports = function (options) {
   }
 
   function cmd_load(args, done) {
-    var seneca = this;
-    seneca.make(ENTITY_NS).load$(args.id, function(err, response) {
+    seneca.make$(ENTITY_NS).load$(args.id, function(err, response) {
       if(err) return done(err);
       done(null, response);
     });
   }
 
   function cmd_find(args, done) {
-    var seneca = this;
-    seneca.make(ENTITY_NS).load$(args.query, function(err, response) {
+    seneca.make$(ENTITY_NS).load$(args.query, function(err, response) {
       if(err) return done(err);
       done(null, response);
     });
   }
 
+  // user can only create X number of dojos
+  function wrapCheckRateLimitCreateDojo(f) {
+    return function(args, done) {
+      seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id}, function(err, data) {
+        if (err) return done(err);
+        if (data.length >= options.limits.maxUserDojos) {
+          return done(null, {ok: false, why: 'Rate limit exceeded, you have already created ' + data.length + ' dojos, the maximum allowed is ' + options.limits.maxUserDojos});
+        }
+
+        return f(args, done);
+      });
+    }
+  };
+
   function cmd_create(args, done){
-    var seneca = this, dojo = args.dojo, baseSlug;
+    var dojo = args.dojo, baseSlug;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-    var createdby = args.user;
+
+    var user = args.user;
     var userDojo = {};
 
-    dojo.creator = createdby;
+    dojo.creator = user.id;
     dojo.created = new Date();
 
     if(dojo.needMentors) {
@@ -287,12 +296,12 @@ module.exports = function (options) {
 
     async.waterfall([
       function(cb){
-        seneca.make$(ENTITY_NS).list$({urlSlug: new RegExp('^' + baseSlug,  'i')},function(err, dojos){
+        var urlSlug = {urlSlug: new RegExp('^' + baseSlug,  'i')};
+        seneca.make$(ENTITY_NS).list$(urlSlug,function(err, dojos){
           if(err){
             return cb(err);
           }
           var urlSlugs = {};
-
           if(_.isEmpty(dojos)){
             return cb(null, baseSlug);
           }
@@ -305,88 +314,103 @@ module.exports = function (options) {
         });
       }, function(urlSlug, cb){
         dojo.urlSlug = urlSlug;
-
         seneca.make$(ENTITY_NS).save$(dojo, cb);
       }, function(dojo, cb){
         userDojo.owner = 1;
-        userDojo.user_id = createdby;
+        userDojo.user_id = user.id;
         userDojo.dojo_id = dojo.id;
-
         usersDojosEntity.save$(userDojo, cb);
       }], done);
   }
 
   function cmd_update(args, done){
-    var seneca = this;
     var dojo = args.dojo;
 
+    // TODO - this seems a bit hacky..
     dojo.countryName = dojo.country.countryName;
     delete dojo.country;
 
-    seneca.make(ENTITY_NS).save$(dojo, function(err, response) {
+    seneca.make$(ENTITY_NS).save$(dojo, function(err, response) {
       if(err) return done(err);
       done(null, response);
     });
   }
 
-  function cmd_delete(args, done){
-    var seneca = this;
-    var id = args.id;
-    var creatorId;
+  function checkUserDojoPermissions(dojoId, user, cb) {
+    // first check user is an admin
+    if (_.contains(user.roles, CDF_ADMIN)) {
+      return cb();
+    }
 
-    seneca.make$(ENTITY_NS).load$(id, function(err, dojo){
-      if(err){
-        done(err);
+    // check user is a member of this dojo
+    seneca.act({role:plugin, cmd:'load_usersdojos', query:{userId: user.id, dojoId: dojoId}}, function (err, response) {
+      if(err) return done(err);
+      if(_.isEmpty(response)) {
+        return cb('User is not a member of this Dojo');
+      } else {
+        // TODO - need to check user_permissions field for the dojo-admin permission
+        return cb();
       }
-
-      creatorId = dojo.creator;
-
-      seneca.make$(ENTITY_NS).remove$(id, function(err){
-        if(err){
-          return done(err);
-        }
-
-        seneca.make$(USER_DOJO_ENTITY_NS).load$({user_id: creatorId, dojo_id: id}, function(err, userDojo){
-          if(err){
-            return done(err);
-          }
-          if(userDojo && userDojo.id){
-            seneca.make$(USER_DOJO_ENTITY_NS).remove$(userDojo.id, function(err){
-              if(err){
-                return done(err);
-              }
-
-              done();
-            });
-          }
-          else {
-            done();
-          }
-
-        });
-
-      });
     });
+  }
 
+  function checkDojoExists(dojoId, cb) {
+    seneca.make$(ENTITY_NS).load$(dojoId, function(err, ent) {
+      if(err) return cb(err);
+      return cb(null, ent !== null);
+    });
+  }
+
+  function wrapCheckCDFAdmin(f) {
+    return function(args, done) {
+      var user = args.user;
+      if (!_.contains(user.roles, CDF_ADMIN)) {
+        return done(null, {ok:false, why: 'You must be a CDF Admin user'});
+      }
+      return f(args, done);
+    };
+  };
+
+  function wrapDojoExists(f) {
+    return function(args, done) {
+      checkDojoExists(args.id, function(err, exists) {
+        if (err) return done(err);
+        if (!exists) return done(null, {ok: false, why: 'Dojo does not exist: ' + args.id, code: 404});
+        return f(args, done);
+      });
+    }
+  }
+
+  function wrapDojoPermissions(f) {
+    return function(args, done) {
+      checkUserDojoPermissions(args.id, args.user, function(err) {
+        if (err) return done(null, {ok: false, why: err, code: 403});
+        return f(args, done);
+      });
+    }
+  }
+
+  function cmd_delete(args, done){
+    // TODO - there must be other data to remove if we delete a dojo??
+    seneca.make$(ENTITY_NS).remove$(args.id, function(err){
+      if(err) return done(err);
+      seneca.make$(USER_DOJO_ENTITY_NS).remove$({dojo_id: args.id}, done);
+    });
   }
 
   function cmd_bulk_update(args, done){
-    var seneca = this;
-    async.each(args.dojos, function(dojo, done) {
-      seneca.act({role: plugin, cmd: 'update', dojo: dojo}, done);
+    async.each(args.dojos, function(dojo, cb) {
+      seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, cb);
     }, done);
   }
 
   function cmd_bulk_delete(args, done){
-    var seneca = this;
-    async.each(args.dojos, function(dojo, done) {
-      seneca.act({role: plugin, cmd: 'delete', id: dojo.id, creatorId: dojo.creator}, done);
+    async.map(args.dojos, function deleteDojo(dojo, cb) {
+      seneca.act({role: plugin, cmd: 'delete', id: dojo.id, user: args.user}, cb);
     }, done);
   }
 
   function cmd_my_dojos(args, done){
-    var seneca = this;
-
     async.waterfall([
       function(done) {
         seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id, limit$: 'NULL'}, done);
@@ -421,9 +445,7 @@ module.exports = function (options) {
   }
 
   function cmd_get_stats(args, done){
-    var seneca = this;
-
-    seneca.make(STATS_ENTITY_NS).list$({limit$: 'NULL'}, function(err, dojos){
+    seneca.make$(STATS_ENTITY_NS).list$({limit$: 'NULL'}, function(err, dojos){
       if(err){
         return done(err);
       }
@@ -439,7 +461,6 @@ module.exports = function (options) {
       });
 
       done(null, dojoMappedByContinent);
-
     });
   }
 
@@ -464,23 +485,21 @@ module.exports = function (options) {
   }
 
   function cmd_save_dojo_lead(args, done) {
-    var seneca = this;
-    var dojoLeadEntity = seneca.make(DOJO_LEADS_ENTITY_NS);
+    var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
     var dojoLead = args.dojoLead;
 
     dojoLeadEntity.save$(dojoLead, function(err, response) {
       if(err) return done(err);
       if(process.env.SALESFORCE_ENABLED === true || process.env.SALESFORCE_ENABLED === 'true') {
         // Note: updating SalesForce is slow, ideally this would go on a work queue
-        process.nextTick(function() { updateSalesForce(args.user, dojoLead); });
+        process.nextTick(function() { updateSalesForce(args.user.id, dojoLead); });
       };
       done(null, response);
     });
   }
 
   function cmd_load_user_dojo_lead(args, done) {
-    var seneca = this;
-    var dojoLeadEntity = seneca.make(DOJO_LEADS_ENTITY_NS);
+    var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
     var userId = args.id;
 
     dojoLeadEntity.load$({userId:userId}, function(err, response) {
@@ -490,8 +509,7 @@ module.exports = function (options) {
   }
 
   function cmd_load_dojo_lead(args, done) {
-    var seneca = this;
-    var dojoLeadEntity = seneca.make(DOJO_LEADS_ENTITY_NS);
+    var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
 
     //TO-DO: use seneca-perm to restrict this action to cdf-admin users.
     dojoLeadEntity.load$(args.id, function(err, response) {
@@ -506,10 +524,10 @@ module.exports = function (options) {
   }
 
   function cmd_load_users_dojos(args, done){
-    var usersdojos_ent, seneca = this;
+    var usersdojos_ent;
     var query = args.query ? args.query : {};
 
-    usersdojos_ent = seneca.make(USER_DOJO_ENTITY_NS);
+    usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
 
     usersdojos_ent.list$(query, function(err, usersDojos){
       if(err){
@@ -520,9 +538,8 @@ module.exports = function (options) {
   }
 
   function cmd_load_dojo_users(args, done) {
-    var seneca = this;
     var query  = args.query;
-  
+
     seneca.act({role:plugin, cmd:'load_usersdojos', query: query}, function (err, response) {
       if(err) return done(err);
       var userIds = _.pluck(response, 'userId');
@@ -542,7 +559,7 @@ module.exports = function (options) {
     var inviteEmail = args.email;
     var dojoId = args.dojoId;
     var inviteToken = shortid.generate();
-    
+
     async.waterfall([
       getDojo,
       generateInviteToken,
@@ -585,9 +602,9 @@ module.exports = function (options) {
       var mentorInvites = dojo.mentorInvites;
 
       var inviteFound = _.find(mentorInvites, function(mentorInvite) {
-        if(mentorInvite.id === inviteToken && mentorInvite.email === currentUserEmail) { 
-          return mentorInvite; 
-        } 
+        if(mentorInvite.id === inviteToken && mentorInvite.email === currentUserEmail) {
+          return mentorInvite;
+        }
       });
 
       if(inviteFound) {
@@ -620,7 +637,6 @@ module.exports = function (options) {
   }
 
   function cmd_request_mentor_invite(args, done) {
-    var seneca = this;
     var inviteToken = shortid.generate();
     var data = args.data;
     var user = data.user;
@@ -678,11 +694,10 @@ module.exports = function (options) {
       var payload = {to:championEmail, code:code, content:content};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
     }
-    
+
   }
 
   function cmd_load_dojo_champion(args, done) {
-    var seneca = this;
     var dojoId = args.id;
     var query  = {dojoId:dojoId};
     var champions;
@@ -690,7 +705,7 @@ module.exports = function (options) {
       if(err) return done(err);
       _.find(response, function (user) {
         if(_.contains(user.roles, 'champion')) {
-          champions = []; 
+          champions = [];
           champions.push(user);
         }
       });
@@ -699,7 +714,6 @@ module.exports = function (options) {
   }
 
   function cmd_accept_mentor_request(args, done) {
-    var seneca = this;
     var tokenData = args.data;
     var currentUserId = tokenData.currentUserId;
     var currentUserEmail = tokenData.currentUserEmail;
@@ -736,8 +750,8 @@ module.exports = function (options) {
         seneca.act({role:plugin, cmd:'load_dojo_champion', id:dojoId}, function (err, response) {
           if(err) return done(err);
           var dojoChampions = response;
-          championFound = _.find(dojoChampions, function (dojoChampion) { 
-            if(dojoChampion.id === currentUserId) return dojoChampion; 
+          championFound = _.find(dojoChampions, function (dojoChampion) {
+            if(dojoChampion.id === currentUserId) return dojoChampion;
           });
           done(null, championFound);
         });
@@ -774,10 +788,9 @@ module.exports = function (options) {
   }
 
   function cmd_dojos_for_user(args, done) {
-    var seneca = this;
     var userId = args.id;
-    var usersDojosEntity = seneca.make(USER_DOJO_ENTITY_NS);
-    var dojosEntity = seneca.make(ENTITY_NS);
+    var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
+    var dojosEntity = seneca.make$(ENTITY_NS);
     var query = {userId:userId};
     var dojos = [];
     seneca.act({role:plugin, cmd:'load_usersdojos', query:query}, function (err, response) {
@@ -796,19 +809,17 @@ module.exports = function (options) {
   }
 
   function cmd_save_usersdojos(args, done) {
-    var seneca = this;
     var userDojo = args.userDojo;
-    var usersDojosEntity = seneca.make(USER_DOJO_ENTITY_NS);
+    var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
 
     userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
     usersDojosEntity.save$(userDojo, done);
   }
 
   function cmd_remove_usersdojos(args, done) {
-    var seneca = this;
-    var userId = args.userId;
+    var userId = args.user.id;
     var dojoId = args.dojoId;
-    var usersDojosEntity = seneca.make(USER_DOJO_ENTITY_NS);
+    var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
 
     usersDojosEntity.remove$({userId:userId, dojoId:dojoId}, done);
   }
@@ -821,7 +832,7 @@ module.exports = function (options) {
   function cmd_get_user_permissions(args, done) {
     var userPermissions = [
       {title:'Dojo Admin', name:'dojo-admin'},
-      {title:'Ticketing Admin',name:'ticketing-admin'}, 
+      {title:'Ticketing Admin',name:'ticketing-admin'},
       {title:'Forum Admin', name:'forum-admin'}
     ];
     done(null, userPermissions);
