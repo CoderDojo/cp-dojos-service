@@ -41,8 +41,8 @@ module.exports = function() {
     'email-notifications': {
       sendemail:true,
       email: {
-        'invite-mentor':{
-          subject:'New Dojo Mentor Invitation'
+        'invite-user':{
+          subject:'New Dojo Invitation'
         },
         'mentor-request-to-join':{
           subject:'New Mentor Request to join your Dojo'
