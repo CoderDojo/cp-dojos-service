@@ -44,8 +44,8 @@ module.exports = function() {
         'invite-user':{
           subject:'New Dojo Invitation'
         },
-        'mentor-request-to-join':{
-          subject:'New Mentor Request to join your Dojo'
+        'user-request-to-join':{
+          subject:'New Request to join your Dojo'
         }
       }
     },
