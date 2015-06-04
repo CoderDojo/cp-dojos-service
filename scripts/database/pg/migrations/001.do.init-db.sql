@@ -1,7 +1,5 @@
 
-DROP TABLE IF EXISTS sys_entity;
-
-CREATE TABLE sys_entity
+CREATE TABLE IF NOT EXISTS sys_entity
 (
   id character varying NOT NULL,
   base character varying,
@@ -15,9 +13,8 @@ WITH (
   OIDS=FALSE
 );
 
-DROP TABLE IF EXISTS cd_dojos CASCADE;
 
-CREATE TABLE cd_dojos(
+CREATE TABLE IF NOT EXISTS cd_dojos(
   id character varying NOT NULL,
   mysql_dojo_id int,
   dojo_lead_id character varying,
@@ -75,9 +72,7 @@ WITH (
   OIDS=FALSE
 );
 
-DROP TABLE IF EXISTS cd_usersdojos CASCADE;
-
-CREATE TABLE cd_usersdojos(
+CREATE TABLE IF NOT EXISTS cd_usersdojos(
   id character varying NOT NULL,
   mysql_user_id int,
   mysql_dojo_id int,
@@ -93,10 +88,7 @@ WITH (
   OIDS=FALSE
 );
 
-
-DROP TABLE IF EXISTS cd_dojoleads CASCADE;
-
-CREATE TABLE cd_dojoleads(
+CREATE TABLE IF NOT EXISTS cd_dojoleads(
   user_id character varying,
   email character varying,
   application json,
@@ -109,8 +101,6 @@ WITH (
   OIDS=FALSE
 );
 
-
-DROP VIEW IF EXISTS cd_stats;
 
 CREATE VIEW cd_stats AS
 SELECT  continent, alpha2 as "country", country_name,

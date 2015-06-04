@@ -1,6 +1,9 @@
 FROM node:0.10
 MAINTAINER nearForm <info@nearform.com>
 
+RUN apt-get update
+RUN apt-get install -y postgresql-client
+
 RUN mkdir -p /usr/src/app
 WORKDIR /usr/src/app
 
