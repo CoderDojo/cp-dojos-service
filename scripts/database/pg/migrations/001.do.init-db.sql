@@ -68,6 +68,7 @@ CREATE TABLE cd_dojos(
   admin4_name character varying,
   place_geoname_id character varying,
   place_name character varying,
+  user_invites json[],
   CONSTRAINT pk_cd_dojos_id PRIMARY KEY (id)
 )
 
