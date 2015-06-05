@@ -46,6 +46,9 @@ module.exports = function() {
         },
         'user-request-to-join':{
           subject:'New Request to join your Dojo'
+        },
+        'user-left-dojo': {
+          subject:'A user has left your Dojo'
         }
       }
     },
