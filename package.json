@@ -35,6 +35,7 @@
     "js-yaml": "3.2.7",
     "lodash": "3.7.0",
     "mongodb": "1.4.38",
+    "newrelic": "1.19.2",
     "postgrator": "2.2.0",
     "request": "2.55.0",
     "seneca": "0.6.1",
