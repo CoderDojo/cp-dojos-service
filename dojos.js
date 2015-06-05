@@ -320,7 +320,10 @@ module.exports = function (options) {
         userDojo.owner = 1;
         userDojo.user_id = user.id;
         userDojo.dojo_id = dojo.id;
-        usersDojosEntity.save$(userDojo, cb);
+        usersDojosEntity.save$(userDojo, function (err, userDojo) {
+          if(err) return cb(err);
+          cb(null, dojo);
+        });
       }], done);
   }
 
@@ -730,6 +733,7 @@ module.exports = function (options) {
         seneca.act({role:plugin, cmd:'load_usersdojos', query: query}, function (err, response) {
           if(err) return cb(err);
           var userDojo = response[0];
+          if(!userDojo) return cb();
           if(_.contains(userDojo.userTypes, 'champion')) champions.push(user);
           cb();
         });
@@ -870,7 +874,66 @@ module.exports = function (options) {
     var dojoId = args.dojoId;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
 
-    usersDojosEntity.remove$({userId:userId, dojoId:dojoId}, done);
+    async.waterfall([
+      removeUserDojoLink,
+      loadUserAndDojoDetails,
+      loadDojoChampion,
+      emailDojoChampion
+    ], done);
+
+    function removeUserDojoLink(cb) {
+      usersDojosEntity.remove$({userId:userId, dojoId:dojoId}, cb);
+    }
+
+    function loadUserAndDojoDetails(userDojo, cb) {
+      var user;
+      var dojo;
+
+      async.waterfall([
+        loadUser,
+        loadDojo
+      ], function (err) {
+        if(err) return cb(err);
+        cb(null, user, dojo);
+      });
+
+      function loadUser(cb) {
+        seneca.act({role:'cd-users', cmd:'load', id:userId}, function (err, response) {
+          if(err) return cb(err);
+          user = response;
+          cb();
+        });
+      }
+
+      function loadDojo(cb) {
+        seneca.act({role:plugin, cmd:'load', id:dojoId}, function (err, response) {
+          if(err) return cb(err);
+          dojo = response;
+          cb();
+        });
+      }
+       
+    }
+
+    function loadDojoChampion(user, dojo, cb) {
+      seneca.act({role:plugin, cmd:'load_dojo_champion', id:dojo.id}, function (err, response) {
+        if(err) return cb(err);
+        var champion = response[0];
+        cb(null, user, dojo, champion);
+      });
+    }
+
+    function emailDojoChampion(user, dojo, champion, cb) {
+      if(!champion) return cb(); 
+      var content = {
+        name:user.name,
+        email:user.email,
+        dojoName:dojo.name
+      };
+      var payload = {to:champion.email, code:'user-left-dojo', content:content};
+      seneca.act({role:plugin, cmd:'send_email', payload:payload}, cb);
+    }
+    
   }
 
   function cmd_get_user_types(args, done) {
