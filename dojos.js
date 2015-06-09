@@ -6,6 +6,9 @@ var async = require('async');
 var slug = require('slug');
 var shortid = require('shortid');
 
+var google = require('googleapis');
+var admin = google.admin('directory_v1');
+
 module.exports = function (options) {
   var seneca = this;
   var plugin = 'cd-dojos';
@@ -48,6 +51,79 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'remove_usersdojos'}, cmd_remove_usersdojos);
   seneca.add({role: plugin, cmd: 'get_user_types'}, cmd_get_user_types);
   seneca.add({role: plugin, cmd: 'get_user_permissions'}, cmd_get_user_permissions);
+  seneca.add({role: plugin, cmd: 'create_email'}, cmd_create_dojo_email);
+
+
+  function cmd_create_dojo_email(args, done){
+    var jwt = new google.auth.JWT(
+      options['google-api'].email,
+      options['google-api'].keyFile,
+      "",
+      options['google-api'].scopes,
+      ""
+    );
+
+    jwt.authorize(function (err, data) {
+      if (err) { throw err; }
+      console.log('You have been successfully authenticated: ', JSON.stringify(data));
+
+      // Insert group
+      admin.users.insert({
+        resource: getGoogleUserData(),
+        auth: jwt
+      }, function (err, data) {
+        console.log(err || data);
+      });
+    });
+  }
+
+  function getGoogleUserData(){
+    var userData = {};
+
+    //required user data
+    userData.name = {
+      familyName: "kiss",
+      givenName: "cristi",
+      fullName: "Cristi Kiss"
+    };
+    userData.password = "nitrous";
+    userData.primaryEmail = "cristian.kiss@nearform.com";
+    userData.changePasswordAtNextLogin= false;
+    userData.ipWhitelisted= false;
+    userData.emails= [
+      {
+        "address": "cristian.k1@gmail.com",
+        "type": "home",
+        "customType": "",
+        "primary": true
+      }
+    ];
+    userData.addresses= [
+      {
+        "type": "work",
+        "customType": "",
+        "streetAddress": "1600 Amphitheatre Parkway",
+        "locality": "Mountain View",
+        "region": "CA",
+        "postalCode": "94043"
+      }
+    ];
+    userData.organizations= [
+      {
+        "name": "nearform_test",
+        "title": "nearform_test_cd",
+        "primary": true,
+        "type": "work",
+        "description": "test email address",
+        domain: 'gmail'
+      }
+    ];
+
+    //optional user data
+    //TODO
+
+    return userData;
+  }
 
   function cmd_search(args, done) {
     var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);

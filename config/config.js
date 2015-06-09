@@ -35,9 +35,23 @@ module.exports = function() {
     };
   }
 
+  function googleApiConfig() {
+    return {
+      "email": "597654673440-0noge909lpqftrevdq491dnsoshbrh7d@developer.gserviceaccount.com",
+      "keyFile": path.resolve(__dirname + '/key.pem'),
+      "key": "66abd0b19c5d1dad67ed4dc74242d3702db05894",
+      "scopes": [
+        "https://www.googleapis.com/auth/admin.directory.user"
+      ],
+      "subject":  ""
+    }
+  }
+
   return {
     'postgresql-store': pgConfig(),
     elasticsearch: esConfig(),
+    'google-api': googleApiConfig(),
+
     'email-notifications': {
       sendemail:true,
       email: {
