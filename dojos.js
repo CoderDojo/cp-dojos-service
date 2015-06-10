@@ -59,8 +59,8 @@ module.exports = function (options) {
     seneca.act({role:plugin, cmd:'load_usersdojos', query:query}, function (err, response) {
       if(err) return done(err);
       var userDojo = response[0];
-      isDojoChampion  = _.contains(userDojo.userTypes, 'champion');
-      isDojoAdmin = _.find(userDojo.userPermissions, function(userPermission) {
+      var isDojoChampion  = _.contains(userDojo.userTypes, 'champion');
+      var isDojoAdmin = _.find(userDojo.userPermissions, function(userPermission) {
                       return userPermission.name === 'dojo-admin';
                     });
       if(isDojoChampion && isDojoAdmin) return done(null, true);
@@ -911,29 +911,13 @@ module.exports = function (options) {
   }
 
   function cmd_save_usersdojos(args, done) {
-    //User must have Champion user type & Dojo Admin user permission
-    //to update cd_usersdojos.
+    //TODO: Add permissions check.
     var userDojo = args.userDojo;
-    var user = args.user;
-    var query = {userId:user.id, dojoId:userDojo.dojoId};
 
-    async.waterfall([
-      async.apply(isUserChampionAndDojoAdmin, query, user),
-      saveUserDojo
-    ], done);
+    var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
+    userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
+    usersDojosEntity.save$(userDojo, done);
 
-    function saveUserDojo(hasPermission, cb) {
-      if(hasPermission) {
-        var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-        userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
-        usersDojosEntity.save$(userDojo, cb);
-      } else {
-        var err = new Error('cmd_save_usersdojos/permission-error');
-        err.critical = false;
-        err.httpstatus = 403;
-        cb(err);
-      }
-    }
   }
 
   function cmd_remove_usersdojos(args, done) {
