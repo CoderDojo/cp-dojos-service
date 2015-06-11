@@ -336,6 +336,12 @@ module.exports = function (options) {
         seneca.make$(ENTITY_NS).save$(dojo, cb);
       }, function(dojo, cb){
         userDojo.owner = 1;
+        userDojo.userTypes = ['champion'];
+        userDojo.userPermissions = [
+          {title:'Dojo Admin', name:'dojo-admin'},
+          {title:'Forum Admin', name:'forum-admin'}, 
+          {title:'Ticketing Admin', name:'ticketing-admin'}
+        ];
         userDojo.user_id = user.id;
         userDojo.dojo_id = dojo.id;
         usersDojosEntity.save$(userDojo, function (err, userDojo) {
@@ -912,11 +918,29 @@ module.exports = function (options) {
 
   function cmd_save_usersdojos(args, done) {
     //TODO: Add permissions check.
+    //User should have the Champion user type and Dojo Admin permission to update an existing cd/userdojo entity.
     var userDojo = args.userDojo;
+    var user = args.user;
+    var query = {userId:user.id, dojoId:userDojo.dojoId};
 
-    var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-    userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
-    usersDojosEntity.save$(userDojo, done);
+    async.waterfall([
+      async.apply(isUserChampionAndDojoAdmin, query, user),
+      saveUserDojo
+    ], done);
+    
+    function saveUserDojo(hasPermission, cb) {
+      if(hasPermission) {
+        var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
+        userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
+        usersDojosEntity.save$(userDojo, cb);
+      } else {
+        var err = new Error('cmd_save_usersdojos/permission-error');
+        err.critical = false;
+        err.httpstatus = 403;
+        cb(err);
+      }
+    }
+    
 
   }
 
