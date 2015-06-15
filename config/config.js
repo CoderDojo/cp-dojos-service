@@ -37,13 +37,12 @@ module.exports = function() {
 
   function googleApiConfig() {
     return {
-      "email": "597654673440-0noge909lpqftrevdq491dnsoshbrh7d@developer.gserviceaccount.com",
-      "keyFile": path.resolve(__dirname + '/key.pem'),
-      "key": "66abd0b19c5d1dad67ed4dc74242d3702db05894",
+      "email": "1075875288894-8vec5965koo2580s16hvo3ah4bc5h32f@developer.gserviceaccount.com",
+      "keyFile": path.resolve(__dirname + '/community-platform-testing-key.pem'),
       "scopes": [
         "https://www.googleapis.com/auth/admin.directory.user"
       ],
-      "subject":  ""
+      "subject":  "ursula@coderdojo.org"
     }
   }
 
