@@ -65,8 +65,6 @@ module.exports = function (options) {
       return done();
     }
 
-    console.log('here')
-
     //check if Google API private key file exists
     if (!fs.existsSync(options['google-api'].keyFile)) {
       return done("Google API private key not found", null);
