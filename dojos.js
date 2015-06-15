@@ -65,6 +65,8 @@ module.exports = function (options) {
       return done();
     }
 
+    console.log('here')
+
     //check if Google API private key file exists
     if (!fs.existsSync(options['google-api'].keyFile)) {
       return done("Google API private key not found", null);
@@ -422,10 +424,7 @@ module.exports = function (options) {
 
     async.waterfall([
       function (done) {
-        dojoEnt.load$(dojo.id, function(err, result){
-          if (err) { throw err; }
-          done();
-        });
+        dojoEnt.load$(dojo.id, done);
       },
       /**
        * set 'Verfication' related stuff when verified changed, as follows:
@@ -435,7 +434,6 @@ module.exports = function (options) {
        * - if verified changed to false, clear verifiedAt and verifiedBy
       */
       function (currentDojoState, done) {
-        console.log('DOOOOODOOODODODOODjooo', JSON.stringify(dojo));
         if (!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) &&
           dojo.verified === 1) {
 
@@ -460,20 +458,20 @@ module.exports = function (options) {
           dojo.verifiedAt = null;
           dojo.verifiedBy = null;
 
-          done();
+          done(null, dojo);
         } else
           done();
 
       },
-      function (done) {
+      function (dojo, done) {
         seneca.make$(ENTITY_NS).save$(dojo, function (err, response) {
           if (err) return done(err);
           done(null, response);
         });
       }
-    ], function (err) {
+    ], function (err, res) {
       if (err) return done(err);
-      done(null);
+      done(null, res);
     });
   }
 
