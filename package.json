@@ -32,11 +32,13 @@
   "dependencies": {
     "async": "0.9.2",
     "ejs": "1.0.0",
+    "googleapis": "2.0.5",
     "js-yaml": "3.2.7",
     "lodash": "3.7.0",
     "mongodb": "1.4.38",
     "newrelic": "1.19.2",
     "postgrator": "2.2.0",
+    "randomstring": "1.0.6",
     "request": "2.55.0",
     "seneca": "0.6.1",
     "seneca-elasticsearch": "git://github.com/sigismondm/seneca-elasticsearch.git",

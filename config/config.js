@@ -35,9 +35,22 @@ module.exports = function() {
     };
   }
 
+  function googleApiConfig() {
+    return {
+      "email": "1075875288894-8vec5965koo2580s16hvo3ah4bc5h32f@developer.gserviceaccount.com",
+      "keyFile": path.resolve(__dirname + '/community-platform-testing-key.pem'),
+      "scopes": [
+        "https://www.googleapis.com/auth/admin.directory.user"
+      ],
+      "subject":  "ursula@coderdojo.org"
+    }
+  }
+
   return {
     'postgresql-store': pgConfig(),
     elasticsearch: esConfig(),
+    'google-api': googleApiConfig(),
+
     'email-notifications': {
       sendemail:true,
       email: {

@@ -236,7 +236,7 @@ describe('Dojo Microservice test', function(){
 
       dojosEnt.list$({creator: users[4].id}, function(err, dojos){
 
-        console.log('dojos: ' + util.inspect(dojos));
+        // console.log('dojos: ' + util.inspect(dojos));
 
         expect(dojos).to.exist;
         expect(dojos.length).to.be.equal(1);
@@ -266,6 +266,7 @@ describe('Dojo Microservice test', function(){
         expect(dojos[0]).to.be.ok;
 
         var dojo = dojos[0];
+        dojo.verified = 0;
         dojo.notes = "updated";
 
         seneca.act({role: role, cmd: 'update', dojo: dojo, user:{roles:['cdf-admin']}}, function(err, updatedDojo){
@@ -396,6 +397,7 @@ describe('Dojo Microservice test', function(){
 
           var value = 'updated.';
           _.each(dojos, function(element){
+            element.verified = 0;
             element.notes = value;
           });
 

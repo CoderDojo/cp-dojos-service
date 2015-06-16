@@ -5,6 +5,12 @@ var _ = require('lodash');
 var async = require('async');
 var slug = require('slug');
 var shortid = require('shortid');
+var crypto = require('crypto');
+var randomstring = require('randomstring');
+var fs = require('fs');
+
+var google = require('googleapis');
+var admin = google.admin('directory_v1');
 
 module.exports = function (options) {
   var seneca = this;
@@ -48,6 +54,87 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'remove_usersdojos'}, cmd_remove_usersdojos);
   seneca.add({role: plugin, cmd: 'get_user_types'}, cmd_get_user_types);
   seneca.add({role: plugin, cmd: 'get_user_permissions'}, cmd_get_user_permissions);
+  seneca.add({role: plugin, cmd: 'create_dojo_email'}, cmd_create_dojo_email);
+
+  function cmd_create_dojo_email(args, done){
+    if(!args.dojo){
+      return done('Dojo data is missing.');
+    }
+
+    if(process.env.ENVIRONMENT === 'development'){
+      return done();
+    }
+
+    //check if Google API private key file exists
+    if (!fs.existsSync(options['google-api'].keyFile)) {
+      return done("Google API private key not found", null);
+    }
+
+    var jwt = new google.auth.JWT(
+      options['google-api'].email,
+      options['google-api'].keyFile,
+      "",
+      options['google-api'].scopes,
+      options['google-api'].subject
+    );
+
+    jwt.authorize(function (err, data) {
+      if (err) { throw err; }
+
+      // Insert user
+      admin.users.insert({
+        resource: getGoogleUserData(args.dojo),
+        auth: jwt
+      }, function (err, data) {
+        done(null, data);
+      });
+    });
+  }
+
+  function getGoogleUserData(dojo){
+    var userData = {};
+
+    //this can look something like this: nsc-mahon-cork.ie@coderdojo.com
+    var primaryEmail = _.last(dojo.urlSlug.split('/')).concat('.', dojo.alpha2.toLowerCase(), '@coderdojo.com');
+
+    //required user data
+    userData.name = {
+      familyName: dojo.name, //this can be changed with the champion name & family name
+      givenName: dojo.place
+    };
+    var pass = randomstring.generate(8);
+    userData.password = sha1sum('cocacola');//use default pass for now; replace this with random pass when finished
+    userData.hashFunction = "SHA-1";
+    userData.primaryEmail = primaryEmail;
+    userData.changePasswordAtNextLogin = true;
+
+    //TODO: determine what other optional attributes are required and add them
+    //emails and organizations can also be altered
+    userData.emails= [
+      {
+        "address": "cristian.kiss@nearform.com",
+        "type": "other",
+        "customType": "",
+        "primary": false
+      }
+    ];
+    userData.organizations= [
+      {
+        "name": "nearform_test",
+        "title": "champion",
+        "primary": true,
+        "type": "school",
+        "description": "new test dojo",
+        domain: 'coderdojo.org'
+      }
+    ];
+
+    return userData;
+  }
+
+  function sha1sum(input){
+    return crypto.createHash('sha1').update(JSON.stringify(input)).digest('hex')
+  }
 
   function cmd_search(args, done) {
     var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
@@ -326,13 +413,63 @@ module.exports = function (options) {
   function cmd_update(args, done){
     var dojo = args.dojo;
 
-    // TODO - this seems a bit hacky..
-    dojo.countryName = dojo.country.countryName;
-    delete dojo.country;
+    if(dojo.country){
+      dojo.countryName = dojo.country.countryName;
+    }
 
-    seneca.make$(ENTITY_NS).save$(dojo, function(err, response) {
-      if(err) return done(err);
-      done(null, response);
+    //load dojo before saving to get it's current state
+    var dojoEnt = seneca.make$(ENTITY_NS);
+
+    async.waterfall([
+      function (done) {
+        dojoEnt.load$(dojo.id, done);
+      },
+      /**
+       * set 'Verfication' related stuff when verified changed, as follows:
+       * - if verified changed to true, set verifiedAt and verifiedBy
+       *      * when verified === 1 and if the dojo has no email set, create a new
+       *        CD Organization(@coderdojo.com) email address for it
+       * - if verified changed to false, clear verifiedAt and verifiedBy
+      */
+      function (currentDojoState, done) {
+        if (!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) &&
+          dojo.verified === 1) {
+
+          dojo.verifiedAt = new Date();
+          dojo.verifiedBy = args.user.id;
+
+          //create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
+          if (_.isEmpty(dojo.email) || _.isNull(dojo.email) || _.isUndefined(dojo.email) &&
+            _.isEmpty(currentDojoState.email) || _.isNull(currentDojoState.email) || _.isUndefined(currentDojoState.email)) {
+
+            seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo}, function (err, organizationEmail) {
+              if (err) { return done(err) }
+
+              if (organizationEmail) {
+                dojo.email = organizationEmail.primaryEmail;
+              }
+              done();
+            })
+          }
+        } else if(!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) &&
+          dojo.verified === 0){
+          dojo.verifiedAt = null;
+          dojo.verifiedBy = null;
+
+          done(null, dojo);
+        } else
+          done();
+
+      },
+      function (dojo, done) {
+        seneca.make$(ENTITY_NS).save$(dojo, function (err, response) {
+          if (err) return done(err);
+          done(null, response);
+        });
+      }
+    ], function (err, res) {
+      if (err) return done(err);
+      done(null, res);
     });
   }
 
