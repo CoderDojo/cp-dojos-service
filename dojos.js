@@ -55,6 +55,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'get_user_types'}, cmd_get_user_types);
   seneca.add({role: plugin, cmd: 'get_user_permissions'}, cmd_get_user_permissions);
   seneca.add({role: plugin, cmd: 'create_dojo_email'}, cmd_create_dojo_email);
+  seneca.add({role: plugin, cmd: 'search_dojo_leads'}, cmd_search_dojo_leads);
 
   function cmd_create_dojo_email(args, done){
     if(!args.dojo){
@@ -134,6 +135,25 @@ module.exports = function (options) {
 
   function sha1sum(input){
     return crypto.createHash('sha1').update(JSON.stringify(input)).digest('hex')
+  }
+
+  function cmd_search_dojo_leads(args, done){
+    async.waterfall([
+      function(done) {
+        seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search, type:'cd_dojoleads'}, done);
+      },
+      function(searchResult, done) {
+        return done(null, {
+          total: searchResult.total,
+          records: _.pluck(searchResult.hits, '_source')
+        });
+      }
+    ], function(err, res) {
+      if (err) {
+        return done(err);
+      }
+      return done(null, res);
+    });
   }
 
   function cmd_search(args, done) {
@@ -419,6 +439,7 @@ module.exports = function (options) {
 
     //load dojo before saving to get it's current state
     var dojoEnt = seneca.make$(ENTITY_NS);
+    var dojoObj = {};
 
     async.waterfall([
       function (done) {
@@ -438,31 +459,63 @@ module.exports = function (options) {
           dojo.verifiedAt = new Date();
           dojo.verifiedBy = args.user.id;
 
-          //create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
-          if (_.isEmpty(dojo.email) || _.isNull(dojo.email) || _.isUndefined(dojo.email) &&
-            _.isEmpty(currentDojoState.email) || _.isNull(currentDojoState.email) || _.isUndefined(currentDojoState.email)) {
 
-            seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo}, function (err, organizationEmail) {
-              if (err) { return done(err) }
+          //change dojoLead completed to 'true'
+          dojoObj = {
+            id: dojo.dojoLeadId,
+            completed: true
+          };
 
-              if (organizationEmail) {
-                dojo.email = organizationEmail.primaryEmail;
-              }
-              done();
-            })
-          }
+          //update dojoLead
+          seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoObj}, function (err, dojoLead) {
+
+            if (err) {
+              return done(err)
+            }
+
+            //create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
+            if (_.isEmpty(dojo.email) || _.isNull(dojo.email) || _.isUndefined(dojo.email) &&
+              _.isEmpty(currentDojoState.email) || _.isNull(currentDojoState.email) || _.isUndefined(currentDojoState.email)) {
+
+              seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo}, function (err, organizationEmail) {
+                if (err) {
+                  return done(err)
+                }
+
+                if (organizationEmail) {
+                  dojo.email = organizationEmail.primaryEmail;
+                }
+                done();
+              })
+            }
+          });
         } else if(!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) &&
           dojo.verified === 0){
           dojo.verifiedAt = null;
           dojo.verifiedBy = null;
 
-          done(null, dojo);
+          //change dojoLead completed to 'false'
+          dojoObj = {
+            id: dojo.dojoLeadId,
+            completed: false
+          };
+
+          //update dojoLead
+          seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoObj}, function (err, dojoLead) {
+            if (err) {
+              return done(err)
+            }
+
+            done(null, dojo);
+          });
+
+
         } else
           done();
 
       },
       function (dojo, done) {
-        seneca.make$(ENTITY_NS).save$(dojo, function (err, response) {
+        dojoEnt.save$(dojo, function (err, response) {
           if (err) return done(err);
           done(null, response);
         });
