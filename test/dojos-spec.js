@@ -256,6 +256,67 @@ describe('Dojo Microservice test', function(){
     });
   });
 
+  describe('Save dojo lead', function(){
+    it('save dojo lead to db', function(done){
+      expect(dojoleads[0]).to.exist;
+      expect(dojoleads[0].user_id).to.be.ok;
+
+      seneca.act({role: role, cmd: 'save_dojo_lead', dojoLead: dojoleads[0]}, function(err, savedLead){
+        if(err) return done(err);
+
+        // console.log('savedLead: ' + util.inspect(savedLead));
+
+        expect(savedLead).to.exist;
+        expect(savedLead.user_id).to.be.ok;
+        expect(savedLead.email).to.be.ok;
+        expect(savedLead).not.to.be.empty;
+
+        dojoLeadsEnt.load$({user_id:dojoleads[0].user_id}, function(err, loadedLead){
+          if(err) return done(err);
+
+          // console.log('loadedLead: ' + util.inspect(loadedLead));
+
+          var id_field = using_postgres ? 'userId' : 'user_id';
+
+          expect(loadedLead).to.exist;
+          expect(loadedLead[id_field]).to.be.ok;
+          expect(loadedLead.email).to.be.ok;
+          expect(loadedLead[id_field].toString()).to.equal(savedLead.user_id.toString());
+
+          done();
+        });
+      });
+    });
+  });
+
+  describe('Load user dojo lead', function(){
+    it('load dojo lead based on user id', function(done){
+      dojoLeadsEnt.list$(function(err, dojoLeads){
+
+        // console.log('expectedLead: ' + util.inspect(dojoLeads[0]));
+
+        var id_field = using_postgres ? 'userId' : 'user_id';
+
+        expect(dojoLeads).not.to.be.empty;
+        expect(dojoLeads[0][id_field]).to.be.ok;
+
+        seneca.act({role: role, cmd: 'load_user_dojo_lead', id: dojoLeads[0].userId}, function(err, loadedLead){
+          if(err) return done(err);
+
+          // console.log('loadedLead: ' + util.inspect(loadedLead));
+
+          expect(loadedLead).to.exist;
+          expect(loadedLead[id_field]).to.be.ok;
+          expect(loadedLead.email).to.be.ok;
+          expect(loadedLead[id_field]).to.equal(dojoLeads[0][id_field]);
+
+          done();
+        });
+      });
+    });
+  });
+
+
   describe('Update', function(){
     it('update dojo field', function(done){
       dojosEnt.list$({creator: users[0].id}, function(err, dojos){
@@ -472,65 +533,6 @@ describe('Dojo Microservice test', function(){
   //   });
   // });
 
-  describe('Save dojo lead', function(){
-    it('save dojo lead to db', function(done){
-      expect(dojoleads[0]).to.exist;
-      expect(dojoleads[0].user_id).to.be.ok;
-
-      seneca.act({role: role, cmd: 'save_dojo_lead', dojoLead: dojoleads[0]}, function(err, savedLead){
-        if(err) return done(err);
-
-        // console.log('savedLead: ' + util.inspect(savedLead));
-
-        expect(savedLead).to.exist;
-        expect(savedLead.user_id).to.be.ok;
-        expect(savedLead.email).to.be.ok;
-        expect(savedLead).not.to.be.empty;
-
-        dojoLeadsEnt.load$({user_id:dojoleads[0].user_id}, function(err, loadedLead){
-          if(err) return done(err);
-
-          // console.log('loadedLead: ' + util.inspect(loadedLead));
-
-          var id_field = using_postgres ? 'userId' : 'user_id';
-
-          expect(loadedLead).to.exist;
-          expect(loadedLead[id_field]).to.be.ok;
-          expect(loadedLead.email).to.be.ok;
-          expect(loadedLead[id_field].toString()).to.equal(savedLead.user_id.toString());
-
-          done();
-        });
-      });
-    });
-  });
-
-  describe('Load user dojo lead', function(){
-    it('load dojo lead based on user id', function(done){
-      dojoLeadsEnt.list$(function(err, dojoLeads){
-
-      // console.log('expectedLead: ' + util.inspect(dojoLeads[0]));
-
-      var id_field = using_postgres ? 'userId' : 'user_id';
-
-      expect(dojoLeads).not.to.be.empty;
-      expect(dojoLeads[0][id_field]).to.be.ok;
-
-        seneca.act({role: role, cmd: 'load_user_dojo_lead', id: dojoLeads[0].userId}, function(err, loadedLead){
-          if(err) return done(err);
-
-          // console.log('loadedLead: ' + util.inspect(loadedLead));
-
-          expect(loadedLead).to.exist;
-          expect(loadedLead[id_field]).to.be.ok;
-          expect(loadedLead.email).to.be.ok;
-          expect(loadedLead[id_field]).to.equal(dojoLeads[0][id_field]);
-
-          done();
-        });
-      });
-    });
-  });
 
   describe('Load dojo lead', function(){
     it('load dojo lead based on its id', function(done){

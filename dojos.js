@@ -514,7 +514,7 @@ module.exports = function (options) {
             });
           });
         } else
-          done();
+          done(null, dojo);
 
       },
       function (dojo, done) {
@@ -691,11 +691,19 @@ module.exports = function (options) {
     });
   }
 
+  /**
+   * Returns the uncompleted dojo lead for a certain user.
+   * There should be only one uncompleted dojo lead at a moment.
+   */
   function cmd_load_user_dojo_lead(args, done) {
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
-    var userId = args.id;
 
-    dojoLeadEntity.load$({userId:userId}, function(err, response) {
+    var query = {
+      userId: args.id,
+      completed: false
+    };
+
+    dojoLeadEntity.load$(query, function(err, response) {
       if(err) return done(err);
       done(null, response);
     });
