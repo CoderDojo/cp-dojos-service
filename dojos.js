@@ -386,6 +386,7 @@ module.exports = function (options) {
 
     dojo.creator = user.id;
     dojo.created = new Date();
+    dojo.verified = 0;
 
     if(dojo.needMentors) {
       dojo.needMentors = 1;
