@@ -122,7 +122,7 @@ describe('Dojo Microservice test', function(){
   //   });
   // });
 
-  describe('List', function(){
+  describe.skip('List', function(){
     it('list all dojos from db', function(done){
       seneca.act({role: role, cmd: 'list'}, function(err, dojos){
         if(err) return done(err);
@@ -340,60 +340,60 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  // describe('My dojos', function(){
-  //   it('list all dojos related to user', function(done){
-  //     if (using_postgres) {
-  //       seneca.act({role: role, cmd: 'my_dojos', user: users[0], search:{}}, function(err, dojos){
-  //         if(err) return done(err);
+  describe.skip('My dojos', function () {
+    it('list all dojos related to user', function (done) {
+      if (using_postgres) {
+        seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {}}, function (err, dojos) {
+          if (err) return done(err);
 
-  //         // console.log('dojos: ' + util.inspect(dojos))
+          // console.log('dojos: ' + util.inspect(dojos))
 
-  //         expect(dojos).to.exist;
-  //         expect(dojos.total).to.be.equal(1);
-  //         expect(dojos.records[0]).to.be.ok;
+          expect(dojos).to.exist;
+          expect(dojos.total).to.be.equal(1);
+          expect(dojos.records[0]).to.be.ok;
 
-  //         done();
-  //       });
-  //     } else {
-  //       var err = new Error('POSTGRES SPECIFIC: dojos.js makes postgres-specific query which is not supported in other stores: query:{ids:array_of_ids} in cmd_my_dojos');
-  //       done(err);
-  //     }
-  //   });
-  // });
+          done();
+        });
+      } else {
+        var err = new Error('POSTGRES SPECIFIC: dojos.js makes postgres-specific query which is not supported in other stores: query:{ids:array_of_ids} in cmd_my_dojos');
+        done(err);
+      }
+    });
+  });
 
-  // describe('Dojos count (uses countries-stub)', function(){
-  //   it('list dojos count per geographical location', function(done){
-  //     if (using_postgres) {
-  //       seneca.act({role: role, cmd: 'dojos_count'}, function(err, dojos){
-  //         if(err) return done(err);
-  //         dojos = dojos.dojos;
+  describe.skip('Dojos count (uses countries-stub)', function () {
+    it('list dojos count per geographical location', function (done) {
+      if (using_postgres) {
+        seneca.act({role: role, cmd: 'dojos_count'}, function (err, dojos) {
+          if (err) return done(err);
+          dojos = dojos.dojos;
 
-  //         // console.log('dojos: ' + util.inspect(dojos.continents));
+          // console.log('dojos: ' + util.inspect(dojos.continents));
 
-  //         expect(dojos.continents).to.exist;
-  //         expect(dojos.continents).to.include.keys(['EU', 'NA', 'SA']);
-  //         expect(dojos.continents.EU.countries).to.include.keys(['RO', 'RU']);
-  //         expect(dojos.continents.NA.countries).to.include.keys(['US']);
-  //         expect(dojos.continents.SA.countries).to.include.keys(['BR']);
+          expect(dojos.continents).to.exist;
+          expect(dojos.continents).to.include.keys(['EU', 'NA', 'SA']);
+          expect(dojos.continents.EU.countries).to.include.keys(['RO', 'RU']);
+          expect(dojos.continents.NA.countries).to.include.keys(['US']);
+          expect(dojos.continents.SA.countries).to.include.keys(['BR']);
 
-  //         var total = 0;
-  //         _.each(dojos.continents, function(element){
-  //           expect(element.total).to.exist;
-  //           total += element.total;
-  //         });
+          var total = 0;
+          _.each(dojos.continents, function (element) {
+            expect(element.total).to.exist;
+            total += element.total;
+          });
 
-  //         expect(total).to.be.equal(4);
+          expect(total).to.be.equal(4);
 
-  //         done();
-  //       });
-  //     } else {
-  //       var err = new Error('POSTGRES SPECIFIC: dojos.js makes postgres-specific query which is not supported in other stores: query:{limit$:\'NULL\'} in cmd_my_dojos');
-  //       done(err);
-  //     }
-  //   });
-  // });
+          done();
+        });
+      } else {
+        var err = new Error('POSTGRES SPECIFIC: dojos.js makes postgres-specific query which is not supported in other stores: query:{limit$:\'NULL\'} in cmd_my_dojos');
+        done(err);
+      }
+    });
+  });
 
-  describe('Dojos by country', function(){
+  describe.skip('Dojos by country', function(){
     it('list dojos by country', function(done){
       seneca.act({role: role, cmd: 'dojos_by_country', countries:{US:'', BR:'', RO:''}}, function(err, dojos){
         if(err) return done(err);
@@ -409,36 +409,36 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  // describe('Dojos state count', function(){
-  //   it('list dojos by states in country', function(done){
-  //     seneca.util.recurse(2, function( index, next ){
-  //       create_dojo(dojos[4+index], users[index],
-  //         function(err, dojo){
-  //           if(err) return done(err);
-  //           expect(dojo).to.exist;
-  //           next();
-  //         });
-  //       }, function(err, data) {
+  describe.skip('Dojos state count', function () {
+    it('list dojos by states in country', function (done) {
+      seneca.util.recurse(2, function (index, next) {
+        create_dojo(dojos[4 + index], users[index],
+          function (err, dojo) {
+            if (err) return done(err);
+            expect(dojo).to.exist;
+            next();
+          });
+      }, function (err, data) {
 
-  //       if (using_postgres) {
-  //           seneca.act({role: role, cmd: 'dojos_state_count', country:'UK'}, function(err, dojos){
-  //             if(err) return done(err);
+        if (using_postgres) {
+          seneca.act({role: role, cmd: 'dojos_state_count', country: 'UK'}, function (err, dojos) {
+            if (err) return done(err);
 
-  //             // console.log('dojos: ' + util.inspect(dojos));
+            // console.log('dojos: ' + util.inspect(dojos));
 
-  //             expect(dojos).to.exist;
-  //             expect(dojos.UK).to.exist;
-  //             expect(Object.keys(dojos.UK).length).to.equal(2);
+            expect(dojos).to.exist;
+            expect(dojos.UK).to.exist;
+            expect(Object.keys(dojos.UK).length).to.equal(2);
 
-  //             done();
-  //           });
-  //       } else {
-  //         var err = new Error('POSTGRES SPECIFIC: dojos.js makes postgres-specific query which is not supported in other stores: query:{limit$:\'NULL\'} in cmd_my_dojos');
-  //         done(err);
-  //       }
-  //     });
-  //   });
-  // });
+            done();
+          });
+        } else {
+          var err = new Error('POSTGRES SPECIFIC: dojos.js makes postgres-specific query which is not supported in other stores: query:{limit$:\'NULL\'} in cmd_my_dojos');
+          done(err);
+        }
+      });
+    });
+  });
 
   describe('Bulk update', function(){
     it('update many dojos', function(done){
@@ -503,35 +503,34 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  // describe('Get stats', function(){
-  //   it('list each dojo stats', function(done){
-  //     if (using_postgres) {
-  //       seneca.act({role: role, cmd: 'get_stats'}, function(err, dojos){
-  //         if(err) return done(err);
+  describe.skip('Get stats', function () {
+    it('list each dojo stats', function (done) {
+      if (using_postgres) {
+        seneca.act({role: role, cmd: 'get_stats'}, function (err, dojos) {
+          if (err) return done(err);
 
-  //         // console.log('dojos: ' + util.inspect(dojos));
+          // console.log('dojos: ' + util.inspect(dojos));
 
-  //         expect(dojos).not.to.be.empty;
-  //         expect(dojos.EU).to.exist;
-  //         expect(dojos.EU.length).to.equal(2);
-  //         expect(dojos.EU.toString()).to.contain.all('Romania', 'Russia');
-  //         expect(dojos.NA).to.exist;
-  //         expect(dojos.NA.length).to.equal(1);
-  //         expect(dojos.NA.toString()).to.contain('America');
-  //         expect(dojos.SA).to.exist;
-  //         expect(dojos.SA.length).to.equal(1);
-  //         expect(dojos.SA.toString()).to.contain('Brazil');
+          expect(dojos).not.to.be.empty;
+          expect(dojos.EU).to.exist;
+          expect(dojos.EU.length).to.equal(2);
+          expect(dojos.EU.toString()).to.contain.all('Romania', 'Russia');
+          expect(dojos.NA).to.exist;
+          expect(dojos.NA.length).to.equal(1);
+          expect(dojos.NA.toString()).to.contain('America');
+          expect(dojos.SA).to.exist;
+          expect(dojos.SA.length).to.equal(1);
+          expect(dojos.SA.toString()).to.contain('Brazil');
 
-  //         done();
-  //       });
-  //     }
-  //     else
-  //     {
-  //       var err = new Error('POSTGRES SPECIFIC: cd/stat is a postgres view - a feature unavailable in other stores');
-  //       done(err);
-  //     }
-  //   });
-  // });
+          done();
+        });
+      }
+      else {
+        var err = new Error('POSTGRES SPECIFIC: cd/stat is a postgres view - a feature unavailable in other stores');
+        done(err);
+      }
+    });
+  });
 
 
   describe('Load dojo lead', function(){
