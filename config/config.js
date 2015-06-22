@@ -52,6 +52,9 @@ module.exports = function() {
         },
         'event-application-approved': {
           subject:'Event application approved'
+        },
+        'event-application-received': {
+          subject:'Event application received'
         }
       }
     },
