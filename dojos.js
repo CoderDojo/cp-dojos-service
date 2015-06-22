@@ -55,6 +55,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'get_user_types'}, cmd_get_user_types);
   seneca.add({role: plugin, cmd: 'get_user_permissions'}, cmd_get_user_permissions);
   seneca.add({role: plugin, cmd: 'create_dojo_email'}, cmd_create_dojo_email);
+  seneca.add({role: plugin, cmd: 'search_dojo_leads'}, cmd_search_dojo_leads);
 
   function cmd_create_dojo_email(args, done){
     if(!args.dojo){
@@ -134,6 +135,25 @@ module.exports = function (options) {
 
   function sha1sum(input){
     return crypto.createHash('sha1').update(JSON.stringify(input)).digest('hex')
+  }
+
+  function cmd_search_dojo_leads(args, done){
+    async.waterfall([
+      function(done) {
+        seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search, type:'cd_dojoleads'}, done);
+      },
+      function(searchResult, done) {
+        return done(null, {
+          total: searchResult.total,
+          records: _.pluck(searchResult.hits, '_source')
+        });
+      }
+    ], function(err, res) {
+      if (err) {
+        return done(err);
+      }
+      return done(null, res);
+    });
   }
 
   function cmd_search(args, done) {
@@ -419,6 +439,7 @@ module.exports = function (options) {
 
     //load dojo before saving to get it's current state
     var dojoEnt = seneca.make$(ENTITY_NS);
+    var dojoLeadsEnt = seneca.make$(DOJO_LEADS_ENTITY_NS);
 
     async.waterfall([
       function (done) {
@@ -438,27 +459,62 @@ module.exports = function (options) {
           dojo.verifiedAt = new Date();
           dojo.verifiedBy = args.user.id;
 
-          //create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
-          if (_.isEmpty(dojo.email) || _.isNull(dojo.email) || _.isUndefined(dojo.email) &&
-            _.isEmpty(currentDojoState.email) || _.isNull(currentDojoState.email) || _.isUndefined(currentDojoState.email)) {
 
-            seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo}, function (err, organizationEmail) {
-              if (err) { return done(err) }
+          dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
+            if (err) {
+              return done(err)
+            }
 
-              if (organizationEmail) {
-                dojo.email = organizationEmail.primaryEmail;
+            dojoLead = dojoLead.data$();
+            dojoLead.completed = true;
+
+            //update dojoLead
+            seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead}, function (err, dojoLead) {
+
+              if (err) {
+                return done(err)
               }
-              done();
-            })
-          }
+
+              //create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
+              if (_.isEmpty(dojo.email) || _.isNull(dojo.email) || _.isUndefined(dojo.email) &&
+                _.isEmpty(currentDojoState.email) || _.isNull(currentDojoState.email) || _.isUndefined(currentDojoState.email)) {
+
+                seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo}, function (err, organizationEmail) {
+                  if (err) {
+                    return done(err)
+                  }
+
+                  if (organizationEmail) {
+                    dojo.email = organizationEmail.primaryEmail;
+                  }
+                  done(null, dojo);
+                })
+              }
+            });
+          });
         } else if(!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) &&
           dojo.verified === 0){
           dojo.verifiedAt = null;
           dojo.verifiedBy = null;
 
-          done(null, dojo);
+          dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
+            if (err) {
+              return done(err)
+            }
+            dojoLead = dojoLead.data$();
+            dojoLead.completed = true;
+
+            //update dojoLead
+            seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead}, function (err, dojoLead) {
+              if (err) {
+                return done(err)
+              }
+
+              done(null, dojo);
+            });
+          });
         } else
-          done();
+          done(null, dojo);
 
       },
       function (dojo, done) {
@@ -635,11 +691,19 @@ module.exports = function (options) {
     });
   }
 
+  /**
+   * Returns the uncompleted dojo lead for a certain user.
+   * There should be only one uncompleted dojo lead at a moment.
+   */
   function cmd_load_user_dojo_lead(args, done) {
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
-    var userId = args.id;
 
-    dojoLeadEntity.load$({userId:userId}, function(err, response) {
+    var query = {
+      userId: args.id,
+      completed: false
+    };
+
+    dojoLeadEntity.load$(query, function(err, response) {
       if(err) return done(err);
       done(null, response);
     });
