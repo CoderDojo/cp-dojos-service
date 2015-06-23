@@ -158,8 +158,47 @@ module.exports = function (options) {
   }
 
   function cmd_uncompleted_dojos(args, done){
+    var query = { query : {
+      filtered : {
+        query : {
+          match_all : {}
+        },
+        filter : {
+          bool: {
+            must: [{
+              term: { creator: args.user.id }
+            }]
+          }
+        }
+      }
+    }
+    };
 
-  }
+    seneca.act({role: plugin, cmd: 'search', search: query}, function(err, dojos){
+      if(dojos.total > 0) {
+        var uncompletedDojos = [];
+        async.each(dojos, function (dojo, cb) {
+          //check if dojo "setup dojo step is completed"
+          seneca.act({role: plugin, cmd: 'load_dojo_lead', query: {id: dojo.dojoLeadId}}, function (err, dojoLead) {
+            if (dojoLead) {
+              var isCompleted = checkSetupYourDojoIsCompleted(dojoLead);
+              if (!isCompleted) {
+                uncompletedDojos.push(dojo);
+
+                cb(null)
+              }
+            }
+          });
+        }, function (err) {
+          if (err) {
+            return done(err);
+          }
+
+          return done(null, searchResult);
+        });
+      }
+    });
+  };
 
   function cmd_search(args, done) {
     var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
