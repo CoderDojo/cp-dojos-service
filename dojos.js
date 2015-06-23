@@ -56,6 +56,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'get_user_permissions'}, cmd_get_user_permissions);
   seneca.add({role: plugin, cmd: 'create_dojo_email'}, cmd_create_dojo_email);
   seneca.add({role: plugin, cmd: 'search_dojo_leads'}, cmd_search_dojo_leads);
+  seneca.add({role: plugin, cmd: 'uncompleted_dojos'}, cmd_uncompleted_dojos);
 
   function cmd_create_dojo_email(args, done){
     if(!args.dojo){
@@ -154,6 +155,10 @@ module.exports = function (options) {
       }
       return done(null, res);
     });
+  }
+
+  function cmd_uncompleted_dojos(args, done){
+
   }
 
   function cmd_search(args, done) {
