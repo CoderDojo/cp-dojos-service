@@ -918,112 +918,78 @@ module.exports = function (options) {
 
   function cmd_save_usersdojos(args, done) {
     //TODO: Add permissions check.
-    //User should have the Champion user type and Dojo Admin permission to update an existing cd/userdojo entity.
     var userDojo = args.userDojo;
-    var user = args.user;
-    var query = {userId:user.id, dojoId:userDojo.dojoId};
+    var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
 
-    async.waterfall([
-      async.apply(isUserChampionAndDojoAdmin, query, user),
-      saveUserDojo
-    ], done);
-    
-    function saveUserDojo(hasPermission, cb) {
-      if(hasPermission) {
-        var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-        userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
-        usersDojosEntity.save$(userDojo, cb);
-      } else {
-        var err = new Error('cmd_save_usersdojos/permission-error');
-        err.critical = false;
-        err.httpstatus = 403;
-        cb(err);
-      }
-    }
-    
-
+    userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
+    usersDojosEntity.save$(userDojo, done);
+     
   }
 
   function cmd_remove_usersdojos(args, done) {
-    var requestingUser = args.user;
+    //TODO: Add permissions check.
     var userId = args.userId;
     var dojoId = args.dojoId;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-    var query = {userId:requestingUser.id, dojoId:dojoId};
 
     async.waterfall([
-      async.apply(isUserChampionAndDojoAdmin, query, requestingUser),
-      removeUserDojo
+      removeUserDojoLink,
+      loadUserAndDojoDetails,
+      loadDojoChampion,
+      emailDojoChampion
     ], done);
 
-    function removeUserDojo(hasPermission, done) {
+    function removeUserDojoLink(cb) {
+      usersDojosEntity.remove$({userId:userId, dojoId:dojoId}, cb);
+    }
 
-      if(!hasPermission) {
-        var err = new Error('cmd_remove_usersdojos/permission-error');
-        err.critical = false;
-        err.httpstatus = 403;
-        return done(err);
-      }
+    function loadUserAndDojoDetails(userDojo, cb) {
+      var user;
+      var dojo;
 
       async.waterfall([
-        removeUserDojoLink,
-        loadUserAndDojoDetails,
-        loadDojoChampion,
-        emailDojoChampion
-      ], done);
+        loadUser,
+        loadDojo
+      ], function (err) {
+        if(err) return cb(err);
+        cb(null, user, dojo);
+      });
 
-      function removeUserDojoLink(cb) {
-        usersDojosEntity.remove$({userId:userId, dojoId:dojoId}, cb);
-      }
-
-      function loadUserAndDojoDetails(userDojo, cb) {
-        var user;
-        var dojo;
-
-        async.waterfall([
-          loadUser,
-          loadDojo
-        ], function (err) {
+      function loadUser(cb) {
+        seneca.act({role:'cd-users', cmd:'load', id:userId}, function (err, response) {
           if(err) return cb(err);
-          cb(null, user, dojo);
-        });
-
-        function loadUser(cb) {
-          seneca.act({role:'cd-users', cmd:'load', id:userId}, function (err, response) {
-            if(err) return cb(err);
-            user = response;
-            cb();
-          });
-        }
-
-        function loadDojo(cb) {
-          seneca.act({role:plugin, cmd:'load', id:dojoId}, function (err, response) {
-            if(err) return cb(err);
-            dojo = response;
-            cb();
-          });
-        }
-         
-      }
-
-      function loadDojoChampion(user, dojo, cb) {
-        seneca.act({role:plugin, cmd:'load_dojo_champion', id:dojo.id}, function (err, response) {
-          if(err) return cb(err);
-          var champion = response[0];
-          cb(null, user, dojo, champion);
+          user = response;
+          cb();
         });
       }
 
-      function emailDojoChampion(user, dojo, champion, cb) {
-        if(!champion) return cb(); 
-        var content = {
-          name:user.name,
-          email:user.email,
-          dojoName:dojo.name
-        };
-        var payload = {to:champion.email, code:'user-left-dojo', content:content};
-        seneca.act({role:plugin, cmd:'send_email', payload:payload}, cb);
+      function loadDojo(cb) {
+        seneca.act({role:plugin, cmd:'load', id:dojoId}, function (err, response) {
+          if(err) return cb(err);
+          dojo = response;
+          cb();
+        });
       }
+       
+    }
+
+    function loadDojoChampion(user, dojo, cb) {
+      seneca.act({role:plugin, cmd:'load_dojo_champion', id:dojo.id}, function (err, response) {
+        if(err) return cb(err);
+        var champion = response[0];
+        cb(null, user, dojo, champion);
+      });
+    }
+
+    function emailDojoChampion(user, dojo, champion, cb) {
+      if(!champion) return cb(); 
+      var content = {
+        name:user.name,
+        email:user.email,
+        dojoName:dojo.name
+      };
+      var payload = {to:champion.email, code:'user-left-dojo', content:content};
+      seneca.act({role:plugin, cmd:'send_email', payload:payload}, cb);
     }
   }
 
