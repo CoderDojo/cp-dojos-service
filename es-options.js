@@ -34,10 +34,16 @@ module.exports = {
           'raw': {'type': 'string', analyzer: 'sort'}
         }
       },
-      'creator': true,
+      'creator': {
+        type: 'string',
+        index: 'not_analyzed'
+      },
       'created': true,
       'verifiedAt': true,
-      'verifiedBy': true,
+      'verifiedBy': {
+        type: 'string',
+        index: 'not_analyzed'
+      },
       'verified': true,
       'needMentors': true,
       'stage': true,

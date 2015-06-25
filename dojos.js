@@ -177,16 +177,16 @@ module.exports = function (options) {
     seneca.act({role: plugin, cmd: 'search', search: query}, function(err, dojos){
       if(dojos.total > 0) {
         var uncompletedDojos = [];
-        async.each(dojos, function (dojo, cb) {
+        async.each(dojos.records, function (dojo, cb) {
           //check if dojo "setup dojo step is completed"
-          seneca.act({role: plugin, cmd: 'load_dojo_lead', query: {id: dojo.dojoLeadId}}, function (err, dojoLead) {
+          seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojo.dojoLeadId}, function (err, dojoLead) {
             if (dojoLead) {
               var isCompleted = checkSetupYourDojoIsCompleted(dojoLead);
               if (!isCompleted) {
                 uncompletedDojos.push(dojo);
-
-                cb(null)
               }
+
+              cb(null);
             }
           });
         }, function (err) {
@@ -194,11 +194,33 @@ module.exports = function (options) {
             return done(err);
           }
 
-          return done(null, searchResult);
+          return done(null, uncompletedDojos);
         });
+      } else return done(null);
+    });
+  }
+
+  function checkSetupYourDojoIsCompleted(dojoLead){
+    var isDojoCompleted = true;
+    var setupYourDojo = dojoLead.application.setupYourDojo;
+    var checkboxes = _.flatten(_.pluck(setupDojoSteps, 'checkboxes'));
+
+    _.each(checkboxes, function(checkbox){
+      if(_.isUndefined(setupYourDojo[checkbox.name]) || _.isNull(setupYourDojo[checkbox.name]) || !setupYourDojo[checkbox.name]){
+        isDojoCompleted = false;
+      }
+
+      if(checkbox.textField){
+        if(_.isNull(setupYourDojo[checkbox.name + "-text"]) ||
+          _.isUndefined(setupYourDojo[checkbox.name + '-text']) ||
+          _.isEmpty(setupYourDojo[checkbox.name + '-text'])){
+          isDojoCompleted = false;
+        }
       }
     });
-  };
+
+    return isDojoCompleted;
+  }
 
   function cmd_search(args, done) {
     var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
