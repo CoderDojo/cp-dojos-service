@@ -15,6 +15,8 @@ fi
 ENVIRONMENT=$1 && shift
 FILE="$PROJECT_DIR/config/$ENVIRONMENT.env"
 
+export ENVIRONMENT=$ENVIRONMENT
+
 if [ ! -f "$FILE" ] ; then
     echo "ERROR: config file $FILE not found" >&2
     echo $USAGE >&2

@@ -34,10 +34,16 @@ module.exports = {
           'raw': {'type': 'string', analyzer: 'sort'}
         }
       },
-      'creator': true,
+      'creator': {
+        type: 'string',
+        index: 'not_analyzed'
+      },
       'created': true,
       'verifiedAt': true,
-      'verifiedBy': true,
+      'verifiedBy': {
+        type: 'string',
+        index: 'not_analyzed'
+      },
       'verified': true,
       'needMentors': true,
       'stage': true,
@@ -59,7 +65,7 @@ module.exports = {
       },
       'website': true,
       'twitter': true,
-      'google_group': true,
+      'googleGroup': true,
       'ebId': true,
       'supporterImage': true,
       'private': true,
@@ -81,6 +87,26 @@ module.exports = {
       'admin4Name': true,
       'placeGeonameId': true,
       'placeName': true
+    }
+  }, {
+    base: 'cd',
+    name: 'dojoleads',
+    indexedAttributes: {
+      'id': {
+        type: 'string',
+        index: 'not_analyzed'
+      },
+      'userId': {
+        type: 'string',
+        index: 'not_analyzed'
+      },
+      'application': true,
+      'email': {
+        'analyzer': 'email',
+        'type': 'string'
+      },
+      'currentStep': true,
+      'completed': true
     }
   }]
 };

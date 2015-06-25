@@ -1,5 +1,7 @@
 'use strict';
 
+require('newrelic');
+
 var _ = require('lodash');
 var config = require('./config/config.js')();
 var ESOptions = require('./es-options.js');
@@ -15,7 +17,7 @@ seneca.use('elasticsearch', _.defaults(config["elasticsearch"], ESOptions));
 seneca.use('mail', config["mail"]);
 seneca.use(require('./email-notifications.js'));
 seneca.use(require('./es.js'));
-seneca.use(require('./dojos.js'), {limits: config.limits});
+seneca.use(require('./dojos.js'), {limits: config.limits, 'google-api': config['google-api']});
 
 seneca.listen()
   .client({type: 'web', host: process.env.TARGETIP || '127.0.0.1', port: 10302, pin: 'role:cd-countries,cmd:*'})
