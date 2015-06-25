@@ -56,6 +56,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'get_user_permissions'}, cmd_get_user_permissions);
   seneca.add({role: plugin, cmd: 'create_dojo_email'}, cmd_create_dojo_email);
   seneca.add({role: plugin, cmd: 'search_dojo_leads'}, cmd_search_dojo_leads);
+  seneca.add({role: plugin, cmd: 'uncompleted_dojos'}, cmd_uncompleted_dojos);
 
   function cmd_create_dojo_email(args, done){
     if(!args.dojo){
@@ -154,6 +155,72 @@ module.exports = function (options) {
       }
       return done(null, res);
     });
+  }
+
+  function cmd_uncompleted_dojos(args, done){
+    var query = { query : {
+      filtered : {
+        query : {
+          match_all : {}
+        },
+        filter : {
+          bool: {
+            must: [{
+              term: { creator: args.user.id }
+            }]
+          }
+        }
+      }
+    }
+    };
+
+    seneca.act({role: plugin, cmd: 'search', search: query}, function(err, dojos){
+      if(err){ return done(err) }
+      if(dojos.total > 0) {
+        var uncompletedDojos = [];
+        async.each(dojos.records, function (dojo, cb) {
+          //check if dojo "setup dojo step is completed"
+          seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojo.dojoLeadId}, function (err, dojoLead) {
+            if (dojoLead) {
+              var isCompleted = checkSetupYourDojoIsCompleted(dojoLead);
+              if (!isCompleted) {
+                uncompletedDojos.push(dojo);
+              }
+
+              cb(null);
+            }
+          });
+        }, function (err) {
+          if (err) {
+            return done(err);
+          }
+
+          return done(null, uncompletedDojos);
+        });
+      } else return done(null);
+    });
+  }
+
+  function checkSetupYourDojoIsCompleted(dojoLead){
+    var isDojoCompleted = true;
+    var setupYourDojo = dojoLead.application.setupYourDojo;
+    var checkboxes = _.flatten(_.pluck(setupDojoSteps, 'checkboxes'));
+
+    _.each(checkboxes, function(checkbox){
+      if(_.isUndefined(setupYourDojo[checkbox.name]) || _.isNull(setupYourDojo[checkbox.name]) || !setupYourDojo[checkbox.name]){
+        isDojoCompleted = false;
+      }
+
+      if(checkbox.textField){
+        if(_.isNull(setupYourDojo[checkbox.name + "-text"]) ||
+          _.isUndefined(setupYourDojo[checkbox.name + '-text']) ||
+          _.isEmpty(setupYourDojo[checkbox.name + '-text'])){
+          isDojoCompleted = false;
+        }
+      }
+    });
+
+    return isDojoCompleted;
   }
 
   function cmd_search(args, done) {
