@@ -175,6 +175,7 @@ module.exports = function (options) {
     };
 
     seneca.act({role: plugin, cmd: 'search', search: query}, function(err, dojos){
+      if(err){ return done(err) }
       if(dojos.total > 0) {
         var uncompletedDojos = [];
         async.each(dojos.records, function (dojo, cb) {
