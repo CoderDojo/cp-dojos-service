@@ -66,7 +66,10 @@ module.exports = function() {
         'event-application-approved': {
           subject:'Event application approved'
         },
-        'event-application-received': {
+        'one-off-event-application-received': {
+          subject:'Event application received'
+        },
+        'recurring-event-application-received': {
           subject:'Event application received'
         }
       }
