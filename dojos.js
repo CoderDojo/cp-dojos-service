@@ -467,6 +467,16 @@ module.exports = function (options) {
       return slug(name);
     };
 
+    if (!dojo.geoPoint && dojo.coordinates) {
+      var pair = dojo.coordinates.split(',').map(parseFloat);
+      if (pair.length === 2 && _.isFinite(pair[0]) && _.isFinite(pair[1])) {
+        dojo.geoPoint = {
+          lat: pair[0],
+          lon: pair[1]
+        }
+      }
+    }
+
     baseSlug = _.chain([
       dojo.alpha2, dojo.admin1Name, dojo.placeName, dojo.name
     ]).compact().map(slugify).value().join('/').toLowerCase();
