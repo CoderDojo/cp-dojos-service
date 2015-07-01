@@ -63,7 +63,10 @@ module.exports = function() {
         'user-left-dojo': {
           subject:'A user has left your Dojo'
         },
-        'event-application-approved': {
+        'one-off-event-application-approved': {
+          subject:'Event application approved'
+        },
+        'recurring-event-application-approved': {
           subject:'Event application approved'
         },
         'one-off-event-application-received': {
