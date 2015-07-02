@@ -8,6 +8,7 @@ var shortid = require('shortid');
 var crypto = require('crypto');
 var randomstring = require('randomstring');
 var fs = require('fs');
+var moment = require('moment');
 
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
@@ -902,7 +903,8 @@ module.exports = function (options) {
       var content = {
         link:'http://localhost:8000/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
         userType:userType,
-        dojoName:dojo.name
+        dojoName:dojo.name,
+        year: moment(new Date()).format('YYYY')
       };
       var payload = {to:inviteEmail, code:'invite-user', content:content};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
@@ -1036,7 +1038,8 @@ module.exports = function (options) {
         name:user.name,
         email:user.email,
         dojoName:dojo.name,
-        userType:userType
+        userType:userType,
+        year: moment(new Date()).format('YYYY')
       };
       var code = 'user-request-to-join';
       var payload = {to:championEmail, code:code, content:content};
@@ -1256,7 +1259,8 @@ module.exports = function (options) {
       var content = {
         name:user.name,
         email:user.email,
-        dojoName:dojo.name
+        dojoName:dojo.name,
+        year: moment(new Date()).format('YYYY')
       };
       var payload = {to:champion.email, code:'user-left-dojo', content:content};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, cb);
