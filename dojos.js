@@ -880,6 +880,7 @@ module.exports = function (options) {
   }
 
   function cmd_generate_user_invite_token(args, done) {
+    var zenHostname = args.zenHostname;
     var inviteEmail = args.email;
     var dojoId = args.dojoId;
     var userType = args.userType;
@@ -911,7 +912,7 @@ module.exports = function (options) {
 
     function sendEmail(dojo, done) {
       var content = {
-        link:'http://localhost:8000/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
+        link: 'http://'+zenHostname+'/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
         userType:userType,
         dojoName:dojo.name,
         year: moment(new Date()).format('YYYY')
@@ -995,6 +996,7 @@ module.exports = function (options) {
 
   function cmd_request_user_invite(args, done) {
     var inviteToken = shortid.generate();
+    var zenHostname = args.zenHostname;
     var data = args.data;
     var user = data.user;
     var userType = data.userType;
@@ -1044,7 +1046,7 @@ module.exports = function (options) {
       if(!champion) return done();
       var championEmail = champion.email;
       var content = {
-        link:'http://localhost:8000/accept_dojo_user_request/'+user.id+'/'+inviteToken,
+        link:'http://'+zenHostname+'/accept_dojo_user_request/'+user.id+'/'+inviteToken,
         name:user.name,
         email:user.email,
         dojoName:dojo.name,
