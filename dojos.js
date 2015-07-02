@@ -329,7 +329,7 @@ module.exports = function (options) {
       if(err) return done(err);
       countData[country] = {};
       _.each(response, function(dojo) {
-        if(dojo.coordinates && dojo.deleted !== 1 && dojo.verified !== 0 && dojo.stage === 2) {
+        if(dojo.coordinates && dojo.deleted !== 1 && dojo.verified !== 0 && dojo.stage !== 4) {
           if(!countData[dojo.alpha2][dojo.admin1Name]) countData[dojo.alpha2][dojo.admin1Name] = {total:0};
           countData[dojo.alpha2][dojo.admin1Name].total += 1;
           countData[dojo.alpha2][dojo.admin1Name].latitude = dojo.coordinates.split(',')[0];
@@ -369,8 +369,10 @@ module.exports = function (options) {
       seneca.make$(ENTITY_NS).list$(query, function(err, response) {
         if(err) return response;
         async.each(response, function(dojo, cb) {
-          if(dojo.deleted === 1 || dojo.verified === 0 || dojo.stage !== 2) return cb();
-          dojos.push(dojo);
+          if(dojo.deleted !== 1 && dojo.verified !== 0 && dojo.stage !== 4) {
+            dojos.push(dojo);
+          }
+
           cb();
         }, function() {
           done(null, dojos);
@@ -409,7 +411,7 @@ module.exports = function (options) {
       var dojosByCountry = {};
       response = _.sortBy(response, 'countryName');
       _.each(response, function(dojo) {
-        if(dojo.deleted !== 1 && dojo.verified !== 0 && dojo.stage === 2) {
+        if(dojo.deleted !== 1 && dojo.verified !== 0 && dojo.stage !== 4) {
           var id = dojo.id;
           if(!dojosByCountry[dojo.countryName]) {
             dojosByCountry[dojo.countryName] = {};
@@ -483,6 +485,16 @@ module.exports = function (options) {
     var slugify = function(name) {
       return slug(name);
     };
+
+    if (!dojo.geoPoint && dojo.coordinates) {
+      var pair = dojo.coordinates.split(',').map(parseFloat);
+      if (pair.length === 2 && _.isFinite(pair[0]) && _.isFinite(pair[1])) {
+        dojo.geoPoint = {
+          lat: pair[0],
+          lon: pair[1]
+        }
+      }
+    }
 
     baseSlug = _.chain([
       dojo.alpha2, dojo.admin1Name, dojo.placeName, dojo.name
@@ -585,11 +597,10 @@ module.exports = function (options) {
                   }
                   done(null, dojo);
                 })
-              }
+              } else done(null, dojo);
             });
           });
-        } else if(!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) &&
-          dojo.verified === 0){
+        } else if(!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) && dojo.verified === 0){
           dojo.verifiedAt = null;
           dojo.verifiedBy = null;
 
@@ -609,8 +620,7 @@ module.exports = function (options) {
               done(null, dojo);
             });
           });
-        } else
-          done(null, dojo);
+        } else done(null, dojo);
 
       },
       function (dojo, done) {
