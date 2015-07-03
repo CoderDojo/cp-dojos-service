@@ -751,6 +751,7 @@ module.exports = function (options) {
     if (dojoLead.email) lead.Email = dojoLead.email;
     if (dojoLead.phone) lead.Phone = dojoLead.phone;
 
+    var convertAccount = false;
     switch(dojoLead.currentStep) {
       case 2:
         lead.Status = '2. Champion Registration Completed';
@@ -763,12 +764,19 @@ module.exports = function (options) {
         break;
       case 5:
         lead.Status = '7. Dojo Listing Verified';
+        convertAccount = true;
         break;
     };
 
     seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
-      if (err) return seneca.log.error('Error creating lead in SalesForce!', err);
-      seneca.log.info('Created lead in SalesForce', lead, res);
+      if (err) return seneca.log.error('Error creating Lead in SalesForce!', err);
+      seneca.log.info('Lead saved in SalesForce', lead, res);
+      if (convertAccount === true) {
+        seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: res.id$}, function (err, res){
+          if (err) return seneca.log.error('Error converting Lead to Account in SalesForce!', err);
+          seneca.log.info('Lead converted to Account in SalesForce', lead, res);
+        });
+      }
     });
   }
 
