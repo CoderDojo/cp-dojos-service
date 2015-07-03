@@ -738,8 +738,8 @@ module.exports = function (options) {
   function updateSalesForce(userId, dojoLead) {
     var lead = {
       PlatformId__c: userId,
-      // TODO - need to link to users profile in the platform here when it's ready
-      PlatformUrl__c: 'https://zen.coderdojo.com/TODO-users/' + userId
+      // TODO - zen endpoint shouldn't be hardcoded
+      PlatformUrl__c: 'https://zen.coderdojo.com/dashboard/profile/' + userId
     };
 
     if (dojoLead.application && dojoLead.application.championDetails && dojoLead.application.championDetails.name)
@@ -761,7 +761,7 @@ module.exports = function (options) {
 
     dojoLeadEntity.save$(dojoLead, function(err, response) {
       if(err) return done(err);
-      if(process.env.SALESFORCE_ENABLED === true || process.env.SALESFORCE_ENABLED === 'true') {
+      if(process.env.SALESFORCE_ENABLED === 'true') {
         // Note: updating SalesForce is slow, ideally this would go on a work queue
         process.nextTick(function() { updateSalesForce(args.user.id, dojoLead); });
       };
