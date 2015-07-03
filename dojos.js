@@ -547,6 +547,7 @@ module.exports = function (options) {
 
             dojoLead = dojoLead.data$();
             dojoLead.completed = true;
+            dojoLead.currentStep = 5;  // salesforce trigger to set the Dojo Listing Verified...
 
             //update dojoLead
             seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead}, function (err, dojoLead) {
@@ -581,7 +582,8 @@ module.exports = function (options) {
               return done(err)
             }
             dojoLead = dojoLead.data$();
-            dojoLead.completed = true;
+            dojoLead.completed = false;
+            dojoLead.currentStep = 4;  // reset state in salesforce
 
             //update dojoLead
             seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead}, function (err, dojoLead) {
@@ -751,8 +753,17 @@ module.exports = function (options) {
 
     switch(dojoLead.currentStep) {
       case 2:
-      lead.Status = '2. Champion Registration Completed';
-      break;
+        lead.Status = '2. Champion Registration Completed';
+        break;
+      case 3:
+        lead.Status = '4. Dojo Set Up Completed';
+        break;
+      case 4:
+        lead.Status = '5. Dojo Listing Created';
+        break;
+      case 5:
+        lead.Status = '7. Dojo Listing Verified';
+        break;
     };
 
     seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
@@ -769,7 +780,7 @@ module.exports = function (options) {
       if(err) return done(err);
       if(process.env.SALESFORCE_ENABLED === 'true') {
         // Note: updating SalesForce is slow, ideally this would go on a work queue
-        process.nextTick(function() { updateSalesForce(args.user.id, dojoLead); });
+        process.nextTick(function() { updateSalesForce(dojoLead.userId, dojoLead); });
       };
       done(null, response);
     });
