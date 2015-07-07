@@ -227,7 +227,7 @@ module.exports = function (options) {
     var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
     async.waterfall([
       function(done) {
-        seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search}, done);
+        seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search, type: args.type || null}, done);
       },
       function(searchResult, done) {
         var dojos = _.pluck(searchResult.hits, '_source');
@@ -697,13 +697,13 @@ module.exports = function (options) {
         var query = {ids:dojoIds};
 
         var search = args.search;
-        if (search.from){
+        if (search && search.from){
           query.skip$ = search.from;
         }
-        if (search.size){
+        if (search && search.size){
           query.limit$ = search.size;
         }
-        if (search.sort){
+        if (search && search.sort){
           query.sort$ = search.sort;
         }
         seneca.make$(ENTITY_NS).list$(query, _.partialRight(done, userDojos));
