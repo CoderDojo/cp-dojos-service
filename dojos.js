@@ -1206,7 +1206,9 @@ module.exports = function (options) {
     var userDojo = args.userDojo;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
 
-    userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
+    if(userDojo.userPermissions) {
+      userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
+    }
     usersDojosEntity.save$(userDojo, done);
      
   }
