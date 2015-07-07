@@ -740,9 +740,6 @@ module.exports = function (options) {
   function updateSalesForceChampionDetails(userId, dojoLead) {
      var account = {
       PlatformId__c: userId,
-       // TODO - zen endpoint shouldn't be hardcoded
-       PlatformUrl__c: 'https://zen.coderdojo.com/dashboard/profile/' + userId,
-       RecordTypeId: "0121100000051tU" // TODO - not working
      };
     if (dojoLead.application.championDetails.email)
       account.Email = dojoLead.application.championDetails.email;
@@ -767,14 +764,11 @@ module.exports = function (options) {
     });
   }
 
+  // Note at this stage we expect to have an existing Account and Lead types in salesforce, this is
+  // done at inital champion registration in cp-users.
   function updateSalesForce(userId, dojoLead) {
     var lead = {
       PlatformId__c: userId,
-      Company: '<n/a>',
-      // TODO - zen endpoint shouldn't be hardcoded
-      PlatformUrl__c: 'https://zen.coderdojo.com/dashboard/profile/' + userId,
-      // "RecordTypeId": "0121100000050zq",  // TODO - should be env var
-      // "ChampionAccount__c": userId // TODO - needs to be the salesforce id!!
     };
 
     if (dojoLead.application && dojoLead.application.championDetails) {
