@@ -3,13 +3,13 @@ module.exports = [
     title:'Gather your Team',
     checkboxes:[
       {
-        title:'Gather Team*',
+        title:'Gather Team',
         name:'gatherTeam',
         required:true,
         requiredMessage:'You must gather a team before continuing.'
       },
       {
-        title:'Find Mentors*',
+        title:'Find Mentors',
         name:'findMentors',
         required:true,
         requiredMessage:'You must find mentors before continuing.'
@@ -32,7 +32,7 @@ module.exports = [
     title:'Plan your Dojo',
     checkboxes:[
       { 
-        title:'Plan how frequently you will run your Dojo*',
+        title:'Plan how frequently you will run your Dojo',
         name:'planDojoFrequency',
         required:true,
         requiredMessage:'You must plan how often your Dojo will take place.',
@@ -40,7 +40,7 @@ module.exports = [
         placeholder:'Please describe when your Dojo will take place.'
       },
       {
-        title:'Set the first date of your Dojo*',
+        title:'Set the first date of your Dojo',
         name:'planDojoFirstDate',
         required:true,
         requiredMessage:'You must set the first date of your Dojo.'
