@@ -59,6 +59,9 @@ module.exports = function() {
         },
         'mentor-request-to-join':{
           subject:'New Mentor Request to join your Dojo'
+        },
+        'google-email-pass':{
+          subject:'We created a new Google Email for your Dojo'
         }
       }
     },

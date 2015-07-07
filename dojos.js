@@ -58,13 +58,9 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'search_dojo_leads'}, cmd_search_dojo_leads);
   seneca.add({role: plugin, cmd: 'uncompleted_dojos'}, cmd_uncompleted_dojos);
 
-  function cmd_create_dojo_email(args, done){
-    if(!args.dojo){
+  function cmd_create_dojo_email(args, done) {
+    if (!args.dojo) {
       return done('Dojo data is missing.');
-    }
-
-    if(process.env.ENVIRONMENT === 'development'){
-      return done();
     }
 
     //check if Google API private key file exists
@@ -81,57 +77,102 @@ module.exports = function (options) {
     );
 
     jwt.authorize(function (err, data) {
-      if (err) { throw err; }
+      if (err) {
+        return done(err)
+      }
 
-      // Insert user
-      admin.users.insert({
-        resource: getGoogleUserData(args.dojo),
-        auth: jwt
-      }, function (err, data) {
-        done(null, data);
+      getGoogleUserData(args.dojo, function (err, res) {
+
+        var googleNewAccountData = res.userData;
+        var tempPass = googleNewAccountData.tempPass;
+        googleNewAccountData = _.omit(googleNewAccountData, 'tempPass');
+        var dojo = res.dojo;
+
+        // Insert user
+        admin.users.insert({
+          resource: googleNewAccountData,
+          auth: jwt
+        }, function (err, data) {
+          if (err) {
+            return done(err)
+          }
+
+          seneca.act({role: 'cd-users', cmd: 'load', id: dojo.creator}, function (err, dojoCreator) {
+            if (err) {
+              return done(err)
+            }
+
+            //send dojo creator an email with dojo's newly created email address and it's temp password
+            var payload = {
+              to: dojoCreator.email,
+              code: 'google-email-pass',
+              content: {temp_pass: tempPass, dojo: dojo.name, email: googleNewAccountData.primaryEmail}
+            };
+            seneca.act({role: plugin, cmd: 'send_email', payload: payload}, function (err, res) {
+              if (err) {
+                return done(err)
+              }
+
+              done(null, data);
+            });
+          });
+        });
       });
     });
   }
 
-  function getGoogleUserData(dojo){
+  function getGoogleUserData(dojo, done) {
     var userData = {};
 
-    //this can look something like this: nsc-mahon-cork.ie@coderdojo.com
-    var primaryEmail = _.last(dojo.urlSlug.split('/')).concat('.', dojo.alpha2.toLowerCase(), '@coderdojo.com');
-
-    //required user data
-    userData.name = {
-      familyName: dojo.name, //this can be changed with the champion name & family name
-      givenName: dojo.place
-    };
-    var pass = randomstring.generate(8);
-    userData.password = sha1sum('cocacola');//use default pass for now; replace this with random pass when finished
-    userData.hashFunction = "SHA-1";
-    userData.primaryEmail = primaryEmail;
-    userData.changePasswordAtNextLogin = true;
-
-    //TODO: determine what other optional attributes are required and add them
-    //emails and organizations can also be altered
-    userData.emails= [
-      {
-        "address": "cristian.kiss@nearform.com",
-        "type": "other",
-        "customType": "",
-        "primary": false
+    seneca.act('role:cd-dojos,cmd:load', {id: dojo.id}, function (err, res) {
+      if (err) {
+        return done(err)
       }
-    ];
-    userData.organizations= [
-      {
-        "name": "nearform_test",
-        "title": "champion",
-        "primary": true,
-        "type": "school",
-        "description": "new test dojo",
-        domain: 'coderdojo.org'
-      }
-    ];
 
-    return userData;
+      dojo = res.data$();
+
+      //this can look something like this: nsc-mahon-cork.ie@coderdojo.com
+      var primaryEmail = _.last(dojo.urlSlug.split('/')).concat('.', dojo.alpha2.toLowerCase(), '@coderdojo.com');
+
+      if (process.env.ENVIRONMENT === 'development') {
+        primaryEmail = 'dev-' + primaryEmail;
+      }
+
+      //required user data
+      userData.name = {
+        familyName: dojo.name, //this can be changed with the champion name & family name
+        givenName: dojo.placeName || dojo.address1
+      };
+      var pass = randomstring.generate(8);
+      userData.tempPass = pass;
+      userData.password = sha1sum(pass);//use default pass for now; replace this with random pass when finished
+      userData.hashFunction = "SHA-1";
+      userData.primaryEmail = primaryEmail;
+      userData.changePasswordAtNextLogin = true;
+
+      //TODO: determine what other optional attributes are required and add them
+      //emails and organizations can also be altered
+      userData.emails = [
+        {
+          "address": "cristian.kiss@nearform.com",
+          "type": "other",
+          "customType": "",
+          "primary": false
+        }
+      ];
+      userData.organizations = [
+        {
+          "name": "nearform_test",
+          "title": "champion",
+          "primary": true,
+          "type": "school",
+          "description": "new test dojo",
+          domain: 'coderdojo.org'
+        }
+      ];
+
+      return done(null, {userData: userData, dojo: dojo});
+    });
   }
 
   function sha1sum(input){
