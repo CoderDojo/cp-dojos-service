@@ -63,7 +63,7 @@ module.exports = function (options) {
       return done('Dojo data is missing.');
     }
 
-    if(process.env.ENVIRONMENT === 'development'){
+    if(options['google-api'].enabled === false) {
       return done();
     }
 
@@ -449,7 +449,6 @@ module.exports = function (options) {
   function cmd_create(args, done){
     var dojo = args.dojo, baseSlug;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-
     var user = args.user;
     var userDojo = {};
 
@@ -752,11 +751,11 @@ module.exports = function (options) {
       account.Country = dojoLead.application.championDetails.countryName;
 
     if (dojoLead.application.championDetails.dateOfBirth)
-      account.Date_of_Birth__c = dojoLead.application.championDetails.dateOfBirth;
+      account.DateofBirth__c = dojoLead.application.championDetails.dateOfBirth;
     if (dojoLead.application.championDetails.twitter)
       account.Twitter__c = dojoLead.application.championDetails.twitter;
     if (dojoLead.application.championDetails.linkedIn)
-      account.LinkedIn__c = dojoLead.application.championDetails.linkedIn;
+      account.Linkedin__c = dojoLead.application.championDetails.linkedIn;
 
     seneca.act('role:cd-salesforce,cmd:save_account', {userId: userId, account: account}, function (err, res){
       if (err) return seneca.log.error('Error saving champion account in SalesForce!', err);
@@ -777,10 +776,18 @@ module.exports = function (options) {
         lead.LastName = dojoLead.application.championDetails.name;
     }
 
-    if (dojoLead.application && dojoLead.application.dojoListing && dojoLead.application.dojoListing.name)
+    if (dojoLead.name) lead.Name = dojoLead.name;
+    if (dojoLead.application && dojoLead.application.dojoListing && dojoLead.application.dojoListing.name) {
       lead.Company = dojoLead.application.dojoListing.name;
+      lead.Name = dojoLead.application.dojoListing.name;
+    }
+
     if (dojoLead.email) lead.Email = dojoLead.email;
     if (dojoLead.phone) lead.Phone = dojoLead.phone;
+    if (dojoLead.twitter) lead.Twitter__c = dojoLead.twitter;
+    if (dojoLead.website) lead.Website = dojoLead.website;
+    if (dojoLead.address1) lead.Street = dojoLead.address1;
+    if (dojoLead.countryName) lead.Country = dojoLead.countryName;
 
     var convertAccount = false;
     switch(dojoLead.currentStep) {
@@ -799,7 +806,6 @@ module.exports = function (options) {
         break;
     };
 
-    //console.log("**** UPDATE SALESFORCE DOJOLEAD", dojoLead, dojoLead.id);
     seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
       if (err) return seneca.log.error('Error saving Lead in SalesForce!', err);
       seneca.log.info('Lead saved in SalesForce', lead, res);
