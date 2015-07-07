@@ -63,6 +63,10 @@ module.exports = function (options) {
       return done('Dojo data is missing.');
     }
 
+    if(options['google-api'].enabled === false) {
+      return done();
+    }
+
     //check if Google API private key file exists
     if (!fs.existsSync(options['google-api'].keyFile)) {
       return done("Google API private key not found", null);
@@ -149,9 +153,6 @@ module.exports = function (options) {
       userData.hashFunction = "SHA-1";
       userData.primaryEmail = primaryEmail;
       userData.changePasswordAtNextLogin = true;
-
-      //TODO: determine what other optional attributes are required and add them
-      //emails and organizations can also be altered
       userData.emails = [
         {
           "address": "cristian.kiss@nearform.com",
