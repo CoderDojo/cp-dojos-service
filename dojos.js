@@ -737,15 +737,52 @@ module.exports = function (options) {
     });
   }
 
+  function updateSalesForceChampionDetails(userId, dojoLead) {
+     var account = {
+      PlatformId__c: userId,
+       // TODO - zen endpoint shouldn't be hardcoded
+       PlatformUrl__c: 'https://zen.coderdojo.com/dashboard/profile/' + userId,
+       RecordTypeId: "0121100000051tU" // TODO - not working
+     };
+    if (dojoLead.application.championDetails.email)
+      account.Email = dojoLead.application.championDetails.email;
+    if (dojoLead.application.championDetails.phone)
+      account.Phone = dojoLead.application.championDetails.phone;
+
+    if (dojoLead.application.championDetails.placeName)
+      account.Street = dojoLead.application.championDetails.placeName;
+    if (dojoLead.application.championDetails.countryName)
+      account.Country = dojoLead.application.championDetails.countryName;
+
+    if (dojoLead.application.championDetails.dateOfBirth)
+      account.Date_of_Birth__c = dojoLead.application.championDetails.dateOfBirth;
+    if (dojoLead.application.championDetails.twitter)
+      account.Twitter__c = dojoLead.application.championDetails.twitter;
+    if (dojoLead.application.championDetails.linkedIn)
+      account.LinkedIn__c = dojoLead.application.championDetails.linkedIn;
+
+    seneca.act('role:cd-salesforce,cmd:save_account', {userId: userId, account: account}, function (err, res){
+      if (err) return seneca.log.error('Error saving champion account in SalesForce!', err);
+      seneca.log.info('Account saved in SalesForce', account, res);
+    });
+  }
+
   function updateSalesForce(userId, dojoLead) {
     var lead = {
       PlatformId__c: userId,
+      Company: '<n/a>',
       // TODO - zen endpoint shouldn't be hardcoded
-      PlatformUrl__c: 'https://zen.coderdojo.com/dashboard/profile/' + userId
+      PlatformUrl__c: 'https://zen.coderdojo.com/dashboard/profile/' + userId,
+      // "RecordTypeId": "0121100000050zq",  // TODO - should be env var
+      // "ChampionAccount__c": userId // TODO - needs to be the salesforce id!!
     };
 
-    if (dojoLead.application && dojoLead.application.championDetails && dojoLead.application.championDetails.name)
-      lead.LastName = dojoLead.application.championDetails.name;
+    if (dojoLead.application && dojoLead.application.championDetails) {
+      updateSalesForceChampionDetails(userId, dojoLead);
+      if (dojoLead.application.championDetails.name)
+        lead.LastName = dojoLead.application.championDetails.name;
+    }
+
     if (dojoLead.application && dojoLead.application.dojoListing && dojoLead.application.dojoListing.name)
       lead.Company = dojoLead.application.dojoListing.name;
     if (dojoLead.email) lead.Email = dojoLead.email;
@@ -768,8 +805,9 @@ module.exports = function (options) {
         break;
     };
 
+    //console.log("**** UPDATE SALESFORCE DOJOLEAD", dojoLead, dojoLead.id);
     seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
-      if (err) return seneca.log.error('Error creating Lead in SalesForce!', err);
+      if (err) return seneca.log.error('Error saving Lead in SalesForce!', err);
       seneca.log.info('Lead saved in SalesForce', lead, res);
       if (convertAccount === true) {
         seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: res.id$}, function (err, res){
