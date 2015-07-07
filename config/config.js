@@ -27,7 +27,7 @@ module.exports = function() {
   function esConfig() {
     return {
       connection: {
-        host : localhost() + ':9200',
+        host : (process.env.ES_HOST || localhost()) + ':9200',
         index: process.env.ES_INDEX,
         sniffOnStart: false,
         sniffInterval: false
