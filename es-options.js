@@ -54,7 +54,6 @@ module.exports = {
       'state': true,
       'city': true,
       'place': true,
-      'location': {'type': 'string'},
       'coordinates': true,
       'geoPoint': {
         type: 'geo_point'
