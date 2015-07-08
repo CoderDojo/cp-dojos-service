@@ -31,7 +31,8 @@ module.exports = {
       'name': {
         'type': 'string',
         'fields': {
-          'raw': {'type': 'string', analyzer: 'sort'}
+          'sort': {'type': 'string', analyzer: 'sort'},
+          'search': {'type': 'string'}
         }
       },
       'creator': {
@@ -53,7 +54,6 @@ module.exports = {
       'state': true,
       'city': true,
       'place': true,
-      'location': true,
       'coordinates': true,
       'geoPoint': {
         type: 'geo_point'
