@@ -55,8 +55,26 @@ module.exports = function() {
     'email-notifications': {
       sendemail:true,
       email: {
-        'invite-mentor':{
-          subject:'New Dojo Mentor Invitation'
+        'invite-user':{
+          subject:'New Dojo Invitation'
+        },
+        'user-request-to-join':{
+          subject:'New Request to join your Dojo'
+        },
+        'user-left-dojo': {
+          subject:'A user has left your Dojo'
+        },
+        'one-off-event-application-approved': {
+          subject:'Event application approved'
+        },
+        'recurring-event-application-approved': {
+          subject:'Event application approved'
+        },
+        'one-off-event-application-received': {
+          subject:'Event application received'
+        },
+        'recurring-event-application-received': {
+          subject:'Event application received'
         },
         'mentor-request-to-join':{
           subject:'New Mentor Request to join your Dojo'

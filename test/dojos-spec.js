@@ -231,6 +231,30 @@ describe('Dojo Microservice test', function(){
   });
 
   describe('Delete', function(){
+
+    it('should not delete without correct user role', function (done) {
+      var dojo = dojos[0];
+      dojosEnt.list$({creator: users[4].id}, function(err, dojos){
+
+        // console.log('dojos: ' + util.inspect(dojos));
+
+        expect(dojos).to.exist;
+        expect(dojos.length).to.be.equal(1);
+        expect(dojos[0]).to.be.ok;
+
+        seneca.act({role: role, cmd: 'delete', id: dojos[0].id, user: {roles: ['basic-user']}}, function(err, output){
+          if(err) return done(err);
+          dojosEnt.list$({creator: users[4].id}, function(err, dojos){
+            if(err) return done(err);
+
+            expect(dojos).to.be.not.empty;
+
+            done();
+          });
+        });
+      }); 
+    });
+
     it('delete dojo from db', function(done){
       var dojo = dojos[0];
 
