@@ -74,6 +74,9 @@ module.exports = function() {
         },
         'recurring-event-application-received': {
           subject:'Event application received'
+        },
+        'accept-badge-award': {
+          subject:'CoderDojo Badge Nomination'
         }
       }
     },
