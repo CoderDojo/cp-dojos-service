@@ -511,7 +511,6 @@ module.exports = function (options) {
   function cmd_create(args, done){
     var dojo = args.dojo, baseSlug;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-
     var user = args.user;
     var userDojo = {};
 
@@ -618,6 +617,7 @@ module.exports = function (options) {
 
             dojoLead = dojoLead.data$();
             dojoLead.completed = true;
+            dojoLead.currentStep = 5;  // salesforce trigger to set the Dojo Listing Verified...
 
             //update dojoLead
             seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead}, function (err, dojoLead) {
@@ -652,7 +652,8 @@ module.exports = function (options) {
               return done(err)
             }
             dojoLead = dojoLead.data$();
-            dojoLead.completed = true;
+            dojoLead.completed = false;
+            dojoLead.currentStep = 4;  // reset state in salesforce
 
             //update dojoLead
             seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead}, function (err, dojoLead) {
@@ -823,23 +824,85 @@ module.exports = function (options) {
     });
   }
 
+  function updateSalesForceChampionDetails(userId, dojoLead) {
+     var account = {
+      PlatformId__c: userId,
+     };
+    if (dojoLead.application.championDetails.email)
+      account.Email = dojoLead.application.championDetails.email;
+    if (dojoLead.application.championDetails.phone)
+      account.Phone = dojoLead.application.championDetails.phone;
+
+    if (dojoLead.application.championDetails.placeName)
+      account.Street = dojoLead.application.championDetails.placeName;
+    if (dojoLead.application.championDetails.countryName)
+      account.Country = dojoLead.application.championDetails.countryName;
+
+    if (dojoLead.application.championDetails.dateOfBirth)
+      account.DateofBirth__c = dojoLead.application.championDetails.dateOfBirth;
+    if (dojoLead.application.championDetails.twitter)
+      account.Twitter__c = dojoLead.application.championDetails.twitter;
+    if (dojoLead.application.championDetails.linkedIn)
+      account.Linkedin__c = dojoLead.application.championDetails.linkedIn;
+
+    seneca.act('role:cd-salesforce,cmd:save_account', {userId: userId, account: account}, function (err, res){
+      if (err) return seneca.log.error('Error saving champion account in SalesForce!', err);
+      seneca.log.info('Account saved in SalesForce', account, res);
+    });
+  }
+
+  // Note at this stage we expect to have an existing Account and Lead types in salesforce, this is
+  // done at inital champion registration in cp-users.
   function updateSalesForce(userId, dojoLead) {
     var lead = {
       PlatformId__c: userId,
-      // TODO - need to link to users profile in the platform here when it's ready
-      PlatformUrl__c: 'https://zen.coderdojo.com/TODO-users/' + userId
     };
 
-    if (dojoLead.application && dojoLead.application.championDetails && dojoLead.application.championDetails.name)
-      lead.LastName = dojoLead.application.championDetails.name;
-    if (dojoLead.application && dojoLead.application.dojoListing && dojoLead.application.dojoListing.name)
+    if (dojoLead.application && dojoLead.application.championDetails) {
+      updateSalesForceChampionDetails(userId, dojoLead);
+      if (dojoLead.application.championDetails.name)
+        lead.LastName = dojoLead.application.championDetails.name;
+    }
+
+    if (dojoLead.name) lead.Name = dojoLead.name;
+    if (dojoLead.application && dojoLead.application.dojoListing && dojoLead.application.dojoListing.name) {
       lead.Company = dojoLead.application.dojoListing.name;
+      lead.Name = dojoLead.application.dojoListing.name;
+    }
+
     if (dojoLead.email) lead.Email = dojoLead.email;
     if (dojoLead.phone) lead.Phone = dojoLead.phone;
+    if (dojoLead.twitter) lead.Twitter__c = dojoLead.twitter;
+    if (dojoLead.website) lead.Website = dojoLead.website;
+    if (dojoLead.address1) lead.Street = dojoLead.address1;
+    if (dojoLead.countryName) lead.Country = dojoLead.countryName;
+
+    var convertAccount = false;
+    switch(dojoLead.currentStep) {
+      case 2:
+        lead.Status = '2. Champion Registration Completed';
+        break;
+      case 3:
+        lead.Status = '4. Dojo Set Up Completed';
+        break;
+      case 4:
+        lead.Status = '5. Dojo Listing Created';
+        break;
+      case 5:
+        lead.Status = '7. Dojo Listing Verified';
+        convertAccount = true;
+        break;
+    };
 
     seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
-      if (err) return seneca.log.error('Error creating lead in SalesForce!', err);
-      seneca.log.info('Created lead in SalesForce', lead, res);
+      if (err) return seneca.log.error('Error saving Lead in SalesForce!', err);
+      seneca.log.info('Lead saved in SalesForce', lead, res);
+      if (convertAccount === true) {
+        seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: res.id$}, function (err, res){
+          if (err) return seneca.log.error('Error converting Lead to Account in SalesForce!', err);
+          seneca.log.info('Lead converted to Account in SalesForce', lead, res);
+        });
+      }
     });
   }
 
@@ -848,9 +911,9 @@ module.exports = function (options) {
     var dojoLead = args.dojoLead;
     dojoLeadEntity.save$(dojoLead, function(err, response) {
       if(err) return done(err);
-      if(process.env.SALESFORCE_ENABLED === true || process.env.SALESFORCE_ENABLED === 'true') {
+      if(process.env.SALESFORCE_ENABLED === 'true') {
         // Note: updating SalesForce is slow, ideally this would go on a work queue
-        process.nextTick(function() { updateSalesForce(args.user.id, dojoLead); });
+        process.nextTick(function() { updateSalesForce(dojoLead.userId, dojoLead); });
       };
       done(null, response);
     });

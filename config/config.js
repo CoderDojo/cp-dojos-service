@@ -38,12 +38,12 @@ module.exports = function() {
   function googleApiConfig() {
     return {
       enabled: process.env.GOOGLE_API_ENABLED === 'true',
-      "email": "1075875288894-8vec5965koo2580s16hvo3ah4bc5h32f@developer.gserviceaccount.com",
-      "keyFile": path.resolve(__dirname + '/community-platform-testing-key.pem'),
-      "scopes": [
+      email: "1075875288894-8vec5965koo2580s16hvo3ah4bc5h32f@developer.gserviceaccount.com",
+      keyFile: path.resolve(__dirname + '/community-platform-testing-key.pem'),
+      scopes: [
         "https://www.googleapis.com/auth/admin.directory.user"
       ],
-      "subject":  "ursula@coderdojo.org"
+      subject:  "ursula@coderdojo.org"
     }
   }
 
