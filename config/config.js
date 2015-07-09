@@ -37,6 +37,7 @@ module.exports = function() {
 
   function googleApiConfig() {
     return {
+      enabled: process.env.GOOGLE_API_ENABLED === 'true',
       "email": "1075875288894-8vec5965koo2580s16hvo3ah4bc5h32f@developer.gserviceaccount.com",
       "keyFile": path.resolve(__dirname + '/community-platform-testing-key.pem'),
       "scopes": [
@@ -74,6 +75,12 @@ module.exports = function() {
         },
         'recurring-event-application-received': {
           subject:'Event application received'
+        },
+        'mentor-request-to-join':{
+          subject:'New Mentor Request to join your Dojo'
+        },
+        'google-email-pass':{
+          subject:'We created a new Google Email for your Dojo'
         }
       }
     },
