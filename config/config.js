@@ -76,6 +76,9 @@ module.exports = function() {
         'recurring-event-application-received': {
           subject:'Event application received'
         },
+        'accept-badge-award': {
+          subject:'CoderDojo Badge Nomination'
+        },
         'mentor-request-to-join':{
           subject:'New Mentor Request to join your Dojo'
         },
