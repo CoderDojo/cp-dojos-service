@@ -65,6 +65,7 @@ CREATE TABLE IF NOT EXISTS cd_dojos(
   admin4_name character varying,
   place_geoname_id character varying,
   place_name character varying,
+  user_invites json[],
   CONSTRAINT pk_cd_dojos_id PRIMARY KEY (id)
 )
 
@@ -79,7 +80,7 @@ CREATE TABLE IF NOT EXISTS cd_usersdojos(
   owner smallint,
   user_id character varying,
   dojo_id character varying,
-  user_types json[],
+  user_types character varying[],
   user_permissions json[],
   CONSTRAINT pk_cd_userdojos PRIMARY KEY (id)
 )

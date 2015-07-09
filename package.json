@@ -47,6 +47,7 @@
     "seneca-postgresql-store": "git://github.com/iantocristian/seneca-postgresql-store.git",
     "shortid": "2.2.2",
     "slug": "0.9.1",
-    "yargs": "3.7.2"
+    "yargs": "3.7.2",
+    "moment": "2.10.3"
   }
 }
