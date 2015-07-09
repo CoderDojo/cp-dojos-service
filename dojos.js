@@ -60,12 +60,12 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'search_dojo_leads'}, cmd_search_dojo_leads);
   seneca.add({role: plugin, cmd: 'uncompleted_dojos'}, cmd_uncompleted_dojos);
 
-  function cmd_create_dojo_email(args, done){
-    if(!args.dojo){
+  function cmd_create_dojo_email(args, done) {
+    if (!args.dojo) {
       return done('Dojo data is missing.');
     }
 
-    if(process.env.ENVIRONMENT === 'development'){
+    if(options['google-api'].enabled === false) {
       return done();
     }
 
@@ -83,57 +83,99 @@ module.exports = function (options) {
     );
 
     jwt.authorize(function (err, data) {
-      if (err) { throw err; }
+      if (err) {
+        return done(err)
+      }
 
-      // Insert user
-      admin.users.insert({
-        resource: getGoogleUserData(args.dojo),
-        auth: jwt
-      }, function (err, data) {
-        done(null, data);
+      getGoogleUserData(args.dojo, function (err, res) {
+
+        var googleNewAccountData = res.userData;
+        var tempPass = googleNewAccountData.tempPass;
+        googleNewAccountData = _.omit(googleNewAccountData, 'tempPass');
+        var dojo = res.dojo;
+
+        // Insert user
+        admin.users.insert({
+          resource: googleNewAccountData,
+          auth: jwt
+        }, function (err, data) {
+          if (err) {
+            return done(err)
+          }
+
+          seneca.act({role: 'cd-users', cmd: 'load', id: dojo.creator}, function (err, dojoCreator) {
+            if (err) {
+              return done(err)
+            }
+
+            //send dojo creator an email with dojo's newly created email address and it's temp password
+            var payload = {
+              to: dojoCreator.email,
+              code: 'google-email-pass',
+              content: {temp_pass: tempPass, dojo: dojo.name, email: googleNewAccountData.primaryEmail}
+            };
+            seneca.act({role: plugin, cmd: 'send_email', payload: payload}, function (err, res) {
+              if (err) {
+                return done(err)
+              }
+
+              done(null, data);
+            });
+          });
+        });
       });
     });
   }
 
-  function getGoogleUserData(dojo){
+  function getGoogleUserData(dojo, done) {
     var userData = {};
 
-    //this can look something like this: nsc-mahon-cork.ie@coderdojo.com
-    var primaryEmail = _.last(dojo.urlSlug.split('/')).concat('.', dojo.alpha2.toLowerCase(), '@coderdojo.com');
-
-    //required user data
-    userData.name = {
-      familyName: dojo.name, //this can be changed with the champion name & family name
-      givenName: dojo.place
-    };
-    var pass = randomstring.generate(8);
-    userData.password = sha1sum('cocacola');//use default pass for now; replace this with random pass when finished
-    userData.hashFunction = "SHA-1";
-    userData.primaryEmail = primaryEmail;
-    userData.changePasswordAtNextLogin = true;
-
-    //TODO: determine what other optional attributes are required and add them
-    //emails and organizations can also be altered
-    userData.emails= [
-      {
-        "address": "cristian.kiss@nearform.com",
-        "type": "other",
-        "customType": "",
-        "primary": false
+    seneca.act('role:cd-dojos,cmd:load', {id: dojo.id}, function (err, res) {
+      if (err) {
+        return done(err)
       }
-    ];
-    userData.organizations= [
-      {
-        "name": "nearform_test",
-        "title": "champion",
-        "primary": true,
-        "type": "school",
-        "description": "new test dojo",
-        domain: 'coderdojo.org'
-      }
-    ];
 
-    return userData;
+      dojo = res.data$();
+
+      //this can look something like this: nsc-mahon-cork.ie@coderdojo.com
+      var primaryEmail = _.last(dojo.urlSlug.split('/')).concat('.', dojo.alpha2.toLowerCase(), '@coderdojo.com');
+
+      if (process.env.ENVIRONMENT === 'development') {
+        primaryEmail = 'dev-' + primaryEmail;
+      }
+
+      //required user data
+      userData.name = {
+        familyName: dojo.name, //this can be changed with the champion name & family name
+        givenName: dojo.placeName || dojo.address1
+      };
+      var pass = randomstring.generate(8);
+      userData.tempPass = pass;
+      userData.password = sha1sum(pass);//use default pass for now; replace this with random pass when finished
+      userData.hashFunction = "SHA-1";
+      userData.primaryEmail = primaryEmail;
+      userData.changePasswordAtNextLogin = true;
+      userData.emails = [
+        {
+          "address": "cristian.kiss@nearform.com",
+          "type": "other",
+          "customType": "",
+          "primary": false
+        }
+      ];
+      userData.organizations = [
+        {
+          "name": "nearform_test",
+          "title": "champion",
+          "primary": true,
+          "type": "school",
+          "description": "new test dojo",
+          domain: 'coderdojo.org'
+        }
+      ];
+
+      return done(null, {userData: userData, dojo: dojo});
+    });
   }
 
   function sha1sum(input){
@@ -247,7 +289,7 @@ module.exports = function (options) {
     var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
     async.waterfall([
       function(done) {
-        seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search}, done);
+        seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search, type: args.type || null}, done);
       },
       function(searchResult, done) {
         var dojos = _.pluck(searchResult.hits, '_source');
@@ -469,7 +511,6 @@ module.exports = function (options) {
   function cmd_create(args, done){
     var dojo = args.dojo, baseSlug;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-
     var user = args.user;
     var userDojo = {};
 
@@ -576,6 +617,7 @@ module.exports = function (options) {
 
             dojoLead = dojoLead.data$();
             dojoLead.completed = true;
+            dojoLead.currentStep = 5;  // salesforce trigger to set the Dojo Listing Verified...
 
             //update dojoLead
             seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead}, function (err, dojoLead) {
@@ -610,7 +652,8 @@ module.exports = function (options) {
               return done(err)
             }
             dojoLead = dojoLead.data$();
-            dojoLead.completed = true;
+            dojoLead.completed = false;
+            dojoLead.currentStep = 4;  // reset state in salesforce
 
             //update dojoLead
             seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead}, function (err, dojoLead) {
@@ -741,13 +784,13 @@ module.exports = function (options) {
         var query = {ids:dojoIds};
 
         var search = args.search;
-        if (search.from){
+        if (search && search.from){
           query.skip$ = search.from;
         }
-        if (search.size){
+        if (search && search.size){
           query.limit$ = search.size;
         }
-        if (search.sort){
+        if (search && search.sort){
           query.sort$ = search.sort;
         }
         seneca.make$(ENTITY_NS).list$(query, _.partialRight(done, userDojos));
@@ -781,23 +824,85 @@ module.exports = function (options) {
     });
   }
 
+  function updateSalesForceChampionDetails(userId, dojoLead) {
+     var account = {
+      PlatformId__c: userId,
+     };
+    if (dojoLead.application.championDetails.email)
+      account.Email = dojoLead.application.championDetails.email;
+    if (dojoLead.application.championDetails.phone)
+      account.Phone = dojoLead.application.championDetails.phone;
+
+    if (dojoLead.application.championDetails.placeName)
+      account.Street = dojoLead.application.championDetails.placeName;
+    if (dojoLead.application.championDetails.countryName)
+      account.Country = dojoLead.application.championDetails.countryName;
+
+    if (dojoLead.application.championDetails.dateOfBirth)
+      account.DateofBirth__c = dojoLead.application.championDetails.dateOfBirth;
+    if (dojoLead.application.championDetails.twitter)
+      account.Twitter__c = dojoLead.application.championDetails.twitter;
+    if (dojoLead.application.championDetails.linkedIn)
+      account.Linkedin__c = dojoLead.application.championDetails.linkedIn;
+
+    seneca.act('role:cd-salesforce,cmd:save_account', {userId: userId, account: account}, function (err, res){
+      if (err) return seneca.log.error('Error saving champion account in SalesForce!', err);
+      seneca.log.info('Account saved in SalesForce', account, res);
+    });
+  }
+
+  // Note at this stage we expect to have an existing Account and Lead types in salesforce, this is
+  // done at inital champion registration in cp-users.
   function updateSalesForce(userId, dojoLead) {
     var lead = {
       PlatformId__c: userId,
-      // TODO - need to link to users profile in the platform here when it's ready
-      PlatformUrl__c: 'https://zen.coderdojo.com/TODO-users/' + userId
     };
 
-    if (dojoLead.application && dojoLead.application.championDetails && dojoLead.application.championDetails.name)
-      lead.LastName = dojoLead.application.championDetails.name;
-    if (dojoLead.application && dojoLead.application.dojoListing && dojoLead.application.dojoListing.name)
+    if (dojoLead.application && dojoLead.application.championDetails) {
+      updateSalesForceChampionDetails(userId, dojoLead);
+      if (dojoLead.application.championDetails.name)
+        lead.LastName = dojoLead.application.championDetails.name;
+    }
+
+    if (dojoLead.name) lead.Name = dojoLead.name;
+    if (dojoLead.application && dojoLead.application.dojoListing && dojoLead.application.dojoListing.name) {
       lead.Company = dojoLead.application.dojoListing.name;
+      lead.Name = dojoLead.application.dojoListing.name;
+    }
+
     if (dojoLead.email) lead.Email = dojoLead.email;
     if (dojoLead.phone) lead.Phone = dojoLead.phone;
+    if (dojoLead.twitter) lead.Twitter__c = dojoLead.twitter;
+    if (dojoLead.website) lead.Website = dojoLead.website;
+    if (dojoLead.address1) lead.Street = dojoLead.address1;
+    if (dojoLead.countryName) lead.Country = dojoLead.countryName;
+
+    var convertAccount = false;
+    switch(dojoLead.currentStep) {
+      case 2:
+        lead.Status = '2. Champion Registration Completed';
+        break;
+      case 3:
+        lead.Status = '4. Dojo Set Up Completed';
+        break;
+      case 4:
+        lead.Status = '5. Dojo Listing Created';
+        break;
+      case 5:
+        lead.Status = '7. Dojo Listing Verified';
+        convertAccount = true;
+        break;
+    };
 
     seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
-      if (err) return seneca.log.error('Error creating lead in SalesForce!', err);
-      seneca.log.info('Created lead in SalesForce', lead, res);
+      if (err) return seneca.log.error('Error saving Lead in SalesForce!', err);
+      seneca.log.info('Lead saved in SalesForce', lead, res);
+      if (convertAccount === true) {
+        seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: res.id$}, function (err, res){
+          if (err) return seneca.log.error('Error converting Lead to Account in SalesForce!', err);
+          seneca.log.info('Lead converted to Account in SalesForce', lead, res);
+        });
+      }
     });
   }
 
@@ -806,9 +911,9 @@ module.exports = function (options) {
     var dojoLead = args.dojoLead;
     dojoLeadEntity.save$(dojoLead, function(err, response) {
       if(err) return done(err);
-      if(process.env.SALESFORCE_ENABLED === true || process.env.SALESFORCE_ENABLED === 'true') {
+      if(process.env.SALESFORCE_ENABLED === 'true') {
         // Note: updating SalesForce is slow, ideally this would go on a work queue
-        process.nextTick(function() { updateSalesForce(args.user.id, dojoLead); });
+        process.nextTick(function() { updateSalesForce(dojoLead.userId, dojoLead); });
       };
       done(null, response);
     });

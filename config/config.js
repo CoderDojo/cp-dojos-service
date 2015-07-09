@@ -37,12 +37,13 @@ module.exports = function() {
 
   function googleApiConfig() {
     return {
-      "email": "1075875288894-8vec5965koo2580s16hvo3ah4bc5h32f@developer.gserviceaccount.com",
-      "keyFile": path.resolve(__dirname + '/community-platform-testing-key.pem'),
-      "scopes": [
+      enabled: process.env.GOOGLE_API_ENABLED === 'true',
+      email: "1075875288894-8vec5965koo2580s16hvo3ah4bc5h32f@developer.gserviceaccount.com",
+      keyFile: path.resolve(__dirname + '/community-platform-testing-key.pem'),
+      scopes: [
         "https://www.googleapis.com/auth/admin.directory.user"
       ],
-      "subject":  "ursula@coderdojo.org"
+      subject:  "ursula@coderdojo.org"
     }
   }
 
@@ -77,6 +78,12 @@ module.exports = function() {
         },
         'accept-badge-award': {
           subject:'CoderDojo Badge Nomination'
+        },
+        'mentor-request-to-join':{
+          subject:'New Mentor Request to join your Dojo'
+        },
+        'google-email-pass':{
+          subject:'We created a new Google Email for your Dojo'
         }
       }
     },
