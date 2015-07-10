@@ -1017,7 +1017,7 @@ module.exports = function (options) {
 
     function sendEmail(dojo, done) {
       var content = {
-        link: 'http://'+zenHostname+'/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
+        link: 'http://'+zenHostname+'/dashboard/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
         userType:userType,
         dojoName:dojo.name,
         year: moment(new Date()).format('YYYY')
@@ -1151,7 +1151,7 @@ module.exports = function (options) {
       if(!champion) return done();
       var championEmail = champion.email;
       var content = {
-        link:'http://'+zenHostname+'/accept_dojo_user_request/'+user.id+'/'+inviteToken,
+        link:'http://'+zenHostname+'/dashboard/accept_dojo_user_request/'+user.id+'/'+inviteToken,
         name:user.name,
         email:user.email,
         dojoName:dojo.name,
