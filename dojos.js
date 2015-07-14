@@ -12,6 +12,9 @@ var moment = require('moment');
 
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
+var path = require('path');
+var fs = require('fs');
+var DEFAULT_LANG = 'en_US';
 
 module.exports = function (options) {
   var seneca = this;
@@ -23,6 +26,7 @@ module.exports = function (options) {
   var CDF_ADMIN = 'cdf-admin';
   var DEFAULT_INVITE_USER_TYPE = 'mentor';
   var setupDojoSteps = require('./data/setup_dojo_steps');
+  var so = seneca.options();
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
@@ -1022,7 +1026,18 @@ module.exports = function (options) {
         dojoName:dojo.name,
         year: moment(new Date()).format('YYYY')
       };
-      var payload = {to:inviteEmail, code:'invite-user', content:content};
+
+      var code = 'invite-user-' + args.locality;
+      var templates = {};
+
+      try {
+        templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
+        templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'));
+      }catch(err){
+        code = 'invite-user-' + DEFAULT_LANG;
+      }
+
+      var payload = {to:inviteEmail, code:code, content:content};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
     }
   }
@@ -1158,7 +1173,17 @@ module.exports = function (options) {
         userType:userType,
         year: moment(new Date()).format('YYYY')
       };
-      var code = 'user-request-to-join';
+
+      var code = 'user-request-to-join-' + args.locality;
+      var templates = {};
+
+      try{
+        templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
+        templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'))
+      } catch(err) {
+        code = 'user-request-to-join-' + DEFAULT_LANG;
+      }
+
       var payload = {to:championEmail, code:code, content:content};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
     }
