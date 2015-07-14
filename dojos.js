@@ -112,10 +112,21 @@ module.exports = function (options) {
               return done(err)
             }
 
+            var code = 'google-email-pass-' + args.locality;
+
+            var templates = {};
+
+            try {
+              templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
+              templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'));
+            } catch(err){
+              code = 'google-email-pass-' + DEFAULT_LANG;
+            }
+
             //send dojo creator an email with dojo's newly created email address and it's temp password
             var payload = {
               to: dojoCreator.email,
-              code: 'google-email-pass',
+              code: code,
               content: {temp_pass: tempPass, dojo: dojo.name, email: googleNewAccountData.primaryEmail}
             };
             seneca.act({role: plugin, cmd: 'send_email', payload: payload}, function (err, res) {
@@ -1406,7 +1417,18 @@ module.exports = function (options) {
         dojoName:dojo.name,
         year: moment(new Date()).format('YYYY')
       };
-      var payload = {to:champion.email, code:'user-left-dojo', content:content};
+
+      var code = 'user-left-dojo-' + args.locality;
+      var templates = {};
+
+      try {
+        templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
+        templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'));
+      } catch(err){
+        code = 'user-left-dojo-' + DEFAULT_LANG;
+      }
+
+      var payload = {to:champion.email, code: code, content:content};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, cb);
     }
   }
