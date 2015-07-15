@@ -19,6 +19,7 @@ seneca.options(config);
 
 seneca
   .use(__dirname + '/stubs/cd-countries.js')
+  .use(__dirname + '/stubs/cd-profiles.js')
   .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}});
 
 var using_postgres = false; // can be set to true for debugging
