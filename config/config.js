@@ -55,34 +55,34 @@ module.exports = function() {
     'email-notifications': {
       sendemail:true,
       email: {
-        'invite-user':{
+        'invite-user-en_US':{
           subject:'New Dojo Invitation'
         },
-        'user-request-to-join':{
+        'user-request-to-join-en_US':{
           subject:'New Request to join your Dojo'
         },
-        'user-left-dojo': {
+        'user-left-dojo-en_US': {
           subject:'A user has left your Dojo'
         },
-        'one-off-event-application-approved': {
+        'one-off-event-application-approved-en_US': {
           subject:'Event application approved'
         },
-        'recurring-event-application-approved': {
+        'recurring-event-application-approved-en_US': {
           subject:'Event application approved'
         },
-        'one-off-event-application-received': {
+        'one-off-event-application-received-en_US': {
           subject:'Event application received'
         },
-        'recurring-event-application-received': {
+        'recurring-event-application-received-en_US': {
           subject:'Event application received'
         },
-        'accept-badge-award': {
+        'accept-badge-award-en_US': {
           subject:'CoderDojo Badge Nomination'
         },
-        'mentor-request-to-join':{
+        'mentor-request-to-join-en_US':{
           subject:'New Mentor Request to join your Dojo'
         },
-        'google-email-pass':{
+        'google-email-pass-en_US':{
           subject:'We created a new Google Email for your Dojo'
         }
       }
