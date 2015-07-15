@@ -225,20 +225,17 @@ module.exports = function (options) {
         async.each(dojos.records, function (dojo, cb) {
           //check if dojo "setup dojo step is completed"
           seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojo.dojoLeadId}, function (err, dojoLead) {
+            if(err) return cb(err);
             if (dojoLead) {
               var isCompleted = checkSetupYourDojoIsCompleted(dojoLead);
               if (!isCompleted) {
                 uncompletedDojos.push(dojo);
               }
-
-              cb(null);
             }
+            return cb();
           });
         }, function (err) {
-          if (err) {
-            return done(err);
-          }
-
+          if (err) return done(err);
           return done(null, uncompletedDojos);
         });
       } else return done(null);
@@ -543,7 +540,7 @@ module.exports = function (options) {
     ]).compact().map(slugify).value().join('/').toLowerCase();
 
     async.waterfall([
-      function(cb){
+      function (cb){
         var urlSlug = {urlSlug: new RegExp('^' + baseSlug,  'i')};
         seneca.make$(ENTITY_NS).list$(urlSlug,function(err, dojos){
           if(err){
@@ -560,23 +557,30 @@ module.exports = function (options) {
 
           cb(null, urlSlug);
         });
-      }, function(urlSlug, cb){
+      }, function (urlSlug, cb){
         dojo.urlSlug = urlSlug;
         seneca.make$(ENTITY_NS).save$(dojo, cb);
-      }, function(dojo, cb){
+      }, function (dojo, cb){
         userDojo.owner = 1;
         userDojo.userTypes = ['champion'];
-        userDojo.userPermissions = [
-          {title:'Dojo Admin', name:'dojo-admin'},
-          {title:'Forum Admin', name:'forum-admin'}, 
-          {title:'Ticketing Admin', name:'ticketing-admin'}
-        ];
-        userDojo.user_id = user.id;
-        userDojo.dojo_id = dojo.id;
-        usersDojosEntity.save$(userDojo, function (err, userDojo) {
+        //add user type from users profile.
+        seneca.act({role: 'cd-profiles', cmd: 'list_query', query:{userId: user.id}}, function (err, response) {
           if(err) return cb(err);
-          cb(null, dojo);
-        });
+          var profile = response[0];
+          userDojo.userTypes.push(profile.userType);
+          userDojo.userTypes = _.uniq(userDojo.userTypes);
+          userDojo.userPermissions = [
+            {title:'Dojo Admin', name:'dojo-admin'},
+            {title:'Forum Admin', name:'forum-admin'}, 
+            {title:'Ticketing Admin', name:'ticketing-admin'}
+          ];
+          userDojo.user_id = user.id;
+          userDojo.dojo_id = dojo.id;
+          usersDojosEntity.save$(userDojo, function (err, userDojo) {
+            if(err) return cb(err);
+            cb(null, dojo);
+          });
+        }); 
       }], done);
   }
 
