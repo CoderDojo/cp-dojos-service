@@ -999,6 +999,7 @@ module.exports = function (options) {
     var payload = args.payload;
     var to = payload.to;
     var content = payload.content;
+    content.year = moment(new Date()).format('YYYY');
     var emailCode = payload.code;
     seneca.act({role:'email-notifications', cmd: 'send', to:to, content:content, code:emailCode}, done);
   }
@@ -1038,8 +1039,7 @@ module.exports = function (options) {
       var content = {
         link: 'http://'+zenHostname+'/dashboard/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
         userType:userType,
-        dojoName:dojo.name,
-        year: moment(new Date()).format('YYYY')
+        dojoName:dojo.name
       };
 
       var code = 'invite-user-' + args.locality;
@@ -1215,8 +1215,7 @@ module.exports = function (options) {
         name:user.name,
         email:user.email,
         dojoName:dojo.name,
-        userType:userType,
-        year: moment(new Date()).format('YYYY')
+        userType:userType
       };
 
       var code = 'user-request-to-join-' + args.locality;
@@ -1492,8 +1491,7 @@ module.exports = function (options) {
       var content = {
         name:user.name,
         email:user.email,
-        dojoName:dojo.name,
-        year: moment(new Date()).format('YYYY')
+        dojoName:dojo.name
       };
 
       var code = 'user-left-dojo-' + args.locality;
