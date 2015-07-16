@@ -646,9 +646,7 @@ module.exports = function (options) {
               }
 
               //create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
-              if (_.isEmpty(dojo.email) || _.isNull(dojo.email) || _.isUndefined(dojo.email) &&
-                _.isEmpty(currentDojoState.email) || _.isNull(currentDojoState.email) || _.isUndefined(currentDojoState.email)) {
-
+              if (!currentDojoState.email){
                 seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo}, function (err, organizationEmail) {
                   if (err) {
                     return done(err)
