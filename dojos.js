@@ -1353,10 +1353,7 @@ module.exports = function (options) {
   }
 
   function cmd_dojos_for_user(args, done) {
-    var userId = args.id;
-    var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-    var dojosEntity = seneca.make$(ENTITY_NS);
-    var query = {userId:userId};
+    var query = { userId:args.id };
     var dojos = [];
     seneca.act({role:plugin, cmd:'load_usersdojos', query:query}, function (err, response) {
       if(err) return done(err);
