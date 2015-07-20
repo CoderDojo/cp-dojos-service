@@ -259,22 +259,25 @@ module.exports = function (options) {
 
   function checkSetupYourDojoIsCompleted(dojoLead){
     var isDojoCompleted = true;
-    var setupYourDojo = dojoLead.application.setupYourDojo;
-    var checkboxes = _.flatten(_.pluck(setupDojoSteps, 'checkboxes'));
 
-    _.each(checkboxes, function(checkbox){
-      if(_.isUndefined(setupYourDojo[checkbox.name]) || _.isNull(setupYourDojo[checkbox.name]) || !setupYourDojo[checkbox.name]){
-        isDojoCompleted = false;
-      }
+    if(dojoLead.application.setupYourDojo) {
+      var setupYourDojo = dojoLead.application.setupYourDojo;
+      var checkboxes = _.flatten(_.pluck(setupDojoSteps, 'checkboxes'));
 
-      if(checkbox.textField){
-        if(_.isNull(setupYourDojo[checkbox.name + "-text"]) ||
-          _.isUndefined(setupYourDojo[checkbox.name + '-text']) ||
-          _.isEmpty(setupYourDojo[checkbox.name + '-text'])){
+      _.each(checkboxes, function(checkbox){
+        if(_.isUndefined(setupYourDojo[checkbox.name]) || _.isNull(setupYourDojo[checkbox.name]) || !setupYourDojo[checkbox.name]){
           isDojoCompleted = false;
         }
-      }
-    });
+
+        if(checkbox.textField){
+          if(_.isNull(setupYourDojo[checkbox.name + "Text"]) ||
+            _.isUndefined(setupYourDojo[checkbox.name + 'Text']) ||
+            _.isEmpty(setupYourDojo[checkbox.name + 'Text'])){
+            isDojoCompleted = false;
+          }
+        }
+      });
+    }
 
     return isDojoCompleted;
   }
@@ -842,25 +845,45 @@ module.exports = function (options) {
   }
 
   function updateSalesForceChampionDetails(userId, dojoLead) {
-     var account = {
+    var account = {
       PlatformId__c: userId,
-     };
+    };
+
     if (dojoLead.application.championDetails.email)
       account.Email = dojoLead.application.championDetails.email;
-    if (dojoLead.application.championDetails.phone)
-      account.Phone = dojoLead.application.championDetails.phone;
-
-    if (dojoLead.application.championDetails.placeName)
-      account.Street = dojoLead.application.championDetails.placeName;
-    if (dojoLead.application.championDetails.countryName)
-      account.Country = dojoLead.application.championDetails.countryName;
-
     if (dojoLead.application.championDetails.dateOfBirth)
       account.DateofBirth__c = dojoLead.application.championDetails.dateOfBirth;
+    if (dojoLead.application.championDetails.phone)
+      account.Phone = dojoLead.application.championDetails.phone;
+    if (dojoLead.application.championDetails.country.name)
+      account.BillingCountry = dojoLead.application.championDetails.country.name;
+    if (dojoLead.application.championDetails.place.name)
+      account.BillingCity = dojoLead.application.championDetails.place.name;
+    if (dojoLead.application.championDetails.place.admin2Name)
+      account.BillingState = dojoLead.application.championDetails.place.admin2Name;
+    if (dojoLead.application.championDetails.address1)
+      account.BillingStreet = dojoLead.application.championDetails.address1;
+    if (dojoLead.application.championDetails.place.latitude && dojoLead.application.championDetails.place.longitude) {
+      account.Coordinates__Latitude__s = dojoLead.application.championDetails.place.latitude;
+      account.Coordinates__Longitude__s = dojoLead.application.championDetails.place.longitude;
+    }
+    if (dojoLead.application.championDetails.projects)
+      account.Projects__c = dojoLead.application.championDetails.projects;
+    if (dojoLead.application.championDetails.youthExperience)
+      account.ExperienceWorkingWithYouth__c = dojoLead.application.championDetails.youthExperience;
     if (dojoLead.application.championDetails.twitter)
       account.Twitter__c = dojoLead.application.championDetails.twitter;
     if (dojoLead.application.championDetails.linkedIn)
       account.Linkedin__c = dojoLead.application.championDetails.linkedIn;
+    if (dojoLead.application.championDetails.notes)
+      account.Notes__c = dojoLead.application.championDetails.notes;
+    if (dojoLead.application.championDetails.coderDojoReference) {
+      account.CoderDojoReferral__c = dojoLead.application.championDetails.coderDojoReference;
+      if (dojoLead.application.championDetails.coderDojoReference === "Other" && dojoLead.application.championDetails.coderDojoReferenceOther)
+        account.CoderDojoReferralComment__c = dojoLead.application.championDetails.coderDojoReferenceOther;
+      else
+        account.CoderDojoReferralComment__c = "";
+    }
 
     seneca.act('role:cd-salesforce,cmd:save_account', {userId: userId, account: account}, function (err, res){
       if (err) return seneca.log.error('Error saving champion account in SalesForce!', err);
@@ -893,6 +916,51 @@ module.exports = function (options) {
     if (dojoLead.website) lead.Website = dojoLead.website;
     if (dojoLead.address1) lead.Street = dojoLead.address1;
     if (dojoLead.countryName) lead.Country = dojoLead.countryName;
+
+    if(dojoLead.application.setupYourDojo) {
+      var setupDojoObj = dojoLead.application.setupYourDojo;
+      if(setupDojoObj.findTechnicalMentors) lead.FindTechnicalMentors__c = setupDojoObj.findTechnicalMentors ;
+      if(setupDojoObj.findNonTechnicalMentors) lead.FindNonTechnicalMentors__c = setupDojoObj.findNonTechnicalMentors;
+      if(setupDojoObj.backgroundCheck) lead.BackgroundCheckSetUp__c = setupDojoObj.backgroundCheck;
+      if(setupDojoObj.backgroundCheckText) lead.BackgroundCheckComment__c = setupDojoObj.backgroundCheckText;
+      if(setupDojoObj.locateVenue) lead.LocateVenue__c = setupDojoObj.locateVenue;
+      if(setupDojoObj.ensureHealthAndSafety) lead.HealthAndSafetyMet__c = setupDojoObj.ensureHealthAndSafety;
+      if(setupDojoObj.ensureHealthAndSafetyText) lead.HealthAndSafetyComment__c = setupDojoObj.ensureHealthAndSafetyText;
+      if(setupDojoObj.ensureInsuranceCover) lead.Insurance__c = setupDojoObj.ensureInsuranceCover;
+      if(setupDojoObj.ensureInsuranceCoverText) lead.InsuranceComment__c = setupDojoObj.ensureInsuranceCoverText;
+      if(setupDojoObj.setDojoDateAndTime) lead.LaunchDateAndTime__c = setupDojoObj.setDojoDateAndTime;
+      if(setupDojoObj.planContent) lead.ContentPlan__c = setupDojoObj.planContent;
+      if(setupDojoObj.setupTicketingAndRegistration) lead.TicketingSetUp__c = setupDojoObj.setupTicketingAndRegistration;
+      if(setupDojoObj.setDojoEmailAddress) lead.SetUpEmail__c = setupDojoObj.setDojoEmailAddress;
+      if(setupDojoObj.setupSocialMedia) lead.SetUpSocialMedia__c = setupDojoObj.setupSocialMedia;
+      if(setupDojoObj.connectOtherDojos) lead.ConnectWithOtherDojos__c = setupDojoObj.connectOtherDojos;
+    }
+
+    if(dojoLead.application.dojoListing) {
+      var dojoListingObj = dojoLead.application.dojoListing;
+      console.log("$$$$$$$$$$$$$$$$$$");
+      console.log(dojoListingObj);
+      if(dojoListingObj.name) lead.Name = dojoListingObj.name ;
+      if(dojoListingObj.email) lead.Email = dojoListingObj.email;
+      if(dojoListingObj.time) lead.Time__c = dojoListingObj.time;
+      if(dojoListingObj.country.name) lead.Country = dojoListingObj.country.name;
+      if(dojoListingObj.place.name) lead.City = dojoListingObj.place.name;
+      if(dojoListingObj.place.name) lead.State = dojoListingObj.place.admin2Name;
+      if(dojoListingObj.address1) lead.Street = dojoListingObj.address1;
+      if (dojoListingObj.place.latitude && dojoListingObj.place.longitude) {
+        lead.Coordinates__Latitude__s = dojoListingObj.place.latitude;
+        lead.Coordinates__Longitude__s = dojoListingObj.place.longitude;
+      }
+      if(dojoListingObj.notes) lead.Notes__c = dojoListingObj.notes;
+      if(dojoListingObj.needMentors) lead.NeeedMentors__c = dojoListingObj.needMentors;
+      if(dojoListingObj.stage) lead.Stage__c = dojoListingObj.stage;
+      if(dojoListingObj.private) lead.Private__c = dojoListingObj.private;
+      if(dojoListingObj.googleGroup) lead.GoogleGroupURL__c = dojoListingObj.googleGroup;
+      if(dojoListingObj.website) lead.Website = dojoListingObj.website;
+      if(dojoListingObj.twitter) lead.Twitter__c = dojoListingObj.twitter;
+      if(dojoListingObj.supporterImage) lead.SupportersImageURL__c = dojoListingObj.supporterImage;
+      if(dojoListingObj.mailingList) lead.MailingList__c = dojoListingObj.mailingList;
+    }
 
     var convertAccount = false;
     switch(dojoLead.currentStep) {
