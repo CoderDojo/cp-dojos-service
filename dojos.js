@@ -938,8 +938,6 @@ module.exports = function (options) {
 
     if(dojoLead.application.dojoListing) {
       var dojoListingObj = dojoLead.application.dojoListing;
-      console.log("$$$$$$$$$$$$$$$$$$");
-      console.log(dojoListingObj);
       if(dojoListingObj.name) lead.Name = dojoListingObj.name ;
       if(dojoListingObj.email) lead.Email = dojoListingObj.email;
       if(dojoListingObj.time) lead.Time__c = dojoListingObj.time;
