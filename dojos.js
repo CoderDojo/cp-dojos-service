@@ -926,9 +926,7 @@ module.exports = function (options) {
   function cmd_save_dojo_lead(args, done) {
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
     var dojoLead = args.dojoLead;
-    var self = this;
-    
-    self.response = {}
+
     function saveLead(cb){
       dojoLeadEntity.save$(dojoLead, function(err, response){
         if(err){
@@ -940,7 +938,6 @@ module.exports = function (options) {
           process.nextTick(function() { updateSalesForce(dojoLead.userId, dojoLead); });
         }
 
-        self.response = response;
         cb(null, response);
       });
     }
@@ -991,7 +988,7 @@ module.exports = function (options) {
           return done(err);
         }
 
-        return done(null, self.response);
+        return done(null, results[0]);
       });
   }
 
