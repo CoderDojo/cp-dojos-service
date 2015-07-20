@@ -994,15 +994,72 @@ module.exports = function (options) {
   function cmd_save_dojo_lead(args, done) {
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
     var dojoLead = args.dojoLead;
-    dojoLeadEntity.save$(dojoLead, function(err, response) {
-      if(err) return done(err);
-      if(process.env.SALESFORCE_ENABLED === 'true') {
-        // Note: updating SalesForce is slow, ideally this would go on a work queue
-        process.nextTick(function() { updateSalesForce(dojoLead.userId, dojoLead); });
-      };
-      done(null, response);
-    });
+
+    function saveLead(cb){
+      dojoLeadEntity.save$(dojoLead, function(err, response){
+        if(err){
+          return cb(err);
+        }
+
+        if(process.env.SALESFORCE_ENABLED === 'true') {
+          // Note: updating SalesForce is slow, ideally this would go on a work queue
+          process.nextTick(function() { updateSalesForce(dojoLead.userId, dojoLead); });
+        }
+
+        cb(null, response);
+      });
+    }
+
+    function updateDojoLeadProfile(cb){
+      if(dojoLead.currentStep === 2){
+        seneca.act('role:cd-profiles,cmd:search', {query: {userId: dojoLead.userId}}, function(err, results){
+          var profile = results[0];
+          var championDetails = dojoLead.application && dojoLead.application.championDetails;
+
+          profile.address = championDetails.address1;
+          profile.admin1Code = championDetails.admin1Code;
+          profile.admin1Name = championDetails.admin1Name;
+          profile.admin2Code = championDetails.admin2Code;
+          profile.admin2Name  = championDetails.admin2Name;
+          profile.admin3Code = championDetails.admin3Code;
+          profile.admin3Name = championDetails.admin3Name;
+          profile.admin4Code = championDetails.admin4Code;
+          profile.admin4Name = championDetails.admin4Name;
+          profile.alpha2 = championDetails.alpha2;
+          profile.alpha3 = championDetails.alplha3;
+          profile.city = championDetails.city;
+          profile.countryname = championDetails.countryName;
+          profile.country = championDetails.country;
+          profile.continent = championDetails.continent;
+          profile.twitter = championDetails.twitter;
+          profile.linkedin = championDetails.linkedIn;
+          profile.name = championDetails.name;
+          profile.phone = championDetails.phone;
+          profile.placeGeonameId = championDetails.placeGeonameId;
+          profile.place = championDetails.place;
+          profile.placeName = championDetails.placeName;
+          profile.state = championDetails.state;
+          profile.dob = championDetails.dateOfBirth;
+
+          seneca.act('role:cd-profiles,cmd:save', {profile: profile},cb);
+        });
+      } else {
+        cb();
+      }
+    }
+
+    async.series([
+      saveLead,
+      updateDojoLeadProfile
+      ], function(err, results){
+        if(err){
+          return done(err);
+        }
+
+        return done(null, results[0]);
+      });
   }
+
 
   /**
    * Returns the uncompleted dojo lead for a certain user.
@@ -1421,10 +1478,7 @@ module.exports = function (options) {
   }
 
   function cmd_dojos_for_user(args, done) {
-    var userId = args.id;
-    var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-    var dojosEntity = seneca.make$(ENTITY_NS);
-    var query = {userId:userId};
+    var query = { userId:args.id };
     var dojos = [];
     seneca.act({role:plugin, cmd:'load_usersdojos', query:query}, function (err, response) {
       if(err) return done(err);
