@@ -265,14 +265,12 @@ module.exports = function (options) {
       var checkboxes = _.flatten(_.pluck(setupDojoSteps, 'checkboxes'));
 
       _.each(checkboxes, function(checkbox){
-        if(_.isUndefined(setupYourDojo[checkbox.name]) || _.isNull(setupYourDojo[checkbox.name]) || !setupYourDojo[checkbox.name]){
+        if (!setupYourDojo[checkbox.name]) {
           isDojoCompleted = false;
         }
 
         if(checkbox.textField){
-          if(_.isNull(setupYourDojo[checkbox.name + "Text"]) ||
-            _.isUndefined(setupYourDojo[checkbox.name + 'Text']) ||
-            _.isEmpty(setupYourDojo[checkbox.name + 'Text'])){
+          if(!setupYourDojo[checkbox.name + "Text"]) {
             isDojoCompleted = false;
           }
         }
