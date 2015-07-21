@@ -1161,7 +1161,7 @@ module.exports = function (options) {
         var userTypeFound = _.find(userTypes, function (userTypeObj) {
           return userTypeObj.name === userType;
         });
-        var userTypeTitle = userTypeFound.title;
+        var userTypeTitle = (userTypeFound && userTypeFound.title) || 'member';
         return done(null, userTypeTitle, dojo);
       });
     }
