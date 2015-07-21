@@ -12,6 +12,9 @@ var moment = require('moment');
 
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
+var path = require('path');
+var fs = require('fs');
+var DEFAULT_LANG = 'en_US';
 
 module.exports = function (options) {
   var seneca = this;
@@ -23,6 +26,7 @@ module.exports = function (options) {
   var CDF_ADMIN = 'cdf-admin';
   var DEFAULT_INVITE_USER_TYPE = 'mentor';
   var setupDojoSteps = require('./data/setup_dojo_steps');
+  var so = seneca.options();
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
@@ -108,10 +112,21 @@ module.exports = function (options) {
               return done(err)
             }
 
+            var code = 'google-email-pass-' + args.locality;
+
+            var templates = {};
+
+            try {
+              templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
+              templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'));
+            } catch(err){
+              code = 'google-email-pass-' + DEFAULT_LANG;
+            }
+
             //send dojo creator an email with dojo's newly created email address and it's temp password
             var payload = {
               to: dojoCreator.email,
-              code: 'google-email-pass',
+              code: code,
               content: {temp_pass: tempPass, dojo: dojo.name, email: googleNewAccountData.primaryEmail}
             };
             seneca.act({role: plugin, cmd: 'send_email', payload: payload}, function (err, res) {
@@ -244,22 +259,23 @@ module.exports = function (options) {
 
   function checkSetupYourDojoIsCompleted(dojoLead){
     var isDojoCompleted = true;
-    var setupYourDojo = dojoLead.application.setupYourDojo;
-    var checkboxes = _.flatten(_.pluck(setupDojoSteps, 'checkboxes'));
 
-    _.each(checkboxes, function(checkbox){
-      if(_.isUndefined(setupYourDojo[checkbox.name]) || _.isNull(setupYourDojo[checkbox.name]) || !setupYourDojo[checkbox.name]){
-        isDojoCompleted = false;
-      }
+    if(dojoLead.application.setupYourDojo) {
+      var setupYourDojo = dojoLead.application.setupYourDojo;
+      var checkboxes = _.flatten(_.pluck(setupDojoSteps, 'checkboxes'));
 
-      if(checkbox.textField){
-        if(_.isNull(setupYourDojo[checkbox.name + "-text"]) ||
-          _.isUndefined(setupYourDojo[checkbox.name + '-text']) ||
-          _.isEmpty(setupYourDojo[checkbox.name + '-text'])){
+      _.each(checkboxes, function(checkbox){
+        if (!setupYourDojo[checkbox.name]) {
           isDojoCompleted = false;
         }
-      }
-    });
+
+        if(checkbox.textField){
+          if(!setupYourDojo[checkbox.name + "Text"]) {
+            isDojoCompleted = false;
+          }
+        }
+      });
+    }
 
     return isDojoCompleted;
   }
@@ -631,9 +647,7 @@ module.exports = function (options) {
               }
 
               //create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
-              if (_.isEmpty(dojo.email) || _.isNull(dojo.email) || _.isUndefined(dojo.email) &&
-                _.isEmpty(currentDojoState.email) || _.isNull(currentDojoState.email) || _.isUndefined(currentDojoState.email)) {
-
+              if (!currentDojoState.email){
                 seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo}, function (err, organizationEmail) {
                   if (err) {
                     return done(err)
@@ -829,25 +843,45 @@ module.exports = function (options) {
   }
 
   function updateSalesForceChampionDetails(userId, dojoLead) {
-     var account = {
+    var account = {
       PlatformId__c: userId,
-     };
+    };
+
     if (dojoLead.application.championDetails.email)
       account.Email = dojoLead.application.championDetails.email;
-    if (dojoLead.application.championDetails.phone)
-      account.Phone = dojoLead.application.championDetails.phone;
-
-    if (dojoLead.application.championDetails.placeName)
-      account.Street = dojoLead.application.championDetails.placeName;
-    if (dojoLead.application.championDetails.countryName)
-      account.Country = dojoLead.application.championDetails.countryName;
-
     if (dojoLead.application.championDetails.dateOfBirth)
       account.DateofBirth__c = dojoLead.application.championDetails.dateOfBirth;
+    if (dojoLead.application.championDetails.phone)
+      account.Phone = dojoLead.application.championDetails.phone;
+    if (dojoLead.application.championDetails.country.name)
+      account.BillingCountry = dojoLead.application.championDetails.country.name;
+    if (dojoLead.application.championDetails.place.name)
+      account.BillingCity = dojoLead.application.championDetails.place.name;
+    if (dojoLead.application.championDetails.place.admin2Name)
+      account.BillingState = dojoLead.application.championDetails.place.admin2Name;
+    if (dojoLead.application.championDetails.address1)
+      account.BillingStreet = dojoLead.application.championDetails.address1;
+    if (dojoLead.application.championDetails.place.latitude && dojoLead.application.championDetails.place.longitude) {
+      account.Coordinates__Latitude__s = dojoLead.application.championDetails.place.latitude;
+      account.Coordinates__Longitude__s = dojoLead.application.championDetails.place.longitude;
+    }
+    if (dojoLead.application.championDetails.projects)
+      account.Projects__c = dojoLead.application.championDetails.projects;
+    if (dojoLead.application.championDetails.youthExperience)
+      account.ExperienceWorkingWithYouth__c = dojoLead.application.championDetails.youthExperience;
     if (dojoLead.application.championDetails.twitter)
       account.Twitter__c = dojoLead.application.championDetails.twitter;
     if (dojoLead.application.championDetails.linkedIn)
       account.Linkedin__c = dojoLead.application.championDetails.linkedIn;
+    if (dojoLead.application.championDetails.notes)
+      account.Notes__c = dojoLead.application.championDetails.notes;
+    if (dojoLead.application.championDetails.coderDojoReference) {
+      account.CoderDojoReferral__c = dojoLead.application.championDetails.coderDojoReference;
+      if (dojoLead.application.championDetails.coderDojoReference === "Other" && dojoLead.application.championDetails.coderDojoReferenceOther)
+        account.CoderDojoReferralComment__c = dojoLead.application.championDetails.coderDojoReferenceOther;
+      else
+        account.CoderDojoReferralComment__c = "";
+    }
 
     seneca.act('role:cd-salesforce,cmd:save_account', {userId: userId, account: account}, function (err, res){
       if (err) return seneca.log.error('Error saving champion account in SalesForce!', err);
@@ -881,6 +915,49 @@ module.exports = function (options) {
     if (dojoLead.address1) lead.Street = dojoLead.address1;
     if (dojoLead.countryName) lead.Country = dojoLead.countryName;
 
+    if(dojoLead.application.setupYourDojo) {
+      var setupDojoObj = dojoLead.application.setupYourDojo;
+      if(setupDojoObj.findTechnicalMentors) lead.FindTechnicalMentors__c = setupDojoObj.findTechnicalMentors ;
+      if(setupDojoObj.findNonTechnicalMentors) lead.FindNonTechnicalMentors__c = setupDojoObj.findNonTechnicalMentors;
+      if(setupDojoObj.backgroundCheck) lead.BackgroundCheckSetUp__c = setupDojoObj.backgroundCheck;
+      if(setupDojoObj.backgroundCheckText) lead.BackgroundCheckComment__c = setupDojoObj.backgroundCheckText;
+      if(setupDojoObj.locateVenue) lead.LocateVenue__c = setupDojoObj.locateVenue;
+      if(setupDojoObj.ensureHealthAndSafety) lead.HealthAndSafetyMet__c = setupDojoObj.ensureHealthAndSafety;
+      if(setupDojoObj.ensureHealthAndSafetyText) lead.HealthAndSafetyComment__c = setupDojoObj.ensureHealthAndSafetyText;
+      if(setupDojoObj.ensureInsuranceCover) lead.Insurance__c = setupDojoObj.ensureInsuranceCover;
+      if(setupDojoObj.ensureInsuranceCoverText) lead.InsuranceComment__c = setupDojoObj.ensureInsuranceCoverText;
+      if(setupDojoObj.setDojoDateAndTime) lead.LaunchDateAndTime__c = setupDojoObj.setDojoDateAndTime;
+      if(setupDojoObj.planContent) lead.ContentPlan__c = setupDojoObj.planContent;
+      if(setupDojoObj.setupTicketingAndRegistration) lead.TicketingSetUp__c = setupDojoObj.setupTicketingAndRegistration;
+      if(setupDojoObj.setDojoEmailAddress) lead.SetUpEmail__c = setupDojoObj.setDojoEmailAddress;
+      if(setupDojoObj.setupSocialMedia) lead.SetUpSocialMedia__c = setupDojoObj.setupSocialMedia;
+      if(setupDojoObj.connectOtherDojos) lead.ConnectWithOtherDojos__c = setupDojoObj.connectOtherDojos;
+    }
+
+    if(dojoLead.application.dojoListing) {
+      var dojoListingObj = dojoLead.application.dojoListing;
+      if(dojoListingObj.name) lead.Name = dojoListingObj.name ;
+      if(dojoListingObj.email) lead.Email = dojoListingObj.email;
+      if(dojoListingObj.time) lead.Time__c = dojoListingObj.time;
+      if(dojoListingObj.country.name) lead.Country = dojoListingObj.country.name;
+      if(dojoListingObj.place.name) lead.City = dojoListingObj.place.name;
+      if(dojoListingObj.place.name) lead.State = dojoListingObj.place.admin2Name;
+      if(dojoListingObj.address1) lead.Street = dojoListingObj.address1;
+      if (dojoListingObj.place.latitude && dojoListingObj.place.longitude) {
+        lead.Coordinates__Latitude__s = dojoListingObj.place.latitude;
+        lead.Coordinates__Longitude__s = dojoListingObj.place.longitude;
+      }
+      if(dojoListingObj.notes) lead.Notes__c = dojoListingObj.notes;
+      if(dojoListingObj.needMentors) lead.NeeedMentors__c = dojoListingObj.needMentors;
+      if(dojoListingObj.stage) lead.Stage__c = dojoListingObj.stage;
+      if(dojoListingObj.private) lead.Private__c = dojoListingObj.private;
+      if(dojoListingObj.googleGroup) lead.GoogleGroupURL__c = dojoListingObj.googleGroup;
+      if(dojoListingObj.website) lead.Website = dojoListingObj.website;
+      if(dojoListingObj.twitter) lead.Twitter__c = dojoListingObj.twitter;
+      if(dojoListingObj.supporterImage) lead.SupportersImageURL__c = dojoListingObj.supporterImage;
+      if(dojoListingObj.mailingList) lead.MailingList__c = dojoListingObj.mailingList;
+    }
+
     var convertAccount = false;
     switch(dojoLead.currentStep) {
       case 2:
@@ -913,15 +990,72 @@ module.exports = function (options) {
   function cmd_save_dojo_lead(args, done) {
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
     var dojoLead = args.dojoLead;
-    dojoLeadEntity.save$(dojoLead, function(err, response) {
-      if(err) return done(err);
-      if(process.env.SALESFORCE_ENABLED === 'true') {
-        // Note: updating SalesForce is slow, ideally this would go on a work queue
-        process.nextTick(function() { updateSalesForce(dojoLead.userId, dojoLead); });
-      };
-      done(null, response);
-    });
+
+    function saveLead(cb){
+      dojoLeadEntity.save$(dojoLead, function(err, response){
+        if(err){
+          return cb(err);
+        }
+
+        if(process.env.SALESFORCE_ENABLED === 'true') {
+          // Note: updating SalesForce is slow, ideally this would go on a work queue
+          process.nextTick(function() { updateSalesForce(dojoLead.userId, dojoLead); });
+        }
+
+        cb(null, response);
+      });
+    }
+
+    function updateDojoLeadProfile(cb){
+      if(dojoLead.currentStep === 2){
+        seneca.act('role:cd-profiles,cmd:search', {query: {userId: dojoLead.userId}}, function(err, results){
+          var profile = results[0];
+          var championDetails = dojoLead.application && dojoLead.application.championDetails;
+
+          profile.address = championDetails.address1;
+          profile.admin1Code = championDetails.admin1Code;
+          profile.admin1Name = championDetails.admin1Name;
+          profile.admin2Code = championDetails.admin2Code;
+          profile.admin2Name  = championDetails.admin2Name;
+          profile.admin3Code = championDetails.admin3Code;
+          profile.admin3Name = championDetails.admin3Name;
+          profile.admin4Code = championDetails.admin4Code;
+          profile.admin4Name = championDetails.admin4Name;
+          profile.alpha2 = championDetails.alpha2;
+          profile.alpha3 = championDetails.alplha3;
+          profile.city = championDetails.city;
+          profile.countryname = championDetails.countryName;
+          profile.country = championDetails.country;
+          profile.continent = championDetails.continent;
+          profile.twitter = championDetails.twitter;
+          profile.linkedin = championDetails.linkedIn;
+          profile.name = championDetails.name;
+          profile.phone = championDetails.phone;
+          profile.placeGeonameId = championDetails.placeGeonameId;
+          profile.place = championDetails.place;
+          profile.placeName = championDetails.placeName;
+          profile.state = championDetails.state;
+          profile.dob = championDetails.dateOfBirth;
+
+          seneca.act('role:cd-profiles,cmd:save', {profile: profile},cb);
+        });
+      } else {
+        cb();
+      }
+    }
+
+    async.series([
+      saveLead,
+      updateDojoLeadProfile
+      ], function(err, results){
+        if(err){
+          return done(err);
+        }
+
+        return done(null, results[0]);
+      });
   }
+
 
   /**
    * Returns the uncompleted dojo lead for a certain user.
@@ -984,6 +1118,7 @@ module.exports = function (options) {
     var payload = args.payload;
     var to = payload.to;
     var content = payload.content;
+    content.year = moment(new Date()).format('YYYY');
     var emailCode = payload.code;
     seneca.act({role:'email-notifications', cmd: 'send', to:to, content:content, code:emailCode}, done);
   }
@@ -1038,7 +1173,18 @@ module.exports = function (options) {
         dojoName: dojo.name,
         year: moment(new Date()).format('YYYY')
       };
-      var payload = {to:inviteEmail, code:'invite-user', content:content};
+
+      var code = 'invite-user-' + args.locality;
+      var templates = {};
+
+      try {
+        templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
+        templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'));
+      }catch(err){
+        code = 'invite-user-' + DEFAULT_LANG;
+      }
+
+      var payload = {to:inviteEmail, code:code, content:content};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
     }
   }
@@ -1201,10 +1347,19 @@ module.exports = function (options) {
         name:user.name,
         email:user.email,
         dojoName:dojo.name,
-        userType:userType,
-        year: moment(new Date()).format('YYYY')
+        userType:userType
       };
-      var code = 'user-request-to-join';
+
+      var code = 'user-request-to-join-' + args.locality;
+      var templates = {};
+
+      try{
+        templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
+        templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'))
+      } catch(err) {
+        code = 'user-request-to-join-' + DEFAULT_LANG;
+      }
+
       var payload = {to:championEmail, code:code, content:content};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
     }
@@ -1332,10 +1487,7 @@ module.exports = function (options) {
   }
 
   function cmd_dojos_for_user(args, done) {
-    var userId = args.id;
-    var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-    var dojosEntity = seneca.make$(ENTITY_NS);
-    var query = {userId:userId};
+    var query = { userId:args.id };
     var dojos = [];
     seneca.act({role:plugin, cmd:'load_usersdojos', query:query}, function (err, response) {
       if(err) return done(err);
@@ -1468,10 +1620,20 @@ module.exports = function (options) {
       var content = {
         name:user.name,
         email:user.email,
-        dojoName:dojo.name,
-        year: moment(new Date()).format('YYYY')
+        dojoName:dojo.name
       };
-      var payload = {to:champion.email, code:'user-left-dojo', content:content};
+
+      var code = 'user-left-dojo-' + args.locality;
+      var templates = {};
+
+      try {
+        templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
+        templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'));
+      } catch(err){
+        code = 'user-left-dojo-' + DEFAULT_LANG;
+      }
+
+      var payload = {to:champion.email, code: code, content:content};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, cb);
     }
   }
