@@ -1135,6 +1135,7 @@ module.exports = function (options) {
     async.waterfall([
       getDojo,
       generateInviteToken,
+      getUserTypeTitle,
       sendEmail
     ], done);
 
@@ -1154,11 +1155,23 @@ module.exports = function (options) {
       seneca.act({role:plugin, cmd:'update', user:currentUser, dojo:dojo}, done);
     }
 
-    function sendEmail(dojo, done) {
+    function getUserTypeTitle(dojo, done) {
+      seneca.act({role: 'cd-users', cmd: 'get_init_user_types'}, function (err, userTypes) {
+        if(err) return done(err);
+        var userTypeFound = _.find(userTypes, function (userTypeObj) {
+          return userTypeObj.name === userType;
+        });
+        var userTypeTitle = (userTypeFound && userTypeFound.title) || 'member';
+        return done(null, userTypeTitle, dojo);
+      });
+    }
+
+    function sendEmail(userTypeTitle, dojo, done) {
       var content = {
         link: 'http://'+zenHostname+'/dashboard/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
-        userType:userType,
-        dojoName:dojo.name
+        userType: userTypeTitle,
+        dojoName: dojo.name,
+        year: moment(new Date()).format('YYYY')
       };
 
       var code = 'invite-user-' + args.locality;
