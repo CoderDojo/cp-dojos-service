@@ -65,6 +65,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'search_dojo_leads'}, cmd_search_dojo_leads);
   seneca.add({role: plugin, cmd: 'uncompleted_dojos'}, cmd_uncompleted_dojos);
   seneca.add({role: plugin, cmd: 'get_dojo_config'}, cmd_get_dojo_config);
+  seneca.add({role: plugin, cmd: 'load_dojo_admins'}, cmd_load_dojo_admins);
 
   function cmd_create_dojo_email(args, done) {
     if (!args.dojo) {
@@ -1137,6 +1138,7 @@ module.exports = function (options) {
     async.waterfall([
       getDojo,
       generateInviteToken,
+      getUserTypeTitle,
       sendEmail
     ], done);
 
@@ -1156,11 +1158,23 @@ module.exports = function (options) {
       seneca.act({role:plugin, cmd:'update', user:currentUser, dojo:dojo}, done);
     }
 
-    function sendEmail(dojo, done) {
+    function getUserTypeTitle(dojo, done) {
+      seneca.act({role: 'cd-users', cmd: 'get_init_user_types'}, function (err, userTypes) {
+        if(err) return done(err);
+        var userTypeFound = _.find(userTypes, function (userTypeObj) {
+          return userTypeObj.name === userType;
+        });
+        var userTypeTitle = (userTypeFound && userTypeFound.title) || 'member';
+        return done(null, userTypeTitle, dojo);
+      });
+    }
+
+    function sendEmail(userTypeTitle, dojo, done) {
       var content = {
         link: 'http://'+zenHostname+'/dashboard/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
-        userType:userType,
-        dojoName:dojo.name
+        userType: userTypeTitle,
+        dojoName: dojo.name,
+        year: moment(new Date()).format('YYYY')
       };
 
       var code = 'invite-user-' + args.locality;
@@ -1643,6 +1657,32 @@ module.exports = function (options) {
 
   function cmd_get_dojo_config(args, done) {
     done(null, dojoConfig);
+  }
+
+  function cmd_load_dojo_admins(args, done) {
+    var seneca = this;
+    var dojoId = args.dojoId;
+
+    seneca.act({role: plugin, cmd: 'load_usersdojos', query:{dojoId:dojoId}}, function (err, usersDojos) {
+      if(err) return done(err);
+      async.map(usersDojos, function (userDojo, cb) {
+        var dojoAdminPermissionFound = _.find(userDojo.userPermissions, function (userPermission) {
+          return userPermission.name === 'dojo-admin';
+        });
+        if(dojoAdminPermissionFound) {
+          seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId}, cb);
+        } else {
+          return cb();
+        }
+      }, function (err, dojoAdmins) {
+        if(err) return done(err);
+        dojoAdmins = _.chain(dojoAdmins)
+          .flatten()
+          .compact()
+          .value();
+        return done(null, dojoAdmins);
+      });
+    });
   }
 
   return {
