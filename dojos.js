@@ -63,6 +63,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'create_dojo_email'}, cmd_create_dojo_email);
   seneca.add({role: plugin, cmd: 'search_dojo_leads'}, cmd_search_dojo_leads);
   seneca.add({role: plugin, cmd: 'uncompleted_dojos'}, cmd_uncompleted_dojos);
+  seneca.add({role: plugin, cmd: 'load_dojo_admins'}, cmd_load_dojo_admins);
 
   function cmd_create_dojo_email(args, done) {
     if (!args.dojo) {
@@ -1650,6 +1651,32 @@ module.exports = function (options) {
       {title:'Forum Admin', name:'forum-admin'}
     ];
     done(null, userPermissions);
+  }
+
+  function cmd_load_dojo_admins(args, done) {
+    var seneca = this;
+    var dojoId = args.dojoId;
+
+    seneca.act({role: plugin, cmd: 'load_usersdojos', query:{dojoId:dojoId}}, function (err, usersDojos) {
+      if(err) return done(err);
+      async.map(usersDojos, function (userDojo, cb) {
+        var dojoAdminPermissionFound = _.find(userDojo.userPermissions, function (userPermission) {
+          return userPermission.name === 'dojo-admin';
+        });
+        if(dojoAdminPermissionFound) {
+          seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId}, cb);
+        } else {
+          return cb();
+        }
+      }, function (err, dojoAdmins) {
+        if(err) return done(err);
+        dojoAdmins = _.chain(dojoAdmins)
+          .flatten()
+          .compact()
+          .value();
+        return done(null, dojoAdmins);
+      });
+    });
   }
 
   return {
