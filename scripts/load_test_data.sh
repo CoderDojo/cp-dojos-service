@@ -10,7 +10,8 @@ source "$PROJECT_DIR/scripts/exec_on_env.sh"
 PGPASSWORD=$POSTGRES_PASSWORD
 
 function postgres_test_data {
-    psql --single-transaction -h $POSTGRES_HOST -U $POSTGRES_USERNAME -d $POSTGRES_NAME -f "$PROJECT_DIR/scripts/database/pg/populate-dojos.sql" --port $POSTGRES_PORT
+    echo "Password: $PGPASSWORD"
+    PGPASSWORD=$POSTGRES_PASSWORD psql --single-transaction -w -h $POSTGRES_HOST -U $POSTGRES_USERNAME -d $POSTGRES_NAME -f "$PROJECT_DIR/scripts/database/pg/populate-dojos.sql" --port $POSTGRES_PORT
 }
 
 function delete_elasticsearch_index {
