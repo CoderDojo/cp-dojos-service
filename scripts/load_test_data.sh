@@ -6,6 +6,9 @@ USAGE="Usage: ./$SCRIPT <config>"
 
 source "$PROJECT_DIR/scripts/exec_on_env.sh"
 
+# set the pg password so you're not prompted for login..
+PGPASSWORD=$POSTGRES_PASSWORD
+
 function postgres_test_data {
     psql --single-transaction -h $POSTGRES_HOST -U $POSTGRES_USERNAME -d $POSTGRES_NAME -f "$PROJECT_DIR/scripts/database/pg/populate-dojos.sql" --port $POSTGRES_PORT
 }
