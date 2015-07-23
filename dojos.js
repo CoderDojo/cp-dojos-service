@@ -428,7 +428,7 @@ module.exports = function (options) {
       seneca.make$(ENTITY_NS).list$(query, function(err, response) {
         if(err) return response;
         async.each(response, function(dojo, cb) {
-          if(dojo.deleted !== 1 && dojo.verified !== 0 && dojo.stage !== 4) {
+          if(dojo.deleted !== 1 && dojo.verified === 1 && dojo.stage !== 4) {
             dojos.push(dojo);
           }
 
@@ -463,7 +463,8 @@ module.exports = function (options) {
 
   function cmd_list(args, done) {
     var query = args.query || {};
-    query.limit$ = 1500;
+    query.limit$ = 'NULL';
+    query.verified = 1;
     seneca.make$(ENTITY_NS).list$(query, function(err, response) {
       if(err) return done(err);
 
