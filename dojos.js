@@ -26,6 +26,7 @@ module.exports = function (options) {
   var CDF_ADMIN = 'cdf-admin';
   var DEFAULT_INVITE_USER_TYPE = 'mentor';
   var setupDojoSteps = require('./data/setup_dojo_steps');
+  var dojoConfig = require('./data/dojos_config');
   var so = seneca.options();
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
@@ -63,6 +64,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'create_dojo_email'}, cmd_create_dojo_email);
   seneca.add({role: plugin, cmd: 'search_dojo_leads'}, cmd_search_dojo_leads);
   seneca.add({role: plugin, cmd: 'uncompleted_dojos'}, cmd_uncompleted_dojos);
+  seneca.add({role: plugin, cmd: 'get_dojo_config'}, cmd_get_dojo_config);
   seneca.add({role: plugin, cmd: 'load_dojo_admins'}, cmd_load_dojo_admins);
 
   function cmd_create_dojo_email(args, done) {
@@ -1651,6 +1653,10 @@ module.exports = function (options) {
       {title:'Forum Admin', name:'forum-admin'}
     ];
     done(null, userPermissions);
+  }
+
+  function cmd_get_dojo_config(args, done) {
+    done(null, dojoConfig);
   }
 
   function cmd_load_dojo_admins(args, done) {
