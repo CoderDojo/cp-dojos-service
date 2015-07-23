@@ -943,11 +943,11 @@ module.exports = function (options) {
       if(dojoListingObj.name) lead.Name = dojoListingObj.name ;
       if(dojoListingObj.email) lead.Email = dojoListingObj.email;
       if(dojoListingObj.time) lead.Time__c = dojoListingObj.time;
-      if(dojoListingObj.country.name) lead.Country = dojoListingObj.country.name;
-      if(dojoListingObj.place.name) lead.City = dojoListingObj.place.name;
-      if(dojoListingObj.place.name) lead.State = dojoListingObj.place.admin2Name;
+      if(dojoListingObj.country && dojoListingObj.country.name) lead.Country = dojoListingObj.country.name;
+      if(dojoListingObj.place && dojoListingObj.place.name) lead.City = dojoListingObj.place.name;
+      if(dojoListingObj.place && dojoListingObj.place.name) lead.State = dojoListingObj.place.admin2Name;
       if(dojoListingObj.address1) lead.Street = dojoListingObj.address1;
-      if (dojoListingObj.place.latitude && dojoListingObj.place.longitude) {
+      if (dojoListingObj.place && dojoListingObj.place.latitude && dojoListingObj.place.longitude) {
         lead.Coordinates__Latitude__s = dojoListingObj.place.latitude;
         lead.Coordinates__Longitude__s = dojoListingObj.place.longitude;
       }
