@@ -26,6 +26,6 @@ delete_elasticsearch_index
 test_data
 
 echo "-------------------------------------------------------"
-echo "-------Finished initializating countries DB & ES-------"
+echo "-------Finished initializating dojo    s DB & ES-------"
 echo "-------------------------------------------------------"
 
