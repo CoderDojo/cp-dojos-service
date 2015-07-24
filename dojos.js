@@ -1530,16 +1530,28 @@ module.exports = function (options) {
           var isDojoOwner;
           (originalUserDojo.owner === 1) ? isDojoOwner = true : isDojoOwner = false;
           if(isDojoOwner) {
-            //If this user is the dojo owner, make sure that this update is not removing their champion and dojo admin permissions.
-            var hasDojoAdminPermission = _.find(updatedUserDojo.userPermissions, function (updatedUserPermissions) {
-              return updatedUserPermissions.name === 'dojo-admin';
-            });
-            var hasChampionUserType = _.contains(updatedUserDojo.userTypes, 'champion');
-            if(!hasDojoAdminPermission || !hasChampionUserType) {
-              return done(new Error('Champion and Dojo Admin permissions cannot be removed from a Dojo owner.'));
-            } else {
-              return done();
+            var invalidUpdate = false;
+            //If this user is the dojo owner, make sure that this update is not removing their permissions or user types.
+            if(updatedUserDojo.userPermissions) {
+              var updatedUserPermissions = _.map(updatedUserDojo.userPermissions, function (userPermission) {
+                return userPermission.name;
+              });
+              var originalUserPermissions = _.map(originalUserDojo.userPermissions, function (userPermission) {
+                return userPermission.name;
+              });
+              var difference = _.difference(originalUserPermissions, updatedUserPermissions);
+              if(!_.isEmpty(difference)) {
+                invalidUpdate = true;
+              }
             }
+            if(updatedUserDojo.userTypes) {
+              var championUserTypeFound = _.find(updatedUserDojo.userTypes, function (userType) {
+                return userType === 'champion';
+              });
+              if(!championUserTypeFound) invalidUpdate = true;
+            }
+            if(invalidUpdate) return done(new Error('Admin permissions cannot be removed from a Dojo owner.'));
+            return done();
           }
           return done();
         });
@@ -1563,7 +1575,7 @@ module.exports = function (options) {
     var userId = args.userId;
     var dojoId = args.dojoId;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-
+    
     async.waterfall([
       ownerPermissionsCheck,
       removeUserDojoLink,
