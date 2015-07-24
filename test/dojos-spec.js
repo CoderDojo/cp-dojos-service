@@ -256,7 +256,7 @@ describe('Dojo Microservice test', function(){
       }); 
     });
 
-    it('delete dojo from db', function(done){
+    it.skip('delete dojo from db', function(done){
       var dojo = dojos[0];
 
       dojosEnt.list$({creator: users[4].id}, function(err, dojos){
@@ -507,7 +507,7 @@ describe('Dojo Microservice test', function(){
   });
 
   describe('Bulk delete', function(){
-    it('delete many dojos', function(done){
+    it.skip('delete many dojos', function(done){
       dojosEnt.list$({alpha2:'UK'}, function(err, dojos){
         if(err) return done(err);
         // console.log('dojos: ' + util.inspect(dojos));
@@ -616,7 +616,7 @@ describe('Dojo Microservice test', function(){
   });
 
   describe('Load users dojos', function(){
-    it('load usersDojo based on query', function(done){
+    it.skip('load usersDojo based on query', function(done){
       seneca.util.recurse(2, function( index, next ){
       create_dojo(dojos[4+index], users[index],
         function(err, dojo){
