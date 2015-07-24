@@ -15,7 +15,7 @@ function postgres_test_data {
 }
 
 function delete_elasticsearch_index {
-    echo "Deleting '$ES_INDEX' index" ;
+    echo "Deleting http://$ES_HOST:9200/$ES_INDEX" ;
     curl -XDELETE "http://$ES_HOST:9200/$ES_INDEX?pretty"
 }
 
