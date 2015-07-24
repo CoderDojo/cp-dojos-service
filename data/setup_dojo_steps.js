@@ -83,7 +83,7 @@ module.exports = [
         required:false
       },
        {
-        title:'Connect with other Dojos on sovial media and CoderDojo discussian forums',
+        title:'Connect with other Dojos on social media and CoderDojo discussion forums',
         name:'connectOtherDojos',
         required:false
       }
