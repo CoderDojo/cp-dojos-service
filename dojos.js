@@ -541,12 +541,6 @@ module.exports = function (options) {
     dojo.created = new Date();
     dojo.verified = 0;
 
-    if(dojo.needMentors) {
-      dojo.needMentors = 1;
-    } else {
-      dojo.needMentors = 0;
-    }
-
     var slugify = function(name) {
       return slug(name);
     };
