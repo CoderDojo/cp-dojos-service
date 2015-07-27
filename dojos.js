@@ -229,6 +229,9 @@ module.exports = function (options) {
           bool: {
             must: [{
               term: { creator: args.user.id }
+            }],
+            must_not:[{
+              term: { deleted: 1}
             }]
           }
         }
@@ -384,11 +387,11 @@ module.exports = function (options) {
     var country = args.country;
     var countData = {};
 
-    seneca.make$(ENTITY_NS).list$({limit$:'NULL', alpha2:country}, function(err, response) {
+    seneca.make$(ENTITY_NS).list$({limit$:'NULL', alpha2:country, deleted: 0, verified: 1}, function(err, response) {
       if(err) return done(err);
       countData[country] = {};
       _.each(response, function(dojo) {
-        if(dojo.coordinates && dojo.deleted !== 1 && dojo.verified !== 0 && dojo.stage !== 4) {
+        if(dojo.coordinates && dojo.stage !== 4) {
           if(!countData[dojo.alpha2][dojo.admin1Name]) countData[dojo.alpha2][dojo.admin1Name] = {total:0};
           countData[dojo.alpha2][dojo.admin1Name].total += 1;
           countData[dojo.alpha2][dojo.admin1Name].latitude = dojo.coordinates.split(',')[0];
@@ -425,10 +428,12 @@ module.exports = function (options) {
     function getDojos(done) {
       var dojos = [];
       var query = {limit$:'NULL'};
+      query.deleted = 0;
+      query.verified = 1;
       seneca.make$(ENTITY_NS).list$(query, function(err, response) {
         if(err) return response;
         async.each(response, function(dojo, cb) {
-          if(dojo.deleted !== 1 && dojo.verified === 1 && dojo.stage !== 4) {
+          if(dojo.stage !== 4) {
             dojos.push(dojo);
           }
 
@@ -465,14 +470,14 @@ module.exports = function (options) {
     var query = args.query || {};
     query.limit$ = 'NULL';
     query.verified = 1;
+    query.deleted = 0;
     seneca.make$(ENTITY_NS).list$(query, function(err, response) {
       if(err) return done(err);
 
       var dojosByCountry = {};
       response = _.sortBy(response, 'countryName');
       _.each(response, function(dojo) {
-        if(dojo.deleted !== 1 && dojo.verified !== 0 && dojo.stage !== 4) {
-          var id = dojo.id;
+        if(dojo.stage !== 4) {
           if(!dojosByCountry[dojo.countryName]) {
             dojosByCountry[dojo.countryName] = {};
             dojosByCountry[dojo.countryName].states = {};
@@ -505,6 +510,7 @@ module.exports = function (options) {
   }
 
   function cmd_find(args, done) {
+    if(args.query){ args.query.deleted = 0 }
     seneca.make$(ENTITY_NS).load$(args.query, function(err, response) {
       if(err) return done(err);
       done(null, response);
@@ -762,21 +768,49 @@ module.exports = function (options) {
 
     async.waterfall([
       async.apply(isUserChampionAndDojoAdmin, query, user),
-      deleteDojo
+      deleteDojo,
+      deleteUsersDojos,
+      deleteDojoLead
     ], done);
 
-    function deleteDojo(hasPermission, cb) {
+    function deleteDojo(hasPermission, done) {
       if(hasPermission) {
-        seneca.make$(ENTITY_NS).remove$(args.id, function(err){
-          if(err) return done(err);
-          seneca.make$(USER_DOJO_ENTITY_NS).remove$({dojo_id: args.id}, cb);
-        });
+        var dojo = {
+          id: args.id,
+          deleted: 1,
+          deletedBy: args.user.id,
+          deletedAt: new Date()
+        };
+        seneca.make$(ENTITY_NS).save$(dojo, done);
+
       } else {
         var err = new Error('cmd_delete/permission-error');
         err.critical = false;
         err.httpstatus = 403;
-        cb(err);
+        done(err);
       }
+    }
+    function deleteUsersDojos(dojo, done){
+      seneca.make$(USER_DOJO_ENTITY_NS).load$({dojoId: args.id}, function(err, ent) {
+        if (err) return done(err);
+
+        ent.deleted = 1;
+        ent.deletedBy = args.user.id;
+        ent.deletedAt = new Date();
+
+        seneca.make$(USER_DOJO_ENTITY_NS).save$(ent, done);
+      });
+    }
+    function deleteDojoLead(usersDojos, done){
+      seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: args.dojoLeadId}, function(err, ent) {
+        if (err) return done(err);
+
+        ent.deleted = 1;
+        ent.deletedBy = args.user.id;
+        ent.deletedAt = new Date();
+
+        seneca.make$(DOJO_LEADS_ENTITY_NS).save$(ent, done);
+      });
     }
   }
 
@@ -795,7 +829,7 @@ module.exports = function (options) {
   function cmd_my_dojos(args, done){
     async.waterfall([
       function(done) {
-        seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id, limit$: 'NULL'}, done);
+        seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id, limit$: 'NULL', deleted: 0}, done);
       },
       function(userDojos, done) {
         if (!userDojos || !userDojos.length) {
@@ -1491,7 +1525,10 @@ module.exports = function (options) {
   }
 
   function cmd_dojos_for_user(args, done) {
-    var query = { userId:args.id };
+    var query = {
+      userId:args.id,
+      deleted: 0
+    };
     var dojos = [];
     seneca.act({role:plugin, cmd:'load_usersdojos', query:query}, function (err, response) {
       if(err) return done(err);
@@ -1527,8 +1564,7 @@ module.exports = function (options) {
           if(err) return done(err);
           var originalUserDojo = response;
           var updatedUserDojo = userDojo;
-          var isDojoOwner;
-          (originalUserDojo.owner === 1) ? isDojoOwner = true : isDojoOwner = false;
+          var isDojoOwner = originalUserDojo && originalUserDojo.owner === 1;
           if(isDojoOwner) {
             var invalidUpdate = false;
             //If this user is the dojo owner, make sure that this update is not removing their permissions or user types.
@@ -1597,11 +1633,15 @@ module.exports = function (options) {
       });
     }
 
-    function removeUserDojoLink(cb) {
-      usersDojosEntity.remove$({userId:userId, dojoId:dojoId}, cb);
+    function removeUserDojoLink(usersDojo, cb) {
+      usersDojo.deleted = 1;
+      usersDojo.deletedBy = args.user.id;
+      usersDojo.deletedAt = new Date();
+
+      seneca.make$(USER_DOJO_ENTITY_NS).save$(usersDojo, cb);
     }
 
-    function loadUserAndDojoDetails(userDojo, cb) {
+    function loadUserAndDojoDetails(cb) {
       async.waterfall([
         loadUser,
         loadDojo

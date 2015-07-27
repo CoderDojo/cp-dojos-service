@@ -86,7 +86,10 @@ module.exports = {
       'admin4Code': true,
       'admin4Name': true,
       'placeGeonameId': true,
-      'placeName': true
+      'placeName': true,
+      'deleted': true,
+      'deletedBy': true,
+      'deletedAt': true
     }
   }, {
     base: 'cd',
@@ -106,7 +109,10 @@ module.exports = {
         'type': 'string'
       },
       'currentStep': true,
-      'completed': true
+      'completed': true,
+      'deleted': true,
+      'deletedBy': true,
+      'deletedAt': true
     }
   }]
 };

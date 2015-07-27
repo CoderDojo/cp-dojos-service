@@ -13,6 +13,7 @@ var role  = "cd-dojos";
 var users     = JSON.parse(fs.readFileSync(__dirname + '/fixtures/users.json', 'utf8'));
 var dojos     = JSON.parse(fs.readFileSync(__dirname + '/fixtures/dojos.json', 'utf8'));
 var dojoleads = JSON.parse(fs.readFileSync(__dirname + '/fixtures/dojoleads.json', 'utf8'));
+var usersDojos= JSON.parse(fs.readFileSync(__dirname + '/fixtures/usersdojos.json', 'utf8'));
 
 console.log('using configuration', JSON.stringify(config, null, 4));
 seneca.options(config);
@@ -58,6 +59,14 @@ function create_dojo (obj, creator, done){
     else done(null, savedDojo);
   });
 }
+
+function create_users_dojos(obj, done) {
+  seneca.act({role: role, cmd: 'save_usersdojos', userDojo: obj}, function(err, res){
+    console.log(res[1].dojoId);
+    done();
+  });
+}
+
 
 
 describe('Dojo Microservice test', function(){
@@ -115,6 +124,20 @@ describe('Dojo Microservice test', function(){
       if (!using_postgres) dojos[index].user_id = users[index].id
       create_dojo(dojos[index], users[index], next);
     }, done);
+  });
+
+  before(function(done){
+    async.eachSeries(usersDojos, function(item, callback){
+
+      dojosEnt.list$( function(err, dojos) {
+        if (err) return done(err);
+        item.dojoId = dojos[0].id;
+        create_users_dojos(item, callback);
+      });
+    }, function(err){
+      if(err) return done(err);
+      done();
+    });
   });
 
   // describe('Search', function(){
@@ -231,10 +254,38 @@ describe('Dojo Microservice test', function(){
     });
   });
 
+  describe('Save dojo lead', function(){
+    it('save dojo lead to db', function(done){
+      expect(dojoleads[0]).to.exist;
+      expect(dojoleads[0].user_id).to.be.ok;
+
+      seneca.act({role: role, cmd: 'save_dojo_lead', dojoLead: dojoleads[0]}, function(err, savedLead){
+        if(err) return done(err);
+
+        expect(savedLead).to.exist;
+        expect(savedLead.user_id).to.be.ok;
+        expect(savedLead.email).to.be.ok;
+        expect(savedLead).not.to.be.empty;
+
+        dojoLeadsEnt.load$({user_id:dojoleads[0].user_id}, function(err, loadedLead){
+          if(err) return done(err);
+
+          var id_field = using_postgres ? 'userId' : 'user_id';
+
+          expect(loadedLead).to.exist;
+          expect(loadedLead[id_field]).to.be.ok;
+          expect(loadedLead.email).to.be.ok;
+          expect(loadedLead[id_field].toString()).to.equal(savedLead.user_id.toString());
+
+          done();
+        });
+      });
+    });
+  });
+
   describe('Delete', function(){
 
     it('should not delete without correct user role', function (done) {
-      var dojo = dojos[0];
       dojosEnt.list$({creator: users[4].id}, function(err, dojos){
 
         // console.log('dojos: ' + util.inspect(dojos));
@@ -257,58 +308,22 @@ describe('Dojo Microservice test', function(){
     });
 
     it('delete dojo from db', function(done){
-      var dojo = dojos[0];
-
-      dojosEnt.list$({creator: users[4].id}, function(err, dojos){
-
-        // console.log('dojos: ' + util.inspect(dojos));
+      this.timeout(20000);
+      dojosEnt.list$({creator: users[0].id}, function(err, dojos){
 
         expect(dojos).to.exist;
         expect(dojos.length).to.be.equal(1);
         expect(dojos[0]).to.be.ok;
 
-        seneca.act({role: role, cmd: 'delete', id: dojos[0].id, user: {roles: ['cdf-admin']}}, function(err, output){
+        seneca.act({role: role, cmd: 'delete', id: dojos[0].id, dojoLeadId: 1000, user: {roles: ['cdf-admin']}}, function(err, output){
           if(err) return done(err);
-          dojosEnt.list$({creator: users[4].id}, function(err, dojos){
+          dojosEnt.list$({id: dojos[0].id}, function(err, dojos){
             if(err) return done(err);
 
-            expect(dojos).to.be.empty;
+            expect(dojos[0].deleted).to.equal(1);
 
             done();
           });
-        });
-      });
-    });
-  });
-
-  describe('Save dojo lead', function(){
-    it('save dojo lead to db', function(done){
-      expect(dojoleads[0]).to.exist;
-      expect(dojoleads[0].user_id).to.be.ok;
-
-      seneca.act({role: role, cmd: 'save_dojo_lead', dojoLead: dojoleads[0]}, function(err, savedLead){
-        if(err) return done(err);
-
-        // console.log('savedLead: ' + util.inspect(savedLead));
-
-        expect(savedLead).to.exist;
-        expect(savedLead.user_id).to.be.ok;
-        expect(savedLead.email).to.be.ok;
-        expect(savedLead).not.to.be.empty;
-
-        dojoLeadsEnt.load$({user_id:dojoleads[0].user_id}, function(err, loadedLead){
-          if(err) return done(err);
-
-          // console.log('loadedLead: ' + util.inspect(loadedLead));
-
-          var id_field = using_postgres ? 'userId' : 'user_id';
-
-          expect(loadedLead).to.exist;
-          expect(loadedLead[id_field]).to.be.ok;
-          expect(loadedLead.email).to.be.ok;
-          expect(loadedLead[id_field].toString()).to.equal(savedLead.user_id.toString());
-
-          done();
         });
       });
     });
@@ -344,7 +359,7 @@ describe('Dojo Microservice test', function(){
 
   describe('Update', function(){
     it('update dojo field', function(done){
-      dojosEnt.list$({creator: users[0].id}, function(err, dojos){
+      dojosEnt.list$({creator: users[3].id}, function(err, dojos){
         if(err) return done(err);
 
         expect(dojos).to.exist;
@@ -507,7 +522,7 @@ describe('Dojo Microservice test', function(){
   });
 
   describe('Bulk delete', function(){
-    it('delete many dojos', function(done){
+    it.skip('delete many dojos', function(done){
       dojosEnt.list$({alpha2:'UK'}, function(err, dojos){
         if(err) return done(err);
         // console.log('dojos: ' + util.inspect(dojos));
@@ -643,7 +658,7 @@ describe('Dojo Microservice test', function(){
             // console.log('loadedDojos: ' + util.inspect(loadedDojos));
 
             expect(loadedDojos).to.exist;
-            expect(loadedDojos.length).to.equal(2);
+            expect(loadedDojos.length).to.equal(4);
             expect(loadedDojos[0][id_field]).to.be.ok;
             expect(loadedDojos[1][id_field]).to.be.ok;
             expect(loadedDojos[0][id_field]).to.equal(loadedDojos[1][id_field]);
