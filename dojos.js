@@ -763,7 +763,6 @@ module.exports = function (options) {
 
   function cmd_delete(args, done){
     // TODO - there must be other data to remove if we delete a dojo??
-    // cristik: yes there is, dojoleads and usersdojos records
     var user = args.user;
     var query = {userId:user.id, dojoId:args.id};
 
@@ -774,7 +773,7 @@ module.exports = function (options) {
       deleteDojoLead
     ], done);
 
-    function deleteDojo(hasPermission, cb) {
+    function deleteDojo(hasPermission, done) {
       if(hasPermission) {
         var dojo = {
           id: args.id,
@@ -782,16 +781,16 @@ module.exports = function (options) {
           deletedBy: args.user.id,
           deletedAt: new Date()
         };
-        seneca.make$(ENTITY_NS).save$(dojo, cb);
+        seneca.make$(ENTITY_NS).save$(dojo, done);
 
       } else {
         var err = new Error('cmd_delete/permission-error');
         err.critical = false;
         err.httpstatus = 403;
-        cb(err);
+        done(err);
       }
     }
-    function deleteUsersDojos(cb){
+    function deleteUsersDojos(dojo, done){
       seneca.make$(USER_DOJO_ENTITY_NS).load$({dojoId: args.id}, function(err, ent) {
         if (err) return done(err);
 
@@ -799,18 +798,18 @@ module.exports = function (options) {
         ent.deletedBy = args.user.id;
         ent.deletedAt = new Date();
 
-        seneca.make$(USER_DOJO_ENTITY_NS).save$(ent, cb);
+        seneca.make$(USER_DOJO_ENTITY_NS).save$(ent, done);
       });
     }
-    function deleteDojoLead(cb){
-      seneca.make$(DOJO_LEADS_ENTITY_NS).load$({dojoId: args.dojoLeadId}, function(err, ent) {
+    function deleteDojoLead(usersDojos, done){
+      seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: args.dojoLeadId}, function(err, ent) {
         if (err) return done(err);
 
         ent.deleted = 1;
         ent.deletedBy = args.user.id;
         ent.deletedAt = new Date();
 
-        seneca.make$(DOJO_LEADS_ENTITY_NS).save$(ent, cb);
+        seneca.make$(DOJO_LEADS_ENTITY_NS).save$(ent, done);
       });
     }
   }
@@ -1132,8 +1131,6 @@ module.exports = function (options) {
   function cmd_load_users_dojos(args, done){
     var usersdojos_ent;
     var query = args.query ? args.query : {};
-
-    query.deleted = 0;
 
     usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
 
@@ -1567,8 +1564,7 @@ module.exports = function (options) {
           if(err) return done(err);
           var originalUserDojo = response;
           var updatedUserDojo = userDojo;
-          var isDojoOwner;
-          (originalUserDojo.owner === 1) ? isDojoOwner = true : isDojoOwner = false;
+          var isDojoOwner = originalUserDojo && originalUserDojo.owner === 1;
           if(isDojoOwner) {
             //If this user is the dojo owner, make sure that this update is not removing their champion and dojo admin permissions.
             var hasDojoAdminPermission = _.find(updatedUserDojo.userPermissions, function (updatedUserPermissions) {
