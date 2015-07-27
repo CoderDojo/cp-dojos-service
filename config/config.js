@@ -1,23 +1,10 @@
 var path = require('path');
 module.exports = function() {
 
-  // Utility function for local development running with boot2docker
-  // where we need the ip address of boot2docker instead of localhost.
-  // This is for accessing containerised services.
-  function localhost() {
-    if (process.env.DOCKER_HOST) {
-      return require('url').parse(process.env.DOCKER_HOST).hostname;
-    }
-    if (process.env.TARGETIP) {
-      return process.env.TARGETIP;
-    }
-    return '127.0.0.1';
-  }
-
   function pgConfig() {
     return {
       name: process.env.POSTGRES_NAME,
-      host: process.env.POSTGRES_HOST || localhost(),
+      host: process.env.POSTGRES_HOST || '127.0.0.1',
       port: process.env.POSTGRES_PORT || 5432,
       username: process.env.POSTGRES_USERNAME,
       password: process.env.POSTGRES_PASSWORD
@@ -27,7 +14,7 @@ module.exports = function() {
   function esConfig() {
     return {
       connection: {
-        host : (process.env.ES_HOST || localhost()) + ':9200',
+        host : (process.env.ES_HOST || '127.0.0.1') + ':9200',
         index: process.env.ES_INDEX,
         sniffOnStart: false,
         sniffInterval: false
