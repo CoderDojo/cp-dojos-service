@@ -41,7 +41,7 @@ if (!args['ignore-cache']) {
   }
 }
 
-seneca.client({type: 'web', host: process.env.DOCKER_HOST_IP || process.env.process.env.TARGETIP || '127.0.0.1', port: 10302, pin: 'role:cd-geonames,cmd:*'});
+seneca.client({type: 'web', host: process.env.DOCKER_HOST_IP || process.env.TARGETIP || '127.0.0.1', port: 10302, pin: 'role:cd-geonames,cmd:*'});
 
 seneca.ready(function() {
 
