@@ -128,7 +128,7 @@ module.exports = function (options) {
       seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
     }
 
-    function getCurrentFounderUserDojo(done){
+    function getCurrentFounderUserDojo(prevFoundersUserDojo, done){
       var query = {};
 
       query.userId = founder.id;
