@@ -10,9 +10,9 @@
 exports.config = {
   app_name: ['cp-dojos-service'],
   agent_enabled: false, // set via NEW_RELIC_ENABLED for production
-  license_key: '',      // set via NEW_RELIC_LICENSE_KEY
+  license_key: 'xyz',      // set via NEW_RELIC_LICENSE_KEY
   logging: {
     level: 'info',
-    filepath: os.tmpdir() + 'newrelic_agent.log'
+    filepath: require('os').tmpdir() + 'newrelic_agent.log'
   }
 }
