@@ -123,6 +123,10 @@ module.exports = function (options) {
     }
 
     function updatePreviousFounderUserDojo(userDojo, done){
+      if(_.isEmpty(userDojo)){
+        return done();
+      }
+      
       userDojo.owner = 0;
 
       seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
