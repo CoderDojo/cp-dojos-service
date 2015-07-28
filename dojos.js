@@ -81,13 +81,7 @@ module.exports = function (options) {
       updatePreviousFounderUserDojo,
       getCurrentFounderUserDojo,
       updateOrCreateUserDojo
-      ],function(err, results){
-        if(err){
-          return done(err);
-        }
-
-        return done(null, results);
-      });
+      ],done);
 
     function isCDFAdmin(done){
       var userId = args.user.id;
@@ -112,12 +106,12 @@ module.exports = function (options) {
       query.owner = 1;
       query.dojoId = founder.dojoId;
 
-      seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: query}, function(err, userDojo){
+      seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: query}, function(err, usersDojos){
         if(err){
           return done(err);
         }
 
-        userDojo = userDojo[0];
+        var userDojo = usersDojos[0];
         
         if(_.isEmpty(userDojo)){
           return done(new Error('Cannot find previous founder'));
@@ -131,13 +125,7 @@ module.exports = function (options) {
     function updatePreviousFounderUserDojo(userDojo, done){
       userDojo.owner = 0;
 
-      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, function(err, prevFounder){
-        if(err){
-          return done(err);
-        }
-
-        return done();
-      });
+      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
     }
 
     function getCurrentFounderUserDojo(done){
@@ -1704,13 +1692,7 @@ module.exports = function (options) {
       if(userDojo.userPermissions) {
         userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
       }
-      usersDojosEntity.save$(userDojo, function(err, usersDojos){
-        if(err){
-          return done(err);
-        }
-
-        return done(null, usersDojos);
-      });
+      usersDojosEntity.save$(userDojo, done);
     }
     
   }
