@@ -66,6 +66,107 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'uncompleted_dojos'}, cmd_uncompleted_dojos);
   seneca.add({role: plugin, cmd: 'get_dojo_config'}, cmd_get_dojo_config);
   seneca.add({role: plugin, cmd: 'load_dojo_admins'}, cmd_load_dojo_admins);
+  seneca.add({role: plugin, cmd: 'update_founder'}, cmd_update_dojo_founder);
+
+  function cmd_update_dojo_founder(args, done){
+    var founder = args.founder;
+    var seneca = this;
+    if(_.isEmpty(founder)){
+      return done(new Error('Founder is empty'));
+    }
+
+    async.waterfall([
+      isCDFAdmin,
+      getPreviousFounderUserDojo,
+      updatePreviousFounderUserDojo,
+      getCurrentFounderUserDojo,
+      updateOrCreateUserDojo
+      ],done);
+
+    function isCDFAdmin(done){
+      var userId = args.user.id;
+
+      seneca.act({role: 'cd-users', cmd: 'load', id: userId}, function(err, user){
+        if(err){
+          return done(err);
+        }
+
+        if(!_.contains(user.roles, 'cdf-admin')){
+          return done(new Error('Unauthorized'));
+        }
+
+        return done();
+      });
+    }
+
+    function getPreviousFounderUserDojo(done){
+      var query = {};
+
+      query.userId = founder.previousFounderId;
+      query.owner = 1;
+      query.dojoId = founder.dojoId;
+
+      seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: query}, function(err, usersDojos){
+        if(err){
+          return done(err);
+        }
+
+        var userDojo = usersDojos[0];
+        
+        if(_.isEmpty(userDojo)){
+          return done(new Error('Cannot find previous founder'));
+        }
+
+        return done(null, userDojo);
+
+      });
+    }
+
+    function updatePreviousFounderUserDojo(userDojo, done){
+      if(_.isEmpty(userDojo)){
+        return done();
+      }
+      
+      userDojo.owner = 0;
+
+      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
+    }
+
+    function getCurrentFounderUserDojo(prevFoundersUserDojo, done){
+      var query = {};
+
+      query.userId = founder.id;
+      query.dojoId = founder.dojoId;
+
+      seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: query}, function(err, currentFounder){
+        if(err){
+          return done(err);
+        }
+
+        return done(null, currentFounder[0]);
+      });
+    }
+
+    function updateOrCreateUserDojo(userDojo, done){
+      if(_.isEmpty(userDojo)){
+        userDojo = {};
+        userDojo.dojoId = founder.dojoId;
+        userDojo.userId = founder.id;
+      }
+
+      if(!userDojo.userTypes){
+        userDojo.userTypes = [];
+      }
+
+      if(!_.contains(userDojo.userTypes, 'champion')){
+        userDojo.userTypes.push('champion');
+      }
+
+      userDojo.owner = 1;
+
+      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
+    }
+  }
 
   function cmd_create_dojo_email(args, done) {
     if (!args.dojo) {
@@ -1549,7 +1650,7 @@ module.exports = function (options) {
       saveUserDojo
     ], function (err, res) {
       if(err) return done(null, {error: err.message});
-      return done(null, res);
+      return done(null, res[1]);
     });
 
     function ownerPermissionsCheck(done) {

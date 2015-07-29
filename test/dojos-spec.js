@@ -62,7 +62,7 @@ function create_dojo (obj, creator, done){
 
 function create_users_dojos(obj, done) {
   seneca.act({role: role, cmd: 'save_usersdojos', userDojo: obj}, function(err, res){
-    console.log(res[1].dojoId);
+    console.log(res.dojoId);
     done();
   });
 }
