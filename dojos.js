@@ -112,7 +112,7 @@ module.exports = function (options) {
         }
 
         var userDojo = usersDojos[0];
-        
+
         if(_.isEmpty(userDojo)){
           return done(new Error('Cannot find previous founder'));
         }
@@ -126,7 +126,7 @@ module.exports = function (options) {
       if(_.isEmpty(userDojo)){
         return done();
       }
-      
+
       userDojo.owner = 0;
 
       seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
@@ -692,7 +692,7 @@ module.exports = function (options) {
           userDojo.userTypes = _.uniq(userDojo.userTypes);
           userDojo.userPermissions = [
             {title:'Dojo Admin', name:'dojo-admin'},
-            {title:'Forum Admin', name:'forum-admin'}, 
+            {title:'Forum Admin', name:'forum-admin'},
             {title:'Ticketing Admin', name:'ticketing-admin'}
           ];
           userDojo.user_id = user.id;
@@ -701,7 +701,7 @@ module.exports = function (options) {
             if(err) return cb(err);
             cb(null, dojo);
           });
-        }); 
+        });
       }], done);
   }
 
@@ -1372,9 +1372,9 @@ module.exports = function (options) {
           if(inviteToken.userType === 'champion') {
             userDojo.userPermissions = [
               {title:'Dojo Admin', name:'dojo-admin'},
-              {title:'Forum Admin', name:'forum-admin'}, 
+              {title:'Forum Admin', name:'forum-admin'},
               {title:'Ticketing Admin', name:'ticketing-admin'}
-            ]; 
+            ];
           }
           usersDojosEntity.save$(userDojo, function (err, response) {
             if(err) return done(err);
@@ -1390,7 +1390,7 @@ module.exports = function (options) {
           if(inviteToken.userType === 'champion') {
             userDojo.userPermissions = [
               {title:'Dojo Admin', name:'dojo-admin'},
-              {title:'Forum Admin', name:'forum-admin'}, 
+              {title:'Forum Admin', name:'forum-admin'},
               {title:'Ticketing Admin', name:'ticketing-admin'}
             ];
           }
@@ -1698,7 +1698,7 @@ module.exports = function (options) {
       }
       usersDojosEntity.save$(userDojo, done);
     }
-    
+
   }
 
   function cmd_remove_usersdojos(args, done) {
@@ -1706,7 +1706,7 @@ module.exports = function (options) {
     var userId = args.userId;
     var dojoId = args.dojoId;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-    
+
     async.waterfall([
       ownerPermissionsCheck,
       removeUserDojoLink,
@@ -1736,7 +1736,7 @@ module.exports = function (options) {
       seneca.make$(USER_DOJO_ENTITY_NS).save$(usersDojo, cb);
     }
 
-    function loadUserAndDojoDetails(cb) {
+    function loadUserAndDojoDetails(usersDojo, cb) {
       async.waterfall([
         loadUser,
         loadDojo
@@ -1755,7 +1755,7 @@ module.exports = function (options) {
           return callback(null, user, response);
         });
       }
-       
+
     }
 
     function loadDojoChampion(user, dojo, cb) {
@@ -1767,7 +1767,7 @@ module.exports = function (options) {
     }
 
     function emailDojoChampion(user, dojo, champion, cb) {
-      if(!champion) return cb(); 
+      if(!champion) return cb();
       var content = {
         name:user.name,
         email:user.email,
