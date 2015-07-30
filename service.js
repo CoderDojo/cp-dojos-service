@@ -14,7 +14,7 @@ seneca.options(config);
 
 seneca.use('postgresql-store', config["postgresql-store"]);
 seneca.use('elasticsearch', _.defaults(config["elasticsearch"], ESOptions));
-if(process.env.MAILTRAP_ENABLED === true) {
+if(process.env.MAILTRAP_ENABLED === 'true') {
   seneca.use('mail', config.mailtrap);
 } else {
   seneca.use('mail', config.gmail);
