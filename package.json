@@ -34,7 +34,9 @@
     "ejs": "1.0.0",
     "googleapis": "2.0.5",
     "js-yaml": "3.2.7",
+    "le_node": "1.0.11",
     "lodash": "3.7.0",
+    "moment": "2.10.3",
     "newrelic": "1.19.2",
     "postgrator": "2.2.0",
     "randomstring": "1.0.6",
@@ -46,7 +48,6 @@
     "seneca-postgresql-store": "0.7.0",
     "shortid": "2.2.2",
     "slug": "0.9.1",
-    "yargs": "3.7.2",
-    "moment": "2.10.3"
+    "yargs": "3.7.2"
   }
 }
