@@ -1,15 +1,23 @@
 module.exports = {
   refreshOnSave : true,
- customAnalyzers: {
-    email: {
-      type : 'custom',
-      tokenizer : 'uax_url_email',
-      filter : ['standard', 'lowercase', 'stop']
-    },
-    sort: {
-      type: 'custom',
-      tokenizer: 'keyword',
-      filter: 'lowercase'
+  indexConfig :{
+    settings: {
+      index: {
+        analysis :{
+          analyzer: {
+            email: {
+              type : 'custom',
+              tokenizer : 'uax_url_email',
+              filter : ['standard', 'lowercase', 'stop']
+            },
+            sort: {
+              type: 'custom',
+              tokenizer: 'keyword',
+              filter: 'lowercase'
+            }
+          }
+        }
+      }
     }
   },
   entities: [{
