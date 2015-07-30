@@ -14,7 +14,11 @@ seneca.options(config);
 
 seneca.use('postgresql-store', config["postgresql-store"]);
 seneca.use('elasticsearch', _.defaults(config["elasticsearch"], ESOptions));
-seneca.use('mail', config["mail"]);
+if(process.env.MAILTRAP_ENABLED === true) {
+  seneca.use('mail', config.mailtrap);
+} else {
+  seneca.use('mail', config.gmail);
+}
 seneca.use(require('./email-notifications.js'));
 seneca.use(require('./es.js'));
 seneca.use(require('./dojos.js'), {limits: config.limits, 'google-api': config['google-api']});

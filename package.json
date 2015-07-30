@@ -48,6 +48,7 @@
     "seneca-postgresql-store": "0.7.0",
     "shortid": "2.2.2",
     "slug": "0.9.1",
-    "yargs": "3.7.2"
+    "yargs": "3.7.2",
+    "xoauth2": "1.1.0"
   }
 }
