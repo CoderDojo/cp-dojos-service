@@ -42,7 +42,7 @@
     "randomstring": "1.0.6",
     "request": "2.55.0",
     "seneca": "0.6.1",
-    "seneca-elasticsearch": "git://github.com/sigismondm/seneca-elasticsearch#master",
+    "seneca-elasticsearch": "git://github.com/nearform/seneca-elasticsearch",
     "seneca-mail": "0.2.1",
     "seneca-mongo-store": "0.2.0",
     "seneca-postgresql-store": "0.7.0",
