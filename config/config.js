@@ -1,6 +1,13 @@
 var path = require('path');
 var assert = require('assert');
 var LogEntries = require('le_node');
+var generator = require('xoauth2').createXOAuth2Generator({
+  user: process.env.GMAIL_USER,
+  clientId: process.env.GMAIL_CLIENT_ID,
+  clientSecret: process.env.GMAIL_CLIENT_SECRET,
+  refreshToken: process.env.GMAIL_REFRESH_TOKEN
+});
+
 module.exports = function() {
 
   function log () {
@@ -118,7 +125,7 @@ module.exports = function() {
         }
       }
     },
-    mail: {
+    mailtrap: {
       folder: path.resolve(__dirname + '/../email-templates'),
       mail: {
         from:'no-reply@coderdojo.com'
@@ -130,11 +137,15 @@ module.exports = function() {
           user: process.env.MAIL_USER,
           pass: process.env.MAIL_PASS
         }
-        // service: 'Gmail',
-        // auth: {
-        //   user: 'youremail@example.com',
-        //   pass: 'yourpass'
-        // }
+      }
+    },
+    gmail: {
+      folder: path.resolve(__dirname + '/../email-templates'),
+      config: {
+        service: 'gmail',
+        auth: {
+          xoauth2: generator
+        }
       }
     },
     transport: {
