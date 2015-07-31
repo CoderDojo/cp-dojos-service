@@ -88,5 +88,52 @@ module.exports = [
         required:false
       }
     ]
+  },
+  {
+    title:'Embodying the Ethos',
+    checkboxes:[
+      {
+        title:'We will work to embody the CoderDojo ethos',
+        name:'embodyCoderDojoTao',
+        required:true,
+        requiredMessage:'required.'
+      },
+      {
+        title:'All mentors and young people are aware of online safety best practices and we only allow age appropriate content at our Dojo',
+        name:'onlineSafetyBestPractice',
+        required:true,
+        requiredMessage:'required.',
+        textField:true,
+        placeholder:'Optionally describe how this was achieved.'
+      },
+      {
+        title:'Our Dojo abides by data protection regulations in our jurisdiction',
+        name:'dataProtectionRegulated',
+        required:true,
+        requiredMessage:'required.',
+        textField:true,
+        placeholder:'Optionally describe how this was achieved.'
+      },
+      {
+        title:'Diversity among our attendees is respected',
+        name:'diversityRespected',
+        required:true,
+        requiredMessage:'required.',
+        textField:true,
+        placeholder:'Optionally describe how this was achieved.'
+      },
+      {
+        title:'We will work to help engage with and improve the greater CoderDojo movement by',
+        subList: true,
+        subListItems: [ "Communicating with the CoderDojo Foundation",
+          "Contributing to Kata, the community knowledge base at kata.coderdojo.com",
+          "Connecting with local and international Dojos to share insights and supports" ],
+        name:'engageCoderDojoMovement',
+        required:true,
+        requiredMessage:'required.',
+        textField:true,
+        placeholder:'Optionally describe how this was achieved.'
+      }
+    ]
   }
 ];
