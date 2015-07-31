@@ -1,23 +1,61 @@
 var path = require('path');
+var assert = require('assert');
+var LogEntries = require('le_node');
+var generator = require('xoauth2').createXOAuth2Generator({
+  user: process.env.GMAIL_USER,
+  clientId: process.env.GMAIL_CLIENT_ID,
+  clientSecret: process.env.GMAIL_CLIENT_SECRET,
+  refreshToken: process.env.GMAIL_REFRESH_TOKEN
+});
+
 module.exports = function() {
 
-  // Utility function for local development running with boot2docker
-  // where we need the ip address of boot2docker instead of localhost.
-  // This is for accessing containerised services.
-  function localhost() {
-    if (process.env.DOCKER_HOST) {
-      return require('url').parse(process.env.DOCKER_HOST).hostname;
+  function log () {
+    // seneca custom log handlers
+    function debugHandler() {
+      //console.log(JSON.stringify(arguments));
+
+      if (process.env.LOGENTRIES_ENABLED === 'true') {
+        assert.ok(process.env.LOGENTRIES_DEBUG_TOKEN, 'No LOGENTRIES_DEBUG_TOKEN set');
+        var le = new LogEntries({
+          token: process.env.LOGENTRIES_DEBUG_TOKEN,
+          flatten: true,
+          flattenArrays: true
+        });
+
+        le.log('debug', arguments);
+      }
     }
-    if (process.env.TARGETIP) {
-      return process.env.TARGETIP;
+
+    function errorHandler() {
+      console.error(JSON.stringify(arguments));
+
+      if (process.env.LOGENTRIES_ENABLED === 'true') {
+        assert.ok(process.env.LOGENTRIES_ERRORS_TOKEN, 'No LOGENTRIES_ERROR_TOKEN set');
+        var le = new LogEntries({
+          token: process.env.LOGENTRIES_ERRORS_TOKEN,
+          flatten: true,
+          flattenArrays: true
+        });
+
+        le.log('err', arguments);
+      }
     }
-    return '127.0.0.1';
-  }
+
+    return {
+      map:[{
+        level:'debug', handler: debugHandler
+      }, {
+        level:'error', handler: errorHandler
+      }]
+    };
+  };
+
 
   function pgConfig() {
     return {
       name: process.env.POSTGRES_NAME,
-      host: process.env.POSTGRES_HOST || localhost(),
+      host: process.env.POSTGRES_HOST || '127.0.0.1',
       port: process.env.POSTGRES_PORT || 5432,
       username: process.env.POSTGRES_USERNAME,
       password: process.env.POSTGRES_PASSWORD
@@ -27,7 +65,7 @@ module.exports = function() {
   function esConfig() {
     return {
       connection: {
-        host : (process.env.ES_HOST || localhost()) + ':9200',
+        host : (process.env.ES_HOST || '127.0.0.1') + ':9200',
         index: process.env.ES_INDEX,
         sniffOnStart: false,
         sniffInterval: false
@@ -87,7 +125,7 @@ module.exports = function() {
         }
       }
     },
-    mail: {
+    mailtrap: {
       folder: path.resolve(__dirname + '/../email-templates'),
       mail: {
         from:'no-reply@coderdojo.com'
@@ -99,11 +137,15 @@ module.exports = function() {
           user: process.env.MAIL_USER,
           pass: process.env.MAIL_PASS
         }
-        // service: 'Gmail',
-        // auth: {
-        //   user: 'youremail@example.com',
-        //   pass: 'yourpass'
-        // }
+      }
+    },
+    gmail: {
+      folder: path.resolve(__dirname + '/../email-templates'),
+      config: {
+        service: 'gmail',
+        auth: {
+          xoauth2: generator
+        }
       }
     },
     transport: {
@@ -115,6 +157,7 @@ module.exports = function() {
     },
     limits: {
       maxUserDojos: process.env.LIMITS_MAX_USER_DOJOS || 10
-    }
+    },
+    log: log()
   };
 }

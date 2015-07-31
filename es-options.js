@@ -1,23 +1,16 @@
 module.exports = {
   refreshOnSave : true,
-  indexConfig :{
-    settings: {
-      index: {
-        analysis :{
-          analyzer: {
-            email: {
-              type : 'custom',
-              tokenizer : 'uax_url_email',
-              filter : ['standard', 'lowercase', 'stop']
-            },
-            sort: {
-              type: 'custom',
-              tokenizer: 'keyword',
-              filter: 'lowercase'
-            }
-          }
-        }
-      }
+  fetchEntitesFromDB : true,
+  customAnalyzers: {
+    email: {
+      type : 'custom',
+      tokenizer : 'uax_url_email',
+      filter : ['standard', 'lowercase', 'stop']
+    },
+    sort: {
+      type: 'custom',
+      tokenizer: 'keyword',
+      filter: 'lowercase'
     }
   },
   entities: [{
@@ -86,7 +79,10 @@ module.exports = {
       'admin4Code': true,
       'admin4Name': true,
       'placeGeonameId': true,
-      'placeName': true
+      'placeName': true,
+      'deleted': true,
+      'deletedBy': true,
+      'deletedAt': true
     }
   }, {
     base: 'cd',
@@ -106,7 +102,10 @@ module.exports = {
         'type': 'string'
       },
       'currentStep': true,
-      'completed': true
+      'completed': true,
+      'deleted': true,
+      'deletedBy': true,
+      'deletedAt': true
     }
   }]
 };

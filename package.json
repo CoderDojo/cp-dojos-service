@@ -34,20 +34,21 @@
     "ejs": "1.0.0",
     "googleapis": "2.0.5",
     "js-yaml": "3.2.7",
+    "le_node": "1.0.11",
     "lodash": "3.7.0",
-    "mongodb": "1.4.38",
+    "moment": "2.10.3",
     "newrelic": "1.19.2",
     "postgrator": "2.2.0",
     "randomstring": "1.0.6",
     "request": "2.55.0",
     "seneca": "0.6.1",
-    "seneca-elasticsearch": "git://github.com/sigismondm/seneca-elasticsearch.git",
-    "seneca-mail": "git://github.com/iantocristian/seneca-mail.git#0.1.6",
+    "seneca-elasticsearch": "git://github.com/nearform/seneca-elasticsearch",
+    "seneca-mail": "0.2.1",
     "seneca-mongo-store": "0.2.0",
-    "seneca-postgresql-store": "git://github.com/iantocristian/seneca-postgresql-store.git",
+    "seneca-postgresql-store": "0.7.0",
     "shortid": "2.2.2",
     "slug": "0.9.1",
     "yargs": "3.7.2",
-    "moment": "2.10.3"
+    "xoauth2": "1.1.0"
   }
 }
