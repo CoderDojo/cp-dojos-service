@@ -1753,7 +1753,7 @@ module.exports = function (options) {
 
     function ownerPermissionsCheck(cb) {
       //Prevent the deletion of the dojo owner.
-      usersDojosEntity.load$({userId: userId, dojoId: dojoId}, function (err, response) {
+      usersDojosEntity.load$({userId: userId, dojoId: dojoId, deleted:0}, function (err, response) {
         if(err) return cb(err);
         var userDojo = response;
         if(userDojo.owner === 1) return cb(new Error('Dojo owners cannot be removed.'));
