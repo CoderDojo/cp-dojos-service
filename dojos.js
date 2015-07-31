@@ -697,6 +697,7 @@ module.exports = function (options) {
           ];
           userDojo.user_id = user.id;
           userDojo.dojo_id = dojo.id;
+          userDojo.deleted = 0;
           usersDojosEntity.save$(userDojo, function (err, userDojo) {
             if(err) return cb(err);
             cb(null, dojo);
