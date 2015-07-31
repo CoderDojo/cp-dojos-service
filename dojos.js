@@ -972,12 +972,6 @@ module.exports = function (options) {
   }
 
   function updateSalesForceChampionDetails(userId, dojoObj, dojoAction) {
-
-    console.log("SFC DOJO ACTION");
-    console.log(dojoAction);
-
-    
-
     var account = {
       PlatformId__c: userId
     };
@@ -1041,9 +1035,6 @@ module.exports = function (options) {
   // Note at this stage we expect to have an existing Account and Lead types in salesforce, this is
   // done at inital champion registration in cp-users.
   function updateSalesForce(userId, dojoObj, dojoAction) {
-    console.log("SF DOJOACTION");
-    console.log(dojoAction);
-
     var convertAccount = false;
 
     var lead = {
@@ -1159,8 +1150,6 @@ module.exports = function (options) {
   }
 
   function cmd_save_dojo_lead(args, done) {
-    console.log("ARGS");
-    console.log(args);
     var dojoAction = args.dojoAction || "blank";
 
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
