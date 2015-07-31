@@ -1258,6 +1258,8 @@ module.exports = function (options) {
     var usersdojos_ent;
     var query = args.query ? args.query : {};
 
+    query.deleted = 0;
+
     usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
 
     usersdojos_ent.list$(query, function(err, usersDojos){
@@ -1755,7 +1757,7 @@ module.exports = function (options) {
         if(err) return cb(err);
         var userDojo = response;
         if(userDojo.owner === 1) return cb(new Error('Dojo owners cannot be removed.'));
-        return cb();
+        return cb(null, userDojo);
       });
     }
 
