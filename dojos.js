@@ -697,6 +697,7 @@ module.exports = function (options) {
           ];
           userDojo.user_id = user.id;
           userDojo.dojo_id = dojo.id;
+          userDojo.deleted = 0;
           usersDojosEntity.save$(userDojo, function (err, userDojo) {
             if(err) return cb(err);
             cb(null, dojo);
@@ -1258,6 +1259,8 @@ module.exports = function (options) {
     var usersdojos_ent;
     var query = args.query ? args.query : {};
 
+    query.deleted = 0;
+
     usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
 
     usersdojos_ent.list$(query, function(err, usersDojos){
@@ -1751,11 +1754,11 @@ module.exports = function (options) {
 
     function ownerPermissionsCheck(cb) {
       //Prevent the deletion of the dojo owner.
-      usersDojosEntity.load$({userId: userId, dojoId: dojoId}, function (err, response) {
+      usersDojosEntity.load$({userId: userId, dojoId: dojoId, deleted:0}, function (err, response) {
         if(err) return cb(err);
         var userDojo = response;
         if(userDojo.owner === 1) return cb(new Error('Dojo owners cannot be removed.'));
-        return cb();
+        return cb(null, userDojo);
       });
     }
 
