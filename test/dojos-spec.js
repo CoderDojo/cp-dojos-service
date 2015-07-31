@@ -655,7 +655,7 @@ describe('Dojo Microservice test', function(){
           function(err, loadedDojos){
             if(err) return done(err);
 
-            console.log('loadedDojos: ' + util.inspect(loadedDojos));
+            //console.log('loadedDojos: ' + util.inspect(loadedDojos));
 
             expect(loadedDojos).to.exist;
             expect(loadedDojos.length).to.equal(3); //cause one of them is deleted during tests
