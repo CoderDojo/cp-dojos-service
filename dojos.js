@@ -896,6 +896,7 @@ module.exports = function (options) {
       seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: args.dojoLeadId}, function(err, ent) {
         if (err) return done(err);
 
+        ent.completed = true;
         ent.deleted = 1;
         ent.deletedBy = args.user.id;
         ent.deletedAt = new Date();
