@@ -649,7 +649,7 @@ describe('Dojo Microservice test', function(){
             //console.log('loadedDojos: ' + util.inspect(loadedDojos));
 
             expect(loadedDojos).to.exist;
-            expect(loadedDojos.length).to.equal(4);
+            expect(loadedDojos.length).to.equal(3); //cause one of them is deleted during tests
             expect(loadedDojos[0].userId).to.be.ok;
             expect(loadedDojos[1].userId).to.be.ok;
             expect(loadedDojos[0].userId).to.equal(loadedDojos[1].userId);
