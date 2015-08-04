@@ -621,7 +621,7 @@ module.exports = function (options) {
   // user can only create X number of dojos
   function wrapCheckRateLimitCreateDojo(f) {
     return function(args, done) {
-      seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id}, function(err, data) {
+      seneca.make$(USER_DOJO_ENTITY_NS).list$({userId: args.user.id}, function(err, data) {
         if (err) return done(err);
         if (data.length >= options.limits.maxUserDojos) {
           return done(null, {ok: false, why: 'Rate limit exceeded, you have already created ' + data.length + ' dojos, the maximum allowed is ' + options.limits.maxUserDojos});
@@ -695,9 +695,9 @@ module.exports = function (options) {
             {title:'Forum Admin', name:'forum-admin'},
             {title:'Ticketing Admin', name:'ticketing-admin'}
           ];
-          userDojo.user_id = user.id;
-          userDojo.dojo_id = dojo.id;
           userDojo.deleted = 0;
+          userDojo.userId = user.id;
+          userDojo.dojoId = dojo.id;
           usersDojosEntity.save$(userDojo, function (err, userDojo) {
             if(err) return cb(err);
             cb(null, dojo);
@@ -922,7 +922,7 @@ module.exports = function (options) {
   function cmd_my_dojos(args, done){
     async.waterfall([
       function(done) {
-        seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id, limit$: 'NULL', deleted: 0}, done);
+        seneca.make$(USER_DOJO_ENTITY_NS).list$({userId: args.user.id, limit$: 'NULL', deleted: 0}, done);
       },
       function(userDojos, done) {
         if (!userDojos || !userDojos.length) {
@@ -1408,8 +1408,8 @@ module.exports = function (options) {
         if(_.isEmpty(response)) {
           var userDojo = {};
           userDojo.owner = 0;
-          userDojo.user_id = currentUserId;
-          userDojo.dojo_id = dojoId;
+          userDojo.userId = currentUserId;
+          userDojo.dojoId = dojoId;
           userDojo.userTypes = [];
           userDojo.userTypes.push(inviteToken.userType);
           //If invite token user type is champion, update user permissions
@@ -1625,8 +1625,8 @@ module.exports = function (options) {
           if(_.isEmpty(response)) {
             var userDojo = {};
             userDojo.owner = 0;
-            userDojo.user_id = requestedByUser;
-            userDojo.dojo_id = dojoId;
+            userDojo.userId = requestedByUser;
+            userDojo.dojoId = dojoId;
             userDojo.userTypes = [];
             userDojo.userTypes.push(joinRequest.userType);
             usersDojosEntity.save$(userDojo, function (err, response) {

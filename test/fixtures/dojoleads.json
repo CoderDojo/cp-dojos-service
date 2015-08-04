@@ -1,9 +1,9 @@
 [
   {
     "id": 1000,
-    "user_id": 1000,
+    "userId": 1000,
     "email": "lead1@example.com",
-    "current_step": 0,
+    "currentStep": 0,
     "completed": false
   }
 ]

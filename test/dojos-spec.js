@@ -121,7 +121,7 @@ describe('Dojo Microservice test', function(){
   before(function(done){
     seneca.util.recurse(4, function( index, next ){
       // looks like postgres generates this field while other stores don't
-      if (!using_postgres) dojos[index].user_id = users[index].id
+      if (!using_postgres) dojos[index].userId = users[index].id
       create_dojo(dojos[index], users[index], next);
     }, done);
   });
@@ -257,25 +257,24 @@ describe('Dojo Microservice test', function(){
   describe('Save dojo lead', function(){
     it('save dojo lead to db', function(done){
       expect(dojoleads[0]).to.exist;
-      expect(dojoleads[0].user_id).to.be.ok;
+      expect(dojoleads[0].userId).to.be.ok;
 
       seneca.act({role: role, cmd: 'save_dojo_lead', dojoLead: dojoleads[0]}, function(err, savedLead){
         if(err) return done(err);
 
         expect(savedLead).to.exist;
-        expect(savedLead.user_id).to.be.ok;
+        expect(savedLead.userId).to.be.ok;
         expect(savedLead.email).to.be.ok;
         expect(savedLead).not.to.be.empty;
 
-        dojoLeadsEnt.load$({user_id:dojoleads[0].user_id}, function(err, loadedLead){
+        dojoLeadsEnt.load$({userId:dojoleads[0].userId}, function(err, loadedLead){
           if(err) return done(err);
 
-          var id_field = using_postgres ? 'userId' : 'user_id';
 
           expect(loadedLead).to.exist;
-          expect(loadedLead[id_field]).to.be.ok;
+          expect(loadedLead.userId).to.be.ok;
           expect(loadedLead.email).to.be.ok;
-          expect(loadedLead[id_field].toString()).to.equal(savedLead.user_id.toString());
+          expect(loadedLead.userId).to.equal(savedLead.userId);
 
           done();
         });
@@ -335,10 +334,8 @@ describe('Dojo Microservice test', function(){
 
         //console.log('expectedLead: ' + util.inspect(dojoLeads));
 
-        var id_field = using_postgres ? 'userId' : 'user_id';
-
         expect(dojoLeads).not.to.be.empty;
-        expect(dojoLeads[0][id_field]).to.be.ok;
+        expect(dojoLeads[0].userId).to.be.ok;
 
         //console.log('dojoLead_userId: ' + dojoLeads[0].user_id);
 
@@ -585,10 +582,8 @@ describe('Dojo Microservice test', function(){
 
           // console.log('loadedLead: ' + util.inspect(loadedLead));
 
-          var id_field = using_postgres ? 'userId' : 'user_id';
-
           expect(loadedLead).to.exist;
-          expect(loadedLead[id_field]).to.be.ok;
+          expect(loadedLead.userId).to.be.ok;
           expect(loadedLead.email).to.be.ok;
           expect(loadedLead.id).to.equal(dojoLeads[0].id);
 
@@ -646,10 +641,8 @@ describe('Dojo Microservice test', function(){
         expect(dojos).not.to.be.empty;
         expect(dojos[0].id).to.be.ok;
 
-          var id_field = using_postgres ? 'userId' : 'user_id';
-
-          // there should be two usersDojos with user_id 1001
-          seneca.act({role: role, cmd: 'load_usersdojos', query: {user_id: dojos[1][id_field]}},
+          // there should be two usersDojos with userId 1001
+          seneca.act({role: role, cmd: 'load_usersdojos', query: {userId: dojos[1].userId}},
           function(err, loadedDojos){
             if(err) return done(err);
 
@@ -657,9 +650,9 @@ describe('Dojo Microservice test', function(){
 
             expect(loadedDojos).to.exist;
             expect(loadedDojos.length).to.equal(3); //cause one of them is deleted during tests
-            expect(loadedDojos[0][id_field]).to.be.ok;
-            expect(loadedDojos[1][id_field]).to.be.ok;
-            expect(loadedDojos[0][id_field]).to.equal(loadedDojos[1][id_field]);
+            expect(loadedDojos[0].userId).to.be.ok;
+            expect(loadedDojos[1].userId).to.be.ok;
+            expect(loadedDojos[0].userId).to.equal(loadedDojos[1].userId);
 
             done();
           });
