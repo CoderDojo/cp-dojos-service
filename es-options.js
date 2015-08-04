@@ -82,7 +82,10 @@ module.exports = {
       'placeName': true,
       'deleted': true,
       'deletedBy': true,
-      'deletedAt': true
+      'deletedAt': true,
+      'dojoLeadId': true,
+      'mailingList': true,
+      'userInvites': true
     }
   }, {
     base: 'cd',
@@ -105,7 +108,8 @@ module.exports = {
       'completed': true,
       'deleted': true,
       'deletedBy': true,
-      'deletedAt': true
+      'deletedAt': true,
+      'converted': true
     }
   }]
 };
