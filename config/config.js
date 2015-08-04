@@ -62,17 +62,6 @@ module.exports = function() {
     }
   };
 
-  function esConfig() {
-    return {
-      connection: {
-        host : (process.env.ES_HOST || '127.0.0.1') + ':9200',
-        index: process.env.ES_INDEX,
-        sniffOnStart: false,
-        sniffInterval: false
-      }
-    };
-  }
-
   function googleApiConfig() {
     return {
       enabled: process.env.GOOGLE_API_ENABLED === 'true',
@@ -87,7 +76,6 @@ module.exports = function() {
 
   return {
     'postgresql-store': pgConfig(),
-    elasticsearch: esConfig(),
     'google-api': googleApiConfig(),
 
     'email-notifications': {
