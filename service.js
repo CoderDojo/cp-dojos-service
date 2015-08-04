@@ -21,7 +21,7 @@ if(process.env.MAILTRAP_ENABLED === 'true') {
 }
 seneca.use(require('./email-notifications.js'));
 seneca.use(require('./es.js'));
-seneca.use(require('./dojos.js'), {limits: config.limits, 'google-api': config['google-api']});
+seneca.use(require('./dojos.js'), {limits: config.limits, 'google-api': config['google-api'], postgresql: config['postgresql-store']});
 
 seneca.listen()
   .client({type: 'web', host: process.env.DOCKER_HOST_IP || process.env.TARGETIP || '127.0.0.1', port: 10302, pin: 'role:cd-countries,cmd:*'})

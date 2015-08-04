@@ -9,6 +9,7 @@ var crypto = require('crypto');
 var randomstring = require('randomstring');
 var fs = require('fs');
 var moment = require('moment');
+var pg = require('pg');
 
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
@@ -67,6 +68,8 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'get_dojo_config'}, cmd_get_dojo_config);
   seneca.add({role: plugin, cmd: 'load_dojo_admins'}, cmd_load_dojo_admins);
   seneca.add({role: plugin, cmd: 'update_founder'}, cmd_update_dojo_founder);
+  seneca.add({role: plugin, cmd: 'search_nearest_dojos'}, cmd_search_nearest_dojos);
+  seneca.add({role: plugin, cmd: 'search_bounding_box'}, cmd_search_bounding_box);
 
   function cmd_update_dojo_founder(args, done){
     var founder = args.founder;
@@ -1879,6 +1882,64 @@ module.exports = function (options) {
           .compact()
           .value();
         return done(null, dojoAdmins);
+      });
+    });
+  }
+
+  function cmd_list_query(args, done) {
+    var seneca = this;
+    var query  = args.query || {};
+    var filterInactiveDojos = query.filterInactiveDojos || false;
+    delete query.filterInactiveDojos;
+
+    var dojos = [];
+
+    seneca.act({role: plugin, cmd: 'list_query', query: query}, function (err, response) {
+      if(err) return done(err);
+      if(filterInactiveDojos) {
+        _.each(response, function (dojo) {
+          if(dojo.stage !== 4 && dojo.deleted !== 1) {
+            dojos.push(dojo);
+          }
+        });
+      } else {
+        dojos = response;
+      }
+      return done(null, response);
+    });
+  }
+
+  function cmd_search_nearest_dojos(args, done) {
+    //Optimise db search:
+    //CREATE INDEX nearest_dojos on cd_dojos USING gist(ll_to_earth( (geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8));
+    options.postgresql.database = options.postgresql.name;
+    options.postgresql.user = options.postgresql.username;
+    var searchLat = args.query.lat;
+    var searchLon = args.query.lon;
+
+    pg.connect(options.postgresql, function (err, client) {
+      if(err) return done(err);
+      client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 ORDER BY distance_from_search_location ASC LIMIT 10", [searchLat, searchLon], function (err, results) {
+        if(err) return done(err);
+        client.end();
+        return done(null, results.rows);
+      });
+    });
+  }
+
+  function cmd_search_bounding_box(args, done) {
+    options.postgresql.database = options.postgresql.name;
+    options.postgresql.user = options.postgresql.username;
+    var searchLat = args.query.lat;
+    var searchLon = args.query.lon;
+    var boundsRadius = args.query.radius;
+
+    pg.connect(options.postgresql, function (err, client) {
+      if(err) return done(err);
+      client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 AND earth_box(ll_to_earth($1, $2), $3) @> ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8) ORDER BY distance_from_search_location ASC", [searchLat, searchLon, boundsRadius], function (err, results) {
+        if(err) return done(err);
+        client.end();
+        return done(null, results.rows);
       });
     });
   }
