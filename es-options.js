@@ -46,6 +46,8 @@ module.exports = {
       'county': true,
       'state': true,
       'city': true,
+      'dojoLeadId': true,
+      'converted': true,
       'place': true,
       'coordinates': true,
       'geoPoint': {
