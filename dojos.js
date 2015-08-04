@@ -731,6 +731,9 @@ module.exports = function (options) {
           dojo.verifiedAt = new Date();
           dojo.verifiedBy = args.user.id;
 
+          // need to deal with better, but stops the system from crashing for now.  
+          if(!dojo.dojoLeadId) return;
+
           dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
             if (err) {
               return done(err)
@@ -765,6 +768,9 @@ module.exports = function (options) {
         } else if(!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) && dojo.verified === 0){
           dojo.verifiedAt = null;
           dojo.verifiedBy = null;
+
+          // need to deal with better, but stops the system from crashing for now. 
+          if(!dojo.dojoLeadId) return;
 
           dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
             if (err) {
@@ -1147,7 +1153,7 @@ module.exports = function (options) {
               if (err) { return done(err) };
               if (res) {
                 var dojoLead = res;
-                dl.converted="TRUE";
+                dojoLead.converted = true;
                 var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
                 dojoLeadEntity.save$(dojoLead, function(err, res){
                   if(err) return cb(err);
