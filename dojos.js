@@ -1073,6 +1073,15 @@ module.exports = function (options) {
         if(setupDojoObj.setDojoEmailAddress) lead.SetUpEmail__c = setupDojoObj.setDojoEmailAddress;
         if(setupDojoObj.setupSocialMedia) lead.SetUpSocialMedia__c = setupDojoObj.setupSocialMedia;
         if(setupDojoObj.connectOtherDojos) lead.ConnectWithOtherDojos__c = setupDojoObj.connectOtherDojos;
+        if(setupDojoObj.embodyCoderDojoTao) lead.EmbodyCoderDojoTao__c = setupDojoObj.embodyCoderDojoTao;
+        if(setupDojoObj.onlineSafetyBestPractice) lead.OnlineSafetyBestPractice__c = setupDojoObj.onlineSafetyBestPractice;
+        if(setupDojoObj.onlineSafetyBestPracticeText) lead.OnlineSafetyComments__c = setupDojoObj.onlineSafetyBestPracticeText;
+        if(setupDojoObj.dataProtectionRegulated) lead.DataProtectionRegulated__c = setupDojoObj.dataProtectionRegulated;
+        if(setupDojoObj.dataProtectionRegulatedText) lead.DataProtectionComments__c = setupDojoObj.dataProtectionRegulatedText;
+        if(setupDojoObj.diversityRespected) lead.DiversityRespected__c = setupDojoObj.diversityRespected;
+        if(setupDojoObj.diversityRespectedText) lead.DiversityRespectedComments__c = setupDojoObj.diversityRespectedText;
+        if(setupDojoObj.engageCoderDojoMovement) lead.EngageCoderDojoMovement__c = setupDojoObj.engageCoderDojoMovement;
+        if(setupDojoObj.engageCoderDojoMovementText) lead.EngageCoderDojoMovementComments__c = setupDojoObj.engageCoderDojoMovementText;
         lead.Status = '4. Dojo Set Up Completed';
       }
     } else if (dojoObj.currentStep === 4) {
