@@ -70,6 +70,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'update_founder'}, cmd_update_dojo_founder);
   seneca.add({role: plugin, cmd: 'search_nearest_dojos'}, cmd_search_nearest_dojos);
   seneca.add({role: plugin, cmd: 'search_bounding_box'}, cmd_search_bounding_box);
+  seneca.add({role: plugin, cmd: 'list_query'}, cmd_list_query);
 
   function cmd_update_dojo_founder(args, done){
     var founder = args.founder;
@@ -305,49 +306,17 @@ module.exports = function (options) {
   }
 
   function cmd_search_dojo_leads(args, done){
-    async.waterfall([
-      function(done) {
-        seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search, type:'cd_dojoleads'}, done);
-      },
-      function(searchResult, done) {
-        return done(null, {
-          total: searchResult.total,
-          records: _.pluck(searchResult.hits, '_source')
-        });
-      }
-    ], function(err, res) {
-      if (err) {
-        return done(err);
-      }
-      return done(null, res);
-    });
+    var dojoLeadsEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
+    dojoLeadsEntity.list$(args.query, done);
   }
 
-  function cmd_uncompleted_dojos(args, done){
-    var query = { query : {
-      filtered : {
-        query : {
-          match_all : {}
-        },
-        filter : {
-          bool: {
-            must: [{
-              term: { creator: args.user.id }
-            }],
-            must_not:[{
-              term: { deleted: 1}
-            }]
-          }
-        }
-      }
-    }
-    };
-
-    seneca.act({role: plugin, cmd: 'search', search: query}, function(err, dojos){
+  function cmd_uncompleted_dojos(args, done) {
+    var query = {creator: args.user.id, deleted: 0};
+    seneca.act({role: plugin, cmd: 'search', query: query}, function(err, dojos){
       if(err){ return done(err) }
-      if(dojos.total > 0) {
+      if(dojos.length > 0) {
         var uncompletedDojos = [];
-        async.each(dojos.records, function (dojo, cb) {
+        async.each(dojos, function (dojo, cb) {
           //check if dojo "setup dojo step is completed"
           seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojo.dojoLeadId}, function (err, dojoLead) {
             if(err) return cb(err);
@@ -411,56 +380,42 @@ module.exports = function (options) {
   function cmd_search(args, done) {
     var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
     async.waterfall([
-      function(done) {
-        seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search, type: args.type || null}, done);
+      function (done) {
+        var query = args.query;
+        if(query.name) query.name = new RegExp(query.name, 'i');
+        if(query.email) query.email = new RegExp(query.email, 'i');
+        seneca.act({role: plugin, cmd: 'list_query', query: query}, done);
       },
-      function(searchResult, done) {
-        var dojos = _.pluck(searchResult.hits, '_source');
-
-        async.each(dojos, function(dojo, cb){
-
+      function (searchResult, done) {
+        var dojos = searchResult;
+        async.each(dojos, function (dojo, cb){
           seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojo.id, owner: 1}},
             function(err, userDojos){
-
-              if(err){
-                return cb(err);
-              }
-
-              if(userDojos.length < 1){
-                return cb();
-              }
-
+              if(err) return cb(err);
+              if(userDojos.length < 1) return cb();
               var userIds = _.pluck(userDojos, 'userId');
-
               seneca.act({role: 'cd-users', cmd: 'list', ids: userIds}, function(err, users){
-                if(err){
-                  return cb(err);
-                }
-
+                if(err) return cb(err);
                 dojo.creators = _.map(users, function(user){
                   return {email: user.email, id: user.id};
                 });
-
-                cb(null, dojo);
+                return cb(null, dojo);
               });
             });
-          }, function(err) {
-            if(err){
-              return done(err);
-            }
-
+          }, function (err) {
+            if(err) return done(err);
             return done(null, searchResult);
           });
       },
-      function(searchResult, done) {
-        var userIds = _.chain(searchResult.hits).pluck('_source').pluck('creators').flatten().pluck('id').uniq().value();
+      function (searchResult, done) {
+        var userIds = _.chain(searchResult).pluck('creators').flatten().pluck('id').uniq().value();
         async.waterfall([
           function(done) {
             seneca.act({role:'cd-agreements', cmd:'list', userIds: userIds}, done);
           },
           function(agreements, done) {
             agreements = _.indexBy(agreements, 'userId');
-            _.each(_.pluck(searchResult.hits, '_source'), function(dojo) {
+            _.each(searchResult, function(dojo) {
               dojo.agreements = [];
               _.each(dojo.creators, function(creator){
                 creator.agreements = [];
@@ -474,10 +429,7 @@ module.exports = function (options) {
         ], done);
       },
       function(searchResult, done) {
-        return done(null, {
-          total: searchResult.total,
-          records: _.pluck(searchResult.hits, '_source')
-        });
+        return done(null, searchResult);
       }
     ], function(err, res) {
       if (err) {
@@ -1891,22 +1843,8 @@ module.exports = function (options) {
     var query  = args.query || {};
     var filterInactiveDojos = query.filterInactiveDojos || false;
     delete query.filterInactiveDojos;
-
-    var dojos = [];
-
-    seneca.act({role: plugin, cmd: 'list_query', query: query}, function (err, response) {
-      if(err) return done(err);
-      if(filterInactiveDojos) {
-        _.each(response, function (dojo) {
-          if(dojo.stage !== 4 && dojo.deleted !== 1) {
-            dojos.push(dojo);
-          }
-        });
-      } else {
-        dojos = response;
-      }
-      return done(null, response);
-    });
+    var dojosEntity = seneca.make$(ENTITY_NS);
+    dojosEntity.list$(query, done);
   }
 
   function cmd_search_nearest_dojos(args, done) {
