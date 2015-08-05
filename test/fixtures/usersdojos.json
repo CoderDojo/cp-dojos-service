@@ -2,8 +2,8 @@
   {
     "id": 2000,
     "owner": 1,
-    "user_id":1000,
-    "background_checked": false,
+    "userId":1000,
+    "backgroundChecked": false,
     "deleted": 0,
     "deletedBy": "",
     "deletedAt": ""

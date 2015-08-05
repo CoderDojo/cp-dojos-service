@@ -6,7 +6,7 @@
     "level": 0,
     "activated": 1,
     "banned": 0,
-    "ban_reason": null
+    "banReason": null
   },
   {
     "id": 1001,
@@ -15,7 +15,7 @@
     "level": 0,
     "activated": 1,
     "banned": 0,
-    "ban_reason": null
+    "banReason": null
   },
   {
     "id": 1002,
@@ -24,7 +24,7 @@
     "level": 0,
     "activated": 1,
     "banned": 0,
-    "ban_reason": null
+    "banReason": null
   },
   {
     "id": 1003,
@@ -33,7 +33,7 @@
     "level": 0,
     "activated": 1,
     "banned": 0,
-    "ban_reason": null
+    "banReason": null
   },
   {
     "id": 1004,
@@ -42,6 +42,6 @@
     "level": 0,
     "activated": 1,
     "banned": 0,
-    "ban_reason": null
+    "banReason": null
   }
 ]

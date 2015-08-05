@@ -9,6 +9,7 @@ var crypto = require('crypto');
 var randomstring = require('randomstring');
 var fs = require('fs');
 var moment = require('moment');
+var pg = require('pg');
 
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
@@ -67,6 +68,9 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'get_dojo_config'}, cmd_get_dojo_config);
   seneca.add({role: plugin, cmd: 'load_dojo_admins'}, cmd_load_dojo_admins);
   seneca.add({role: plugin, cmd: 'update_founder'}, cmd_update_dojo_founder);
+  seneca.add({role: plugin, cmd: 'search_nearest_dojos'}, cmd_search_nearest_dojos);
+  seneca.add({role: plugin, cmd: 'search_bounding_box'}, cmd_search_bounding_box);
+  seneca.add({role: plugin, cmd: 'list_query'}, cmd_list_query);
 
   function cmd_update_dojo_founder(args, done){
     var founder = args.founder;
@@ -302,49 +306,17 @@ module.exports = function (options) {
   }
 
   function cmd_search_dojo_leads(args, done){
-    async.waterfall([
-      function(done) {
-        seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search, type:'cd_dojoleads'}, done);
-      },
-      function(searchResult, done) {
-        return done(null, {
-          total: searchResult.total,
-          records: _.pluck(searchResult.hits, '_source')
-        });
-      }
-    ], function(err, res) {
-      if (err) {
-        return done(err);
-      }
-      return done(null, res);
-    });
+    var dojoLeadsEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
+    dojoLeadsEntity.list$(args.query, done);
   }
 
-  function cmd_uncompleted_dojos(args, done){
-    var query = { query : {
-      filtered : {
-        query : {
-          match_all : {}
-        },
-        filter : {
-          bool: {
-            must: [{
-              term: { creator: args.user.id }
-            }],
-            must_not:[{
-              term: { deleted: 1}
-            }]
-          }
-        }
-      }
-    }
-    };
-
-    seneca.act({role: plugin, cmd: 'search', search: query}, function(err, dojos){
+  function cmd_uncompleted_dojos(args, done) {
+    var query = {creator: args.user.id, deleted: 0};
+    seneca.act({role: plugin, cmd: 'search', query: query}, function(err, dojos){
       if(err){ return done(err) }
-      if(dojos.total > 0) {
+      if(dojos.length > 0) {
         var uncompletedDojos = [];
-        async.each(dojos.records, function (dojo, cb) {
+        async.each(dojos, function (dojo, cb) {
           //check if dojo "setup dojo step is completed"
           seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojo.dojoLeadId}, function (err, dojoLead) {
             if(err) return cb(err);
@@ -408,56 +380,42 @@ module.exports = function (options) {
   function cmd_search(args, done) {
     var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
     async.waterfall([
-      function(done) {
-        seneca.act('role:cd-dojos-elasticsearch,cmd:search', {search:args.search, type: args.type || null}, done);
+      function (done) {
+        var query = args.query;
+        if(query.name) query.name = new RegExp(query.name, 'i');
+        if(query.email) query.email = new RegExp(query.email, 'i');
+        seneca.act({role: plugin, cmd: 'list_query', query: query}, done);
       },
-      function(searchResult, done) {
-        var dojos = _.pluck(searchResult.hits, '_source');
-
-        async.each(dojos, function(dojo, cb){
-
+      function (searchResult, done) {
+        var dojos = searchResult;
+        async.each(dojos, function (dojo, cb){
           seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojo.id, owner: 1}},
             function(err, userDojos){
-
-              if(err){
-                return cb(err);
-              }
-
-              if(userDojos.length < 1){
-                return cb();
-              }
-
+              if(err) return cb(err);
+              if(userDojos.length < 1) return cb();
               var userIds = _.pluck(userDojos, 'userId');
-
               seneca.act({role: 'cd-users', cmd: 'list', ids: userIds}, function(err, users){
-                if(err){
-                  return cb(err);
-                }
-
+                if(err) return cb(err);
                 dojo.creators = _.map(users, function(user){
                   return {email: user.email, id: user.id};
                 });
-
-                cb(null, dojo);
+                return cb(null, dojo);
               });
             });
-          }, function(err) {
-            if(err){
-              return done(err);
-            }
-
+          }, function (err) {
+            if(err) return done(err);
             return done(null, searchResult);
           });
       },
-      function(searchResult, done) {
-        var userIds = _.chain(searchResult.hits).pluck('_source').pluck('creators').flatten().pluck('id').uniq().value();
+      function (searchResult, done) {
+        var userIds = _.chain(searchResult).pluck('creators').flatten().pluck('id').uniq().value();
         async.waterfall([
           function(done) {
             seneca.act({role:'cd-agreements', cmd:'list', userIds: userIds}, done);
           },
           function(agreements, done) {
             agreements = _.indexBy(agreements, 'userId');
-            _.each(_.pluck(searchResult.hits, '_source'), function(dojo) {
+            _.each(searchResult, function(dojo) {
               dojo.agreements = [];
               _.each(dojo.creators, function(creator){
                 creator.agreements = [];
@@ -471,10 +429,7 @@ module.exports = function (options) {
         ], done);
       },
       function(searchResult, done) {
-        return done(null, {
-          total: searchResult.total,
-          records: _.pluck(searchResult.hits, '_source')
-        });
+        return done(null, searchResult);
       }
     ], function(err, res) {
       if (err) {
@@ -621,7 +576,7 @@ module.exports = function (options) {
   // user can only create X number of dojos
   function wrapCheckRateLimitCreateDojo(f) {
     return function(args, done) {
-      seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id}, function(err, data) {
+      seneca.make$(USER_DOJO_ENTITY_NS).list$({userId: args.user.id}, function(err, data) {
         if (err) return done(err);
         if (data.length >= options.limits.maxUserDojos) {
           return done(null, {ok: false, why: 'Rate limit exceeded, you have already created ' + data.length + ' dojos, the maximum allowed is ' + options.limits.maxUserDojos});
@@ -695,8 +650,9 @@ module.exports = function (options) {
             {title:'Forum Admin', name:'forum-admin'},
             {title:'Ticketing Admin', name:'ticketing-admin'}
           ];
-          userDojo.user_id = user.id;
-          userDojo.dojo_id = dojo.id;
+          userDojo.deleted = 0;
+          userDojo.userId = user.id;
+          userDojo.dojoId = dojo.id;
           usersDojosEntity.save$(userDojo, function (err, userDojo) {
             if(err) return cb(err);
             cb(null, dojo);
@@ -707,10 +663,6 @@ module.exports = function (options) {
 
   function cmd_update(args, done){
     var dojo = args.dojo;
-
-    if(dojo.country){
-      dojo.countryName = dojo.country.countryName;
-    }
 
     //load dojo before saving to get it's current state
     var dojoEnt = seneca.make$(ENTITY_NS);
@@ -734,18 +686,20 @@ module.exports = function (options) {
           dojo.verifiedAt = new Date();
           dojo.verifiedBy = args.user.id;
 
+          // need to deal with better, but stops the system from crashing for now.  
+          if(!dojo.dojoLeadId) return;
 
           dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
             if (err) {
               return done(err)
             }
-
             dojoLead = dojoLead.data$();
             dojoLead.completed = true;
+
             dojoLead.currentStep = 5;  // salesforce trigger to set the Dojo Listing Verified...
 
             //update dojoLead
-            seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead}, function (err, dojoLead) {
+            seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead, dojoAction: "verify"}, function (err, dojoLead) {
 
               if (err) {
                 return done(err)
@@ -770,6 +724,9 @@ module.exports = function (options) {
           dojo.verifiedAt = null;
           dojo.verifiedBy = null;
 
+          // need to deal with better, but stops the system from crashing for now. 
+          if(!dojo.dojoLeadId) return;
+
           dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
             if (err) {
               return done(err)
@@ -779,7 +736,7 @@ module.exports = function (options) {
             dojoLead.currentStep = 4;  // reset state in salesforce
 
             //update dojoLead
-            seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead}, function (err, dojoLead) {
+            seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead, dojoAction: "verify"}, function (err, dojoLead) {
               if (err) {
                 return done(err)
               }
@@ -900,6 +857,7 @@ module.exports = function (options) {
       seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: args.dojoLeadId}, function(err, ent) {
         if (err) return done(err);
 
+        ent.completed = true;
         ent.deleted = 1;
         ent.deletedBy = args.user.id;
         ent.deletedAt = new Date();
@@ -911,6 +869,7 @@ module.exports = function (options) {
 
   function cmd_bulk_update(args, done){
     async.each(args.dojos, function(dojo, cb) {
+
       seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, cb);
     }, done);
   }
@@ -924,7 +883,7 @@ module.exports = function (options) {
   function cmd_my_dojos(args, done){
     async.waterfall([
       function(done) {
-        seneca.make$(USER_DOJO_ENTITY_NS).list$({user_id: args.user.id, limit$: 'NULL', deleted: 0}, done);
+        seneca.make$(USER_DOJO_ENTITY_NS).list$({userId: args.user.id, limit$: 'NULL', deleted: 0}, done);
       },
       function(userDojos, done) {
         if (!userDojos || !userDojos.length) {
@@ -975,45 +934,59 @@ module.exports = function (options) {
     });
   }
 
-  function updateSalesForceChampionDetails(userId, dojoLead) {
+  function updateSalesForceChampionDetails(userId, dojoObj, dojoAction) {
     var account = {
-      PlatformId__c: userId,
+      PlatformId__c: userId
     };
 
-    if (dojoLead.application.championDetails.email)
-      account.Email = dojoLead.application.championDetails.email;
-    if (dojoLead.application.championDetails.dateOfBirth)
-      account.DateofBirth__c = dojoLead.application.championDetails.dateOfBirth;
-    if (dojoLead.application.championDetails.phone)
-      account.Phone = dojoLead.application.championDetails.phone;
-    if (dojoLead.application.championDetails.country.name)
-      account.BillingCountry = dojoLead.application.championDetails.country.name;
-    if (dojoLead.application.championDetails.place.name)
-      account.BillingCity = dojoLead.application.championDetails.place.name;
-    if (dojoLead.application.championDetails.place.admin2Name)
-      account.BillingState = dojoLead.application.championDetails.place.admin2Name;
-    if (dojoLead.application.championDetails.address1)
-      account.BillingStreet = dojoLead.application.championDetails.address1;
-    if (dojoLead.application.championDetails.place.latitude && dojoLead.application.championDetails.place.longitude) {
-      account.Coordinates__Latitude__s = dojoLead.application.championDetails.place.latitude;
-      account.Coordinates__Longitude__s = dojoLead.application.championDetails.place.longitude;
-    }
-    if (dojoLead.application.championDetails.projects)
-      account.Projects__c = dojoLead.application.championDetails.projects;
-    if (dojoLead.application.championDetails.youthExperience)
-      account.ExperienceWorkingWithYouth__c = dojoLead.application.championDetails.youthExperience;
-    if (dojoLead.application.championDetails.twitter)
-      account.Twitter__c = dojoLead.application.championDetails.twitter;
-    if (dojoLead.application.championDetails.linkedIn)
-      account.Linkedin__c = dojoLead.application.championDetails.linkedIn;
-    if (dojoLead.application.championDetails.notes)
-      account.Notes__c = dojoLead.application.championDetails.notes;
-    if (dojoLead.application.championDetails.coderDojoReference) {
-      account.CoderDojoReferral__c = dojoLead.application.championDetails.coderDojoReference;
-      if (dojoLead.application.championDetails.coderDojoReference === "Other" && dojoLead.application.championDetails.coderDojoReferenceOther)
-        account.CoderDojoReferralComment__c = dojoLead.application.championDetails.coderDojoReferenceOther;
-      else
-        account.CoderDojoReferralComment__c = "";
+    if(dojoObj.currentStep === 2) {
+      if (dojoObj.application.championDetails.email)
+        account.Email__c = dojoObj.application.championDetails.email;
+      if (dojoObj.application.championDetails.dateOfBirth)
+        account.DateofBirth__c = dojoObj.application.championDetails.dateOfBirth;
+      if (dojoObj.application.championDetails.phone)
+        account.Phone = dojoObj.application.championDetails.phone;
+      if (dojoObj.application.championDetails.country.name)
+        account.BillingCountry = dojoObj.application.championDetails.country.name;
+      if (dojoObj.application.championDetails.place.name)
+        account.BillingCity = dojoObj.application.championDetails.place.name;
+      if (dojoObj.application.championDetails.place.admin2Name)
+        account.BillingState = dojoObj.application.championDetails.place.admin2Name;
+      if (dojoObj.application.championDetails.address1)
+        account.BillingStreet = dojoObj.application.championDetails.address1;
+      if (dojoObj.application.championDetails.place.latitude && dojoObj.application.championDetails.place.longitude) {
+        account.Coordinates__Latitude__s = dojoObj.application.championDetails.place.latitude;
+        account.Coordinates__Longitude__s = dojoObj.application.championDetails.place.longitude;
+      }
+      if (dojoObj.application.championDetails.projects)
+        account.Projects__c = dojoObj.application.championDetails.projects;
+      if (dojoObj.application.championDetails.youthExperience)
+        account.ExperienceWorkingWithYouth__c = dojoObj.application.championDetails.youthExperience;
+      if (dojoObj.application.championDetails.twitter)
+        account.Twitter__c = dojoObj.application.championDetails.twitter;
+      if (dojoObj.application.championDetails.linkedIn)
+        account.Linkedin__c = dojoObj.application.championDetails.linkedIn;
+      if (dojoObj.application.championDetails.notes)
+        account.Notes__c = dojoObj.application.championDetails.notes;
+      if (dojoObj.application.championDetails.coderDojoReference) {
+        account.CoderDojoReferral__c = dojoObj.application.championDetails.coderDojoReference;
+        if (dojoObj.application.championDetails.coderDojoReference === "Other" && dojoObj.application.championDetails.coderDojoReferenceOther)
+          account.CoderDojoReferralComment__c = dojoObj.application.championDetails.coderDojoReferenceOther;
+        else
+          account.CoderDojoReferralComment__c = "";
+      }
+    } else if(dojoObj.currentStep === 4) {
+      if(dojoAction === "verify") {
+        account.Verified__c = 0; 
+      } else if (dojoAction === "delete") {
+        account.Deleted__c = 1;
+      } 
+    } else if(dojoObj.currentStep === 5) {
+      if(dojoAction === "verify") {
+        account.Verified__c = 1; 
+      } else if (dojoAction === "delete") {
+        account.Deleted__c = 1;
+      }
     }
 
     seneca.act('role:cd-salesforce,cmd:save_account', {userId: userId, account: account}, function (err, res){
@@ -1024,103 +997,133 @@ module.exports = function (options) {
 
   // Note at this stage we expect to have an existing Account and Lead types in salesforce, this is
   // done at inital champion registration in cp-users.
-  function updateSalesForce(userId, dojoLead) {
-    var lead = {
-      PlatformId__c: userId,
-    };
-
-    if (dojoLead.application && dojoLead.application.championDetails) {
-      updateSalesForceChampionDetails(userId, dojoLead);
-      if (dojoLead.application.championDetails.name)
-        lead.LastName = dojoLead.application.championDetails.name;
-    }
-
-    if (dojoLead.name) lead.Name = dojoLead.name;
-    if (dojoLead.application && dojoLead.application.dojoListing && dojoLead.application.dojoListing.name) {
-      lead.Company = dojoLead.application.dojoListing.name;
-      lead.Name = dojoLead.application.dojoListing.name;
-    }
-
-    if (dojoLead.email) lead.Email = dojoLead.email;
-    if (dojoLead.phone) lead.Phone = dojoLead.phone;
-    if (dojoLead.twitter) lead.Twitter__c = dojoLead.twitter;
-    if (dojoLead.website) lead.Website = dojoLead.website;
-    if (dojoLead.address1) lead.Street = dojoLead.address1;
-    if (dojoLead.countryName) lead.Country = dojoLead.countryName;
-
-    if(dojoLead.application.setupYourDojo) {
-      var setupDojoObj = dojoLead.application.setupYourDojo;
-      if(setupDojoObj.findTechnicalMentors) lead.FindTechnicalMentors__c = setupDojoObj.findTechnicalMentors ;
-      if(setupDojoObj.findNonTechnicalMentors) lead.FindNonTechnicalMentors__c = setupDojoObj.findNonTechnicalMentors;
-      if(setupDojoObj.backgroundCheck) lead.BackgroundCheckSetUp__c = setupDojoObj.backgroundCheck;
-      if(setupDojoObj.backgroundCheckText) lead.BackgroundCheckComment__c = setupDojoObj.backgroundCheckText;
-      if(setupDojoObj.locateVenue) lead.LocateVenue__c = setupDojoObj.locateVenue;
-      if(setupDojoObj.ensureHealthAndSafety) lead.HealthAndSafetyMet__c = setupDojoObj.ensureHealthAndSafety;
-      if(setupDojoObj.ensureHealthAndSafetyText) lead.HealthAndSafetyComment__c = setupDojoObj.ensureHealthAndSafetyText;
-      if(setupDojoObj.ensureInsuranceCover) lead.Insurance__c = setupDojoObj.ensureInsuranceCover;
-      if(setupDojoObj.ensureInsuranceCoverText) lead.InsuranceComment__c = setupDojoObj.ensureInsuranceCoverText;
-      if(setupDojoObj.setDojoDateAndTime) lead.LaunchDateAndTime__c = setupDojoObj.setDojoDateAndTime;
-      if(setupDojoObj.planContent) lead.ContentPlan__c = setupDojoObj.planContent;
-      if(setupDojoObj.setupTicketingAndRegistration) lead.TicketingSetUp__c = setupDojoObj.setupTicketingAndRegistration;
-      if(setupDojoObj.setDojoEmailAddress) lead.SetUpEmail__c = setupDojoObj.setDojoEmailAddress;
-      if(setupDojoObj.setupSocialMedia) lead.SetUpSocialMedia__c = setupDojoObj.setupSocialMedia;
-      if(setupDojoObj.connectOtherDojos) lead.ConnectWithOtherDojos__c = setupDojoObj.connectOtherDojos;
-    }
-
-    if(dojoLead.application.dojoListing) {
-      var dojoListingObj = dojoLead.application.dojoListing;
-      if(dojoListingObj.name) lead.Name = dojoListingObj.name ;
-      if(dojoListingObj.email) lead.Email = dojoListingObj.email;
-      if(dojoListingObj.time) lead.Time__c = dojoListingObj.time;
-      if(dojoListingObj.country && dojoListingObj.country.name) lead.Country = dojoListingObj.country.name;
-      if(dojoListingObj.place && dojoListingObj.place.name) lead.City = dojoListingObj.place.name;
-      if(dojoListingObj.place && dojoListingObj.place.name) lead.State = dojoListingObj.place.admin2Name;
-      if(dojoListingObj.address1) lead.Street = dojoListingObj.address1;
-      if (dojoListingObj.place && dojoListingObj.place.latitude && dojoListingObj.place.longitude) {
-        lead.Coordinates__Latitude__s = dojoListingObj.place.latitude;
-        lead.Coordinates__Longitude__s = dojoListingObj.place.longitude;
-      }
-      if(dojoListingObj.notes) lead.Notes__c = dojoListingObj.notes;
-      if(dojoListingObj.needMentors) lead.NeeedMentors__c = dojoListingObj.needMentors;
-      if(dojoListingObj.stage) lead.Stage__c = dojoListingObj.stage;
-      if(dojoListingObj.private) lead.Private__c = dojoListingObj.private;
-      if(dojoListingObj.googleGroup) lead.GoogleGroupURL__c = dojoListingObj.googleGroup;
-      if(dojoListingObj.website) lead.Website = dojoListingObj.website;
-      if(dojoListingObj.twitter) lead.Twitter__c = dojoListingObj.twitter;
-      if(dojoListingObj.supporterImage) lead.SupportersImageURL__c = dojoListingObj.supporterImage;
-      if(dojoListingObj.mailingList) lead.MailingList__c = dojoListingObj.mailingList;
-    }
-
+  function updateSalesForce(userId, dojoObj, dojoAction) {
     var convertAccount = false;
-    switch(dojoLead.currentStep) {
-      case 2:
-        lead.Status = '2. Champion Registration Completed';
-        break;
-      case 3:
-        lead.Status = '4. Dojo Set Up Completed';
-        break;
-      case 4:
-        lead.Status = '5. Dojo Listing Created';
-        break;
-      case 5:
-        lead.Status = '7. Dojo Listing Verified';
-        convertAccount = true;
-        break;
+
+    var lead = {
+      PlatformId__c: userId
     };
 
-    seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
-      if (err) return seneca.log.error('Error saving Lead in SalesForce!', err);
-      seneca.log.info('Lead saved in SalesForce', lead, res);
-      if (convertAccount === true) {
-        seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: res.id$}, function (err, res){
-          if (err) return seneca.log.error('Error converting Lead to Account in SalesForce!', err);
-          seneca.log.info('Lead converted to Account in SalesForce', lead, res);
-        });
+    if(dojoObj.currentStep === 2) {
+      if (dojoObj.application && dojoObj.application.championDetails) {
+        updateSalesForceChampionDetails(userId, dojoObj);
+        if (dojoObj.application.championDetails.name) lead.LastName = dojoObj.application.championDetails.name;
       }
-    });
+      lead.Status = '2. Champion Registration Completed';
+    } else if(dojoObj.currentStep === 3) {
+      if(dojoObj.application && dojoObj.application.setupYourDojo) {
+        var setupDojoObj = dojoObj.application.setupYourDojo;
+
+        if (setupDojoObj.name) {
+          lead.Company = setupDojoObj.name;
+          lead.Name = setupDojoObj.name;
+        }
+        if(setupDojoObj.phone) lead.Phone = setupDojoObj.phone;
+        if(setupDojoObj.findTechnicalMentors) lead.FindTechnicalMentors__c = setupDojoObj.findTechnicalMentors ;
+        if(setupDojoObj.findNonTechnicalMentors) lead.FindNonTechnicalMentors__c = setupDojoObj.findNonTechnicalMentors;
+        if(setupDojoObj.backgroundCheck) lead.BackgroundCheckSetUp__c = setupDojoObj.backgroundCheck;
+        if(setupDojoObj.backgroundCheckText) lead.BackgroundCheckComment__c = setupDojoObj.backgroundCheckText;
+        if(setupDojoObj.locateVenue) lead.LocateVenue__c = setupDojoObj.locateVenue;
+        if(setupDojoObj.ensureHealthAndSafety) lead.HealthAndSafetyMet__c = setupDojoObj.ensureHealthAndSafety;
+        if(setupDojoObj.ensureHealthAndSafetyText) lead.HealthAndSafetyComment__c = setupDojoObj.ensureHealthAndSafetyText;
+        if(setupDojoObj.ensureInsuranceCover) lead.Insurance__c = setupDojoObj.ensureInsuranceCover;
+        if(setupDojoObj.ensureInsuranceCoverText) lead.InsuranceComment__c = setupDojoObj.ensureInsuranceCoverText;
+        if(setupDojoObj.setDojoDateAndTime) lead.LaunchDateAndTime__c = setupDojoObj.setDojoDateAndTime;
+        if(setupDojoObj.planContent) lead.ContentPlan__c = setupDojoObj.planContent;
+        if(setupDojoObj.setupTicketingAndRegistration) lead.TicketingSetUp__c = setupDojoObj.setupTicketingAndRegistration;
+        if(setupDojoObj.setDojoEmailAddress) lead.SetUpEmail__c = setupDojoObj.setDojoEmailAddress;
+        if(setupDojoObj.setupSocialMedia) lead.SetUpSocialMedia__c = setupDojoObj.setupSocialMedia;
+        if(setupDojoObj.connectOtherDojos) lead.ConnectWithOtherDojos__c = setupDojoObj.connectOtherDojos;
+        if(setupDojoObj.embodyCoderDojoTao) lead.EmbodyCoderDojoTao__c = setupDojoObj.embodyCoderDojoTao;
+        if(setupDojoObj.onlineSafetyBestPractice) lead.OnlineSafetyBestPractice__c = setupDojoObj.onlineSafetyBestPractice;
+        if(setupDojoObj.onlineSafetyBestPracticeText) lead.OnlineSafetyComments__c = setupDojoObj.onlineSafetyBestPracticeText;
+        if(setupDojoObj.dataProtectionRegulated) lead.DataProtectionRegulated__c = setupDojoObj.dataProtectionRegulated;
+        if(setupDojoObj.dataProtectionRegulatedText) lead.DataProtectionComments__c = setupDojoObj.dataProtectionRegulatedText;
+        if(setupDojoObj.diversityRespected) lead.DiversityRespected__c = setupDojoObj.diversityRespected;
+        if(setupDojoObj.diversityRespectedText) lead.DiversityRespectedComments__c = setupDojoObj.diversityRespectedText;
+        if(setupDojoObj.engageCoderDojoMovement) lead.EngageCoderDojoMovement__c = setupDojoObj.engageCoderDojoMovement;
+        if(setupDojoObj.engageCoderDojoMovementText) lead.EngageCoderDojoMovementComments__c = setupDojoObj.engageCoderDojoMovementText;
+        lead.Status = '4. Dojo Set Up Completed';
+      }
+    } else if (dojoObj.currentStep === 4) {
+
+      if(dojoObj.converted === true) {
+
+        dojoObj.Verified__c === false;
+        updateSalesForceChampionDetails(userId + "-a", dojoObj, dojoAction);
+      } else {
+
+      if(dojoObj.application && dojoObj.application.dojoListing) {
+        var dojoListingObj = dojoObj.application.dojoListing;
+        if (dojoListingObj.name) {
+          lead.Company = dojoListingObj.name;
+          lead.Name = dojoListingObj.name;
+        }
+        if(dojoListingObj.phone) lead.Phone = dojoListingObj.phone;
+        if(dojoListingObj.name) lead.Name = dojoListingObj.name ;
+        if(dojoListingObj.email) lead.Email = dojoListingObj.email;
+        if(dojoListingObj.time) lead.Time__c = dojoListingObj.time;
+        if(dojoListingObj.country && dojoListingObj.country.name) lead.Country = dojoListingObj.country.name;
+        if(dojoListingObj.place && dojoListingObj.place.name) lead.City = dojoListingObj.place.name;
+        if(dojoListingObj.place && dojoListingObj.place.name) lead.State = dojoListingObj.place.admin2Name;
+        if(dojoListingObj.address1) lead.Street = dojoListingObj.address1;
+        if (dojoListingObj.place && dojoListingObj.place.latitude && dojoListingObj.place.longitude) {
+          lead.Coordinates__Latitude__s = dojoListingObj.place.latitude;
+          lead.Coordinates__Longitude__s = dojoListingObj.place.longitude;
+        }
+        if(dojoListingObj.notes) lead.Notes__c = dojoListingObj.notes;
+        if(dojoListingObj.needMentors) lead.NeedMentors__c = dojoListingObj.needMentors;
+        if(dojoListingObj.stage) lead.Stage__c = dojoListingObj.stage;
+        if(dojoListingObj.private) lead.Private__c = dojoListingObj.private;
+        if(dojoListingObj.googleGroup) lead.GoogleGroupURL__c = dojoListingObj.googleGroup;
+        if(dojoListingObj.website) lead.Website = dojoListingObj.website;
+        if(dojoListingObj.twitter) lead.Twitter__c = dojoListingObj.twitter;
+        if(dojoListingObj.supporterImage) lead.SupportersImageURL__c = dojoListingObj.supporterImage;
+        if(dojoListingObj.mailingList) lead.MailingList__c = dojoListingObj.mailingList;
+        lead.Status = '5. Dojo Listing Created';
+      }
+    }
+    } else if(dojoObj.currentStep === 5) {
+
+      if(dojoObj.converted === true) {
+ 
+        dojoObj.Verified__c === true;
+        updateSalesForceChampionDetails(userId + "-a", dojoObj, dojoAction);
+      } else {
+        lead.Status = '7. Dojo Listing Verified';
+        lead.PlatformId__c = userId + "-a";
+        convertAccount = true;
+      }
+    }
+
+    if(dojoObj.converted !== true) {
+      seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
+        if (err) return seneca.log.error('Error saving Lead in SalesForce!', err);
+        seneca.log.info('Lead saved in SalesForce', lead, res);
+        if (convertAccount === true) {
+          seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: res.id$}, function (err, res){
+            if (err) return seneca.log.error('Error converting Lead to Account in SalesForce!', err);
+            seneca.log.info('Lead converted to Account in SalesForce', lead, res);
+            seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojoObj.id}, function (err, res) {
+              if (err) { return done(err) };
+              if (res) {
+                var dojoLead = res;
+                dojoLead.converted = true;
+                var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
+                dojoLeadEntity.save$(dojoLead, function(err, res){
+                  if(err) return cb(err);
+                });
+              }
+            });
+          });
+        }
+      });
+    }
   }
 
   function cmd_save_dojo_lead(args, done) {
+    var dojoAction = args.dojoAction || "blank";
+
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
     var dojoLead = args.dojoLead;
 
@@ -1132,7 +1135,7 @@ module.exports = function (options) {
 
         if(process.env.SALESFORCE_ENABLED === 'true') {
           // Note: updating SalesForce is slow, ideally this would go on a work queue
-          process.nextTick(function() { updateSalesForce(dojoLead.userId, dojoLead); });
+          process.nextTick(function() { updateSalesForce(dojoLead.userId, dojoLead, dojoAction); });
         }
 
         cb(null, response);
@@ -1226,6 +1229,8 @@ module.exports = function (options) {
   function cmd_load_users_dojos(args, done){
     var usersdojos_ent;
     var query = args.query ? args.query : {};
+
+    query.deleted = 0;
 
     usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
 
@@ -1364,8 +1369,8 @@ module.exports = function (options) {
         if(_.isEmpty(response)) {
           var userDojo = {};
           userDojo.owner = 0;
-          userDojo.user_id = currentUserId;
-          userDojo.dojo_id = dojoId;
+          userDojo.userId = currentUserId;
+          userDojo.dojoId = dojoId;
           userDojo.userTypes = [];
           userDojo.userTypes.push(inviteToken.userType);
           //If invite token user type is champion, update user permissions
@@ -1581,8 +1586,8 @@ module.exports = function (options) {
           if(_.isEmpty(response)) {
             var userDojo = {};
             userDojo.owner = 0;
-            userDojo.user_id = requestedByUser;
-            userDojo.dojo_id = dojoId;
+            userDojo.userId = requestedByUser;
+            userDojo.dojoId = dojoId;
             userDojo.userTypes = [];
             userDojo.userTypes.push(joinRequest.userType);
             usersDojosEntity.save$(userDojo, function (err, response) {
@@ -1720,11 +1725,11 @@ module.exports = function (options) {
 
     function ownerPermissionsCheck(cb) {
       //Prevent the deletion of the dojo owner.
-      usersDojosEntity.load$({userId: userId, dojoId: dojoId}, function (err, response) {
+      usersDojosEntity.load$({userId: userId, dojoId: dojoId, deleted:0}, function (err, response) {
         if(err) return cb(err);
         var userDojo = response;
         if(userDojo.owner === 1) return cb(new Error('Dojo owners cannot be removed.'));
-        return cb();
+        return cb(null, userDojo);
       });
     }
 
@@ -1829,6 +1834,50 @@ module.exports = function (options) {
           .compact()
           .value();
         return done(null, dojoAdmins);
+      });
+    });
+  }
+
+  function cmd_list_query(args, done) {
+    var seneca = this;
+    var query  = args.query || {};
+    var filterInactiveDojos = query.filterInactiveDojos || false;
+    delete query.filterInactiveDojos;
+    var dojosEntity = seneca.make$(ENTITY_NS);
+    dojosEntity.list$(query, done);
+  }
+
+  function cmd_search_nearest_dojos(args, done) {
+    //Optimise db search:
+    //CREATE INDEX nearest_dojos on cd_dojos USING gist(ll_to_earth( (geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8));
+    options.postgresql.database = options.postgresql.name;
+    options.postgresql.user = options.postgresql.username;
+    var searchLat = args.query.lat;
+    var searchLon = args.query.lon;
+
+    pg.connect(options.postgresql, function (err, client) {
+      if(err) return done(err);
+      client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 ORDER BY distance_from_search_location ASC LIMIT 10", [searchLat, searchLon], function (err, results) {
+        if(err) return done(err);
+        client.end();
+        return done(null, results.rows);
+      });
+    });
+  }
+
+  function cmd_search_bounding_box(args, done) {
+    options.postgresql.database = options.postgresql.name;
+    options.postgresql.user = options.postgresql.username;
+    var searchLat = args.query.lat;
+    var searchLon = args.query.lon;
+    var boundsRadius = args.query.radius;
+
+    pg.connect(options.postgresql, function (err, client) {
+      if(err) return done(err);
+      client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 AND earth_box(ll_to_earth($1, $2), $3) @> ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8) ORDER BY distance_from_search_location ASC", [searchLat, searchLon, boundsRadius], function (err, results) {
+        if(err) return done(err);
+        client.end();
+        return done(null, results.rows);
       });
     });
   }
