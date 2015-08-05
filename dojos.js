@@ -15,7 +15,7 @@ var google = require('googleapis');
 var admin = google.admin('directory_v1');
 var path = require('path');
 var fs = require('fs');
-var DEFAULT_LANG = 'en_US';
+var DEFAULT_LANG = 'en_us';
 
 module.exports = function (options) {
   var seneca = this;
@@ -220,7 +220,8 @@ module.exports = function (options) {
               return done(err)
             }
 
-            var code = 'google-email-pass-' + args.locality;
+            var locality = args.locality || 'en_us';
+            var code = 'google-email-pass-' + locality.toLowerCase();
 
             var templates = {};
 
@@ -1312,7 +1313,8 @@ module.exports = function (options) {
         year: moment(new Date()).format('YYYY')
       };
 
-      var code = 'invite-user-' + args.locality;
+      var locality = args.locality || 'en_us';
+      var code = 'invite-user-' + locality.toLowerCase();
       var templates = {};
 
       try {
@@ -1488,7 +1490,8 @@ module.exports = function (options) {
         userType:userType
       };
 
-      var code = 'user-request-to-join-' + args.locality;
+      var locality = args.locality || 'en_us';
+      var code = 'user-request-to-join-' + locality.toLowerCase();
       var templates = {};
 
       try{
@@ -1779,7 +1782,8 @@ module.exports = function (options) {
         dojoName:dojo.name
       };
 
-      var code = 'user-left-dojo-' + args.locality;
+      var locality = args.locality || 'en_us';
+      var code = 'user-left-dojo-' + locality.toLowerCase();
       var templates = {};
 
       try {
@@ -1844,6 +1848,7 @@ module.exports = function (options) {
     var filterInactiveDojos = query.filterInactiveDojos || false;
     delete query.filterInactiveDojos;
     var dojosEntity = seneca.make$(ENTITY_NS);
+    if(!query.limit$) query.limit$ = 'NULL';
     dojosEntity.list$(query, done);
   }
 
