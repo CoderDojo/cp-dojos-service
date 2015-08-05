@@ -41,8 +41,6 @@ if (!args['ignore-cache']) {
   }
 }
 
-seneca.client({type: 'web', host: process.env.DOCKER_HOST_IP || process.env.TARGETIP || '127.0.0.1', port: 10302, pin: 'role:cd-geonames,cmd:*'});
-
 seneca.ready(function() {
 
   function call_geonames(method, params, done) {
@@ -186,12 +184,7 @@ seneca.ready(function() {
                   return done();
                 },
                 function(done) {
-                  if (dojo.placeGeonameId) {
-                    seneca.act(seneca.util.argprops( {geonameId: dojo.placeGeonameId}, {role:'cd-geonames', cmd: 'load'} ), done);
-                  }
-                  else {
-                    return done(null, null);
-                  }
+                  return done(null, null);
                 },
                 function(placeGeoname, done) {
                   if (placeGeoname) {
