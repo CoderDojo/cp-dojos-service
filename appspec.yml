@@ -12,9 +12,6 @@ permissions:
   - object: /opt/zen/cp-dojos-service
     owner: ubuntu
     group: ubuntu
-  - object: /etc/zen/cp-dojos-service.env
-    owner: ubuntu
-    group: ubuntu
   
 hooks:
   ApplicationStop:
