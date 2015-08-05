@@ -1844,6 +1844,7 @@ module.exports = function (options) {
     var filterInactiveDojos = query.filterInactiveDojos || false;
     delete query.filterInactiveDojos;
     var dojosEntity = seneca.make$(ENTITY_NS);
+    if(!query.limit$) query.limit$ = 'NULL';
     dojosEntity.list$(query, done);
   }
 
