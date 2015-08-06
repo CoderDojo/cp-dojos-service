@@ -385,6 +385,7 @@ module.exports = function (options) {
         var query = args.query;
         if(query.name) query.name = new RegExp(query.name, 'i');
         if(query.email) query.email = new RegExp(query.email, 'i');
+        if(query.creatorEmail) query.creatorEmail = new RegExp(query.creatorEmail, 'i');
         seneca.act({role: plugin, cmd: 'list_query', query: query}, done);
       },
       function (searchResult, done) {
@@ -595,6 +596,7 @@ module.exports = function (options) {
     var userDojo = {};
 
     dojo.creator = user.id;
+    dojo.creatorEmail = user.email;
     dojo.created = new Date();
     dojo.verified = 0;
 
@@ -1853,8 +1855,6 @@ module.exports = function (options) {
   }
 
   function cmd_search_nearest_dojos(args, done) {
-    //Optimise db search:
-    //CREATE INDEX nearest_dojos on cd_dojos USING gist(ll_to_earth( (geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8));
     options.postgresql.database = options.postgresql.name;
     options.postgresql.user = options.postgresql.username;
     var searchLat = args.query.lat;
