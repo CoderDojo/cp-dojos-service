@@ -666,7 +666,6 @@ module.exports = function (options) {
 
   function cmd_update(args, done){
     var dojo = args.dojo;
-
     //load dojo before saving to get it's current state
     var dojoEnt = seneca.make$(ENTITY_NS);
     var dojoLeadsEnt = seneca.make$(DOJO_LEADS_ENTITY_NS);
@@ -689,8 +688,7 @@ module.exports = function (options) {
           dojo.verifiedAt = new Date();
           dojo.verifiedBy = args.user.id;
 
-          // need to deal with better, but stops the system from crashing for now.  
-          if(!dojo.dojoLeadId) return;
+          if(!dojo.dojoLeadId) return done(null, dojo);
 
           dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
             if (err) {
