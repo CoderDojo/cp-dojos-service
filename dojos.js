@@ -15,7 +15,7 @@ var google = require('googleapis');
 var admin = google.admin('directory_v1');
 var path = require('path');
 var fs = require('fs');
-var DEFAULT_LANG = 'en_us';
+var DEFAULT_LANG = 'en_US';
 
 module.exports = function (options) {
   var seneca = this;
@@ -666,7 +666,8 @@ module.exports = function (options) {
 
   function cmd_update(args, done){
     var dojo = args.dojo;
-
+    var emailSubject = dojo.emailSubject || null;
+    delete dojo.emailSubject;
     //load dojo before saving to get it's current state
     var dojoEnt = seneca.make$(ENTITY_NS);
     var dojoLeadsEnt = seneca.make$(DOJO_LEADS_ENTITY_NS);
@@ -710,7 +711,7 @@ module.exports = function (options) {
 
               //create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
               if (!currentDojoState.email){
-                seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo}, function (err, organizationEmail) {
+                seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo, subject: emailSubject}, function (err, organizationEmail) {
                   if (err) {
                     return done(err)
                   }
@@ -1261,12 +1262,14 @@ module.exports = function (options) {
     var content = payload.content;
     content.year = moment(new Date()).format('YYYY');
     var emailCode = payload.code;
-    seneca.act({role:'email-notifications', cmd: 'send', to:to, content:content, code:emailCode}, done);
+    var emailSubject = payload.subject;
+    seneca.act({role:'email-notifications', cmd: 'send', to:to, content:content, code:emailCode, subject: emailSubject}, done);
   }
 
   function cmd_generate_user_invite_token(args, done) {
     var zenHostname = args.zenHostname;
     var inviteEmail = args.email;
+    var emailSubject = args.emailSubject;
     var dojoId = args.dojoId;
     var userType = args.userType;
     var inviteToken = shortid.generate();
@@ -1315,8 +1318,8 @@ module.exports = function (options) {
         year: moment(new Date()).format('YYYY')
       };
 
-      var locality = args.locality || 'en_us';
-      var code = 'invite-user-' + locality.toLowerCase();
+      var locality = args.locality || 'en_US';
+      var code = 'invite-user-' + locality;
       var templates = {};
 
       try {
@@ -1326,7 +1329,7 @@ module.exports = function (options) {
         code = 'invite-user-' + DEFAULT_LANG;
       }
 
-      var payload = {to:inviteEmail, code:code, content:content};
+      var payload = {to:inviteEmail, code:code, content:content, subject: emailSubject};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
     }
   }
@@ -1439,6 +1442,7 @@ module.exports = function (options) {
     var data = args.data;
     var user = data.user;
     var userType = data.userType;
+    var emailSubject = data.emailSubject;
     var dojoId = data.dojoId;
     if(!userType) userType = DEFAULT_INVITE_USER_TYPE;
 
@@ -1492,8 +1496,8 @@ module.exports = function (options) {
         userType:userType
       };
 
-      var locality = args.locality || 'en_us';
-      var code = 'user-request-to-join-' + locality.toLowerCase();
+      var locality = args.locality || 'en_US';
+      var code = 'user-request-to-join-' + locality;
       var templates = {};
 
       try{
@@ -1503,7 +1507,7 @@ module.exports = function (options) {
         code = 'user-request-to-join-' + DEFAULT_LANG;
       }
 
-      var payload = {to:championEmail, code:code, content:content};
+      var payload = {to:championEmail, code:code, content:content, subject: emailSubject};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
     }
 
@@ -1713,8 +1717,10 @@ module.exports = function (options) {
 
   function cmd_remove_usersdojos(args, done) {
     //TODO: Add permissions check.
-    var userId = args.userId;
-    var dojoId = args.dojoId;
+    var data = args.data;
+    var userId = data.userId;
+    var dojoId = data.dojoId;
+    var emailSubject = data.emailSubject;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
 
     async.waterfall([
@@ -1784,8 +1790,8 @@ module.exports = function (options) {
         dojoName:dojo.name
       };
 
-      var locality = args.locality || 'en_us';
-      var code = 'user-left-dojo-' + locality.toLowerCase();
+      var locality = args.locality || 'en_US';
+      var code = 'user-left-dojo-' + locality;
       var templates = {};
 
       try {
@@ -1795,7 +1801,7 @@ module.exports = function (options) {
         code = 'user-left-dojo-' + DEFAULT_LANG;
       }
 
-      var payload = {to:champion.email, code: code, content:content};
+      var payload = {to:champion.email, code: code, content:content, subject: emailSubject};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, cb);
     }
   }

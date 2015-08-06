@@ -22,7 +22,7 @@ module.exports = function( options ) {
         role: 'mail', cmd: 'send',
         code: args.code,
         to: args.to,
-        subject: email.subject,
+        subject: args.subject,
         content: args.content
       }, done)
     }
