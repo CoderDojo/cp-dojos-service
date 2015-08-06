@@ -144,7 +144,7 @@ module.exports = function() {
       }
     },
     limits: {
-      maxUserDojos: process.env.LIMITS_MAX_USER_DOJOS || 10
+      maxUserDojos: process.env.LIMITS_MAX_USER_DOJOS || 30
     },
     log: log()
   };
