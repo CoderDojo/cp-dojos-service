@@ -90,25 +90,25 @@ module.exports = function() {
         'user-left-dojo-en_US': {
           subject:'A user has left your Dojo'
         },
-        'one-off-event-application-approved-en_US': {
+        'one-off-event-application-approved-en_us': {
           subject:'Event application approved'
         },
-        'recurring-event-application-approved-en_US': {
+        'recurring-event-application-approved-en_us': {
           subject:'Event application approved'
         },
-        'one-off-event-application-received-en_US': {
+        'one-off-event-application-received-en_us': {
           subject:'Event application received'
         },
-        'recurring-event-application-received-en_US': {
+        'recurring-event-application-received-en_us': {
           subject:'Event application received'
         },
-        'accept-badge-award-en_US': {
+        'accept-badge-award-en_us': {
           subject:'CoderDojo Badge Nomination'
         },
-        'mentor-request-to-join-en_US':{
+        'mentor-request-to-join-en_us':{
           subject:'New Mentor Request to join your Dojo'
         },
-        'google-email-pass-en_US':{
+        'google-email-pass-en_us':{
           subject:'We created a new Google Email for your Dojo'
         }
       }
