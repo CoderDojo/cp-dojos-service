@@ -1175,6 +1175,7 @@ module.exports = function (options) {
           profile.placeName = championDetails.placeName;
           profile.state = championDetails.state;
           profile.dob = championDetails.dateOfBirth;
+          profile.notes = championDetails.notes;
 
           seneca.act('role:cd-profiles,cmd:save', {profile: profile},cb);
         });
