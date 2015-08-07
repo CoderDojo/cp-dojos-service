@@ -591,6 +591,7 @@ module.exports = function (options) {
 
   function cmd_create(args, done){
     var dojo = args.dojo, baseSlug;
+    delete dojo.emailSubject;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
     var user = args.user;
     var userDojo = {};
