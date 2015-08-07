@@ -120,6 +120,7 @@ module.exports = function() {
     debug: {
       undead: true
     },
+    strict: {add:false,  result:false},
     log: log()
   };
 }
