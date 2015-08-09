@@ -15,7 +15,6 @@ function postgres_test_data {
 }
 
 function test_data {
-    run_js "$PROJECT_DIR/scripts/add-geonames-data.js"
     run_js "$PROJECT_DIR/scripts/generate-slugs.js"
 }
 
