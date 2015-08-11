@@ -117,9 +117,6 @@ module.exports = function() {
       maxUserDojos: process.env.LIMITS_MAX_USER_DOJOS || 30
     },
     timeout: 120000,
-    debug: {
-      undead: true
-    },
     strict: {add:false,  result:false},
     log: log()
   };
