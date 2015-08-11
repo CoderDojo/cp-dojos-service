@@ -40,6 +40,10 @@ module.exports = function() {
 
         le.log('err', arguments);
       }
+
+      if (process.env.SENECA_DEBUG === 'true') {
+        console.log(arguments);
+      }
     }
 
     return {
