@@ -753,6 +753,16 @@ module.exports = function (options) {
 
       },
       function (dojo, done) {
+        if(dojo.coordinates){
+          var pair = dojo.coordinates.split(',').map(parseFloat);
+          if (pair.length === 2 && _.isFinite(pair[0]) && _.isFinite(pair[1])) {
+            dojo.geoPoint = {
+              lat: pair[0],
+              lon: pair[1]
+            }
+          }
+        }
+        //update dojo geoPoint as well if coordinates are updated
         seneca.make$(ENTITY_NS).save$(dojo, function (err, response) {
           if (err) return done(err);
           done(null, response);
