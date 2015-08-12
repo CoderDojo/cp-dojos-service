@@ -112,9 +112,8 @@ module.exports = function() {
       }
     },
     transport: {
-      type: 'web',
-      web: {
-        host: '0.0.0.0',
+      type: 'tcp',
+      tcp: {
         port: 10301
       }
     },
