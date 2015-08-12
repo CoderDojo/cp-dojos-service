@@ -2,6 +2,8 @@
 
 var _ = require('lodash')
 var async = require('async')
+var fs = require('fs');
+var path = require('path');
 
 module.exports = function( options ) {
   var seneca = this
@@ -18,6 +20,9 @@ module.exports = function( options ) {
   function send_notification(args, done) {
     if (options.sendemail && options.email) {
       var email = options.email[args.code];
+      if (!fs.existsSync(path.join(__dirname, '/email-templates/', args.code))) {
+        args.code = args.code.substring(0, args.code.length-5) + 'en_US';
+      }
       seneca.act({
         role: 'mail', cmd: 'send',
         code: args.code,
