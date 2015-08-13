@@ -11,14 +11,19 @@ module.exports = [
       {
         title:'Find non-technical mentors',
         name:'findNonTechnicalMentors',
-        required:false
+        required:false,
+        infoIcon:true,
+        infoText:'This is not required but will help you significantly with the running of your Dojo! It is encouraged to encourage parents to get involved in the running of your Dojo!'
       },
       {
         title:'Background check',
         name:'backgroundCheck',
         required:false,
         textField:true,
-        placeholder:'Please describe how you have background checked your team.'
+        placeholder:'Please describe how you have background checked your team',
+        infoIcon:true,
+        infoText:'This is specific to the legislation in your jurisdiction. Please comment below giving us more information or contact a CoderDojo Foundation staff member at info@coderdojo.com.',
+        taoIcon:true
       }
     ]
   },
@@ -36,14 +41,16 @@ module.exports = [
         name:'ensureHealthAndSafety',
         required:false,
         textField:true,
-        placeholder:'Please describe how you have ensured health and safety best practices.'
+        placeholder:'Please add a comment on how you’ve met local health and safety best practices in your region',
+        taoIcon:true
       },
       {
         title:'Ensure public liability insurance is covered',
         name:'ensureInsuranceCover',
         required:false,
         textField:true,
-        placeholder:'Please describe how you have ensured public liability is covered'
+        placeholder:'Please add a comment on how you’ve met public liability best practices in your region',
+        taoIcon:true
       }
     ]
   },
@@ -59,7 +66,9 @@ module.exports = [
       {
         title:'Create a content plan with your mentors',
         name:'planContent',
-        required:false
+        required:false,
+        infoIcon:true,
+        infoText:'See <a href="http://kata.coderdojo.com/wiki/Learning_Resource">Kata</a>, the CoderDojo community wiki for more information on learning resources'
       },
       {
         title:'Setup ticketing and registration for your Dojo',
@@ -80,7 +89,9 @@ module.exports = [
       {
         title:'Set up social media presence for your Dojo',
         name:'setupSocialMedia',
-        required:false
+        required:false,
+        infoIcon:true,
+        infoText:'This is not required but will help you significantly with the running of your Dojo and will help in connecting you to the global CoderDojo community!'
       },
        {
         title:'Connect with other Dojos on social media and CoderDojo discussion forums',
@@ -93,34 +104,40 @@ module.exports = [
     title:'Embodying the Ethos',
     checkboxes:[
       {
-        title:'We will work to embody the CoderDojo ethos',
+        title:'We will embody the CoderDojo ethos',
         name:'embodyCoderDojoTao',
         required:true,
-        requiredMessage:'required.'
+        requiredMessage:'required.',
+        infoIcon:true,
+        infoText:'Please read CoderDojo ECHO, our guide to the Ethos, Culture, Happiness and Outcomes of CoderDojo <a href="http://kata.coderdojo.com/wiki/Guiding_Principles_and_Philosophies">here</a>',
+        taoIcon:true,
       },
       {
-        title:'All mentors and young people are aware of online safety best practices and we only allow age appropriate content at our Dojo',
+        title:'Online Safety: All mentors and young people are aware of online safety best practices and we only allow age appropriate content at our Dojo',
         name:'onlineSafetyBestPractice',
-        required:true,
-        requiredMessage:'required.',
         textField:true,
-        placeholder:'Optionally describe how this was achieved.'
+        placeholder:'Please feel free to add comments or more information here',
+        infoIcon:true,
+        infoText:'Please see Online Safety 101 for Mentors <a href="https://docs.google.com/document/d/1DDwpYKBltkJXH15pr_p2Ig0_9l4Uq2TdE7zG_9QsdjI/edit?usp=sharing">here</a> and Online Safety 101 for Ninjas <a href="https://docs.google.com/document/d/1BIhYjhOiTxeFdbBRVouBZQRWLQD_v-gCkCIYtDcP2CM/edit?usp=sharing">here</a>',
+        taoIcon:true
       },
       {
-        title:'Our Dojo abides by data protection regulations in our jurisdiction',
+        title:'Data Protection: Our Dojo abides by data protection regulations in our jurisdiction',
         name:'dataProtectionRegulated',
-        required:true,
-        requiredMessage:'required.',
         textField:true,
-        placeholder:'Optionally describe how this was achieved.'
+        placeholder:'Please feel free to add comments or more information here',
+        infoIcon:true,
+        infoText:'You can see more information on Data Protection <a href="https://docs.google.com/document/d/18XQNYEMQrBDJoR0Gt1ryC6CzxDEd_k41p4PEeKYtIxE/edit?usp=sharing"here</a>',
+        taoIcon:true
       },
       {
         title:'Diversity among our attendees is respected',
         name:'diversityRespected',
-        required:true,
-        requiredMessage:'required.',
         textField:true,
-        placeholder:'Optionally describe how this was achieved.'
+        placeholder:'Please feel free to add comments or more information here',
+        infoIcon:true,
+        infoText:'You can see more information on our inclusion policy <a href="http://kata.coderdojo.com/wiki/Guiding_Principles_and_Philosophies#Inclusion_Policy">here</a>',
+        taoIcon:true
       },
       {
         title:'We will work to help engage with and improve the greater CoderDojo movement by',
@@ -129,10 +146,11 @@ module.exports = [
           "Contributing to Kata, the community knowledge base at kata.coderdojo.com",
           "Connecting with local and international Dojos to share insights and supports" ],
         name:'engageCoderDojoMovement',
-        required:true,
-        requiredMessage:'required.',
         textField:true,
-        placeholder:'Optionally describe how this was achieved.'
+        placeholder:'Please feel free to add comments or more information here',
+        infoIcon:true,
+        infoText:'See more information on the supports available to you <a href="https://coderdojo.com/organise-a-dojo/community-support/">here</a>',
+        taoIcon:true
       }
     ]
   }
