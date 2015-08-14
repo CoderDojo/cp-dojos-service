@@ -882,24 +882,30 @@ module.exports = function (options) {
       });
     }
     function deleteSalesForce(dojoLead, done) {
-
       seneca.make$(ENTITY_NS).load$(args.id, function(err, response) {
         if(err) return done(err);
+
         var dojoLeadId;
         dojoLeadId = response.dojoLeadId;
-        if(dojoLeadId) {
+        if(dojoLeadId) {  
           seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojoLeadId}, function(err, response) {
             if(err) return done(err);
+
             var lead;
             lead = response.data$();
             if(lead) {
               seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: "delete"}, function (err, response) {
-                if (err)  return done(err);
+                if (err) return done(err);
+
+                return done();
               });
+            } else {
+              return done(null, response);
             }
           });
+        } else {
+          return done(null, response);
         }
-        done(null, response);
       });
     }
   }
@@ -1175,21 +1181,23 @@ module.exports = function (options) {
       if(dojoObj.converted !== true) {
         seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
           if (err) return seneca.log.error('Error saving Lead in SalesForce!', err);
+          
           seneca.log.info('Lead saved in SalesForce', lead, res);
           if (convertAccount === true) {
             seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: res.id$}, function (err, res){
               if (err) return seneca.log.error('Error converting Lead to Account in SalesForce!', err);
+              
               seneca.log.info('Lead converted to Account in SalesForce', lead, res);
               seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojoObj.id}, function (err, res) {
                 if (err) { return done(err) };
-                if (res) {
-                  var dojoLead = res;
-                  dojoLead.converted = true;
-                  var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
-                  dojoLeadEntity.save$(dojoLead, function(err, res){
-                    if(err) return cb(err);
-                  });
-                }
+                if (!res) { return done() };
+                
+                var dojoLead = res;
+                dojoLead.converted = true;
+                var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
+                dojoLeadEntity.save$(dojoLead, function(err, res){
+                  if(err) return done(err);
+                });
               });
             });
           }
