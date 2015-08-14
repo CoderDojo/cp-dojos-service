@@ -732,6 +732,10 @@ module.exports = function (options) {
           // need to deal with better, but stops the system from crashing for now. 
           if(!dojo.dojoLeadId) return;
 
+console.log("FROGS: ");
+console.log(dojo);
+
+          //dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
           dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
             if (err) {
               return done(err)
@@ -1060,11 +1064,11 @@ module.exports = function (options) {
     var convertAccount = false;
 
     console.log("INSIDE SF");
-    //console.log(dojoObj);
+    console.log(dojoObj);
 
     var lead = {
-      //PlatformId__c: userId,
-      PlatformId__c: leadId
+      PlatformId__c: userId,
+      //PlatformId__c: leadId
     };
 
     if(dojoObj.currentStep === 2) {
@@ -1134,7 +1138,8 @@ module.exports = function (options) {
         accId = res.accId;
         if(dojoObj.converted === true) {
           dojoObj.Verified__c === false;
-          updateSalesForceChampionDetails(userId + "-a", dojoObj, dojoAction);
+          //updateSalesForceChampionDetails(userId + "-a", dojoObj, dojoAction);
+          updateSalesForceChampionDetails(dojoObj.id, dojoObj, dojoAction);
         } else {
           if(accId && dojoObj.application && dojoObj.application.dojoListing) {
             step4UpdateLead(dojoObj.application.dojoListing, accId);
@@ -1187,7 +1192,9 @@ module.exports = function (options) {
         else if(dojoAction == "delete") {
           dojoObj.Deleted__c === true;
         }
-        updateSalesForceChampionDetails(userId + "-a", dojoObj, dojoAction);
+        //updateSalesForceChampionDetails(userId + "-a", dojoObj, dojoAction);
+
+updateSalesForceChampionDetails(dojoObj.id, dojoObj, dojoAction);
         salesForceSaveChanges();
       } else {
         if(dojoAction == "verify") {
@@ -1195,7 +1202,8 @@ module.exports = function (options) {
         } else if(dojoAction == "delete") {
           lead.Deleted__c === true;
         }
-        lead.PlatformId__c = userId + "-a";
+        //lead.PlatformId__c = userId + "-a";
+        lead.PlatformId__c = dojoObj.id;
         convertAccount = true;
         salesForceSaveChanges();
       }
