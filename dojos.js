@@ -833,11 +833,14 @@ module.exports = function (options) {
     var user = args.user;
     var query = {userId:user.id, dojoId:args.id};
 
+  //  console.log(args);
+
     async.waterfall([
       async.apply(isUserChampionAndDojoAdmin, query, user),
       deleteDojo,
       deleteUsersDojos,
-      deleteDojoLead
+      deleteDojoLead,
+      deleteSalesForce
     ], done);
 
     function deleteDojo(hasPermission, done) {
@@ -878,6 +881,37 @@ module.exports = function (options) {
         ent.deletedAt = new Date();
 
         seneca.make$(DOJO_LEADS_ENTITY_NS).save$(ent, done);
+    
+          /*seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: ent, dojoAction: "delete"}, function (err, dojoLead) {
+            if (err)  return done(err);
+          });*/
+      });
+    }
+    function deleteSalesForce(dojoLead, done) {
+
+      seneca.make$(ENTITY_NS).load$(args.id, function(err, response) {
+        if(err) return done(err);
+        var dojoLeadId;
+        dojoLeadId = response.dojoLeadId;
+        if(dojoLeadId) {
+          seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojoLeadId}, function(err, response) {
+            if(err) return done(err);
+            var lead;
+            lead = response.data$();
+
+            //console.log(lead);
+
+            if(lead) {
+              seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: "delete"}, function (err, response) {
+
+              //seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: "delete"}, function (err, response) {
+                if (err)  return done(err);
+              });
+            }
+
+          });
+        }
+        done(null, response);
       });
     }
   }
@@ -950,6 +984,10 @@ module.exports = function (options) {
   }
 
   function updateSalesForceChampionDetails(userId, dojoObj, dojoAction) {
+    console.log("INSIDE SFC");
+    console.log(dojoObj.currentStep);
+    console.log(dojoAction);
+
     var account = {
       PlatformId__c: userId
     };
@@ -996,17 +1034,19 @@ module.exports = function (options) {
       }
     } else if(dojoObj.currentStep === 4) {
       if(dojoAction === "verify") {
-        account.Verified__c = 0; 
+        account.Verified__c = false; 
       } else if (dojoAction === "delete") {
         account.Deleted__c = 1;
       } 
     } else if(dojoObj.currentStep === 5) {
       if(dojoAction === "verify") {
-        account.Verified__c = 1; 
+        account.Verified__c = true; 
       } else if (dojoAction === "delete") {
         account.Deleted__c = 1;
       }
     }
+    console.log(userId);
+    console.log(account);
 
     seneca.act('role:cd-salesforce,cmd:save_account', {userId: userId, account: account}, function (err, res){
       if (err) return seneca.log.error('Error saving champion account in SalesForce!', err);
@@ -1019,8 +1059,12 @@ module.exports = function (options) {
   function updateSalesForce(userId, dojoObj, dojoAction) {
     var convertAccount = false;
 
+    console.log("INSIDE SF");
+    //console.log(dojoObj);
+
     var lead = {
-      PlatformId__c: userId,
+      //PlatformId__c: userId,
+      PlatformId__c: leadId
     };
 
     if(dojoObj.currentStep === 2) {
@@ -1132,12 +1176,25 @@ module.exports = function (options) {
         lead.Status = '5. Dojo Listing Created';
       }
     } else if(dojoObj.currentStep === 5) {
+      
+      console.log(dojoObj.converted);
+      console.log(dojoAction);
+
       if(dojoObj.converted === true) {
-        dojoObj.Verified__c === true;
+        if(dojoAction == "verify") {
+          dojoObj.Verified__c === true;
+        }
+        else if(dojoAction == "delete") {
+          dojoObj.Deleted__c === true;
+        }
         updateSalesForceChampionDetails(userId + "-a", dojoObj, dojoAction);
         salesForceSaveChanges();
       } else {
-        lead.Status = '7. Dojo Listing Verified';
+        if(dojoAction == "verify") {
+          lead.Status = '7. Dojo Listing Verified';
+        } else if(dojoAction == "delete") {
+          lead.Deleted__c === true;
+        }
         lead.PlatformId__c = userId + "-a";
         convertAccount = true;
         salesForceSaveChanges();
