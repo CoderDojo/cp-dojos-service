@@ -837,7 +837,8 @@ module.exports = function (options) {
       async.apply(isUserChampionAndDojoAdmin, query, user),
       deleteDojo,
       deleteUsersDojos,
-      deleteDojoLead
+      deleteDojoLead,
+      deleteSalesForce
     ], done);
 
     function deleteDojo(hasPermission, done) {
@@ -878,6 +879,33 @@ module.exports = function (options) {
         ent.deletedAt = new Date();
 
         seneca.make$(DOJO_LEADS_ENTITY_NS).save$(ent, done);
+      });
+    }
+    function deleteSalesForce(dojoLead, done) {
+      seneca.make$(ENTITY_NS).load$(args.id, function(err, response) {
+        if(err) return done(err);
+
+        var dojoLeadId;
+        dojoLeadId = response.dojoLeadId;
+        if(dojoLeadId) {  
+          seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojoLeadId}, function(err, response) {
+            if(err) return done(err);
+
+            var lead;
+            lead = response.data$();
+            if(lead) {
+              seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: "delete"}, function (err, response) {
+                if (err) return done(err);
+
+                return done();
+              });
+            } else {
+              return done(null, response);
+            }
+          });
+        } else {
+          return done(null, response);
+        }
       });
     }
   }
@@ -957,14 +985,16 @@ module.exports = function (options) {
     if(dojoObj.currentStep === 2) {
       if (dojoObj.application.championDetails.email)
         account.Email__c = dojoObj.application.championDetails.email;
+      if (dojoObj.application.championDetails.name)
+        account.Name = dojoObj.application.championDetails.name;
       if (dojoObj.application.championDetails.dateOfBirth)
         account.DateofBirth__c = dojoObj.application.championDetails.dateOfBirth;
       if (dojoObj.application.championDetails.phone)
         account.Phone = dojoObj.application.championDetails.phone;
-      if (dojoObj.application.championDetails.country.name)
-        account.BillingCountry = dojoObj.application.championDetails.country.name;
-      if (dojoObj.application.championDetails.place.name)
-        account.BillingCity = dojoObj.application.championDetails.place.name;
+      if (dojoObj.application.championDetails.country.countryName)
+        account.BillingCountry = dojoObj.application.championDetails.country.countryName;
+      if (dojoObj.application.championDetails.place.nameWithHierarchy)
+        account.BillingCity = dojoObj.application.championDetails.place.nameWithHierarchy;
       if (dojoObj.application.championDetails.place.admin2Name)
         account.BillingState = dojoObj.application.championDetails.place.admin2Name;
       if (dojoObj.application.championDetails.address1)
@@ -992,13 +1022,13 @@ module.exports = function (options) {
       }
     } else if(dojoObj.currentStep === 4) {
       if(dojoAction === "verify") {
-        account.Verified__c = 0; 
+        account.Verified__c = false; 
       } else if (dojoAction === "delete") {
         account.Deleted__c = 1;
       } 
     } else if(dojoObj.currentStep === 5) {
       if(dojoAction === "verify") {
-        account.Verified__c = 1; 
+        account.Verified__c = true; 
       } else if (dojoAction === "delete") {
         account.Deleted__c = 1;
       }
@@ -1016,24 +1046,44 @@ module.exports = function (options) {
     var convertAccount = false;
 
     var lead = {
-      PlatformId__c: userId
+      PlatformId__c: userId,
     };
 
     if(dojoObj.currentStep === 2) {
-      if (dojoObj.application && dojoObj.application.championDetails) {
-        updateSalesForceChampionDetails(userId, dojoObj);
-        if (dojoObj.application.championDetails.name) lead.LastName = dojoObj.application.championDetails.name;
-      }
-      lead.Status = '2. Champion Registration Completed';
-    } else if(dojoObj.currentStep === 3) {
-      if(dojoObj.application && dojoObj.application.setupYourDojo) {
-        var setupDojoObj = dojoObj.application.setupYourDojo;
-
-        if (setupDojoObj.name) {
-          lead.Company = setupDojoObj.name;
-          lead.Name = setupDojoObj.name;
+      seneca.act('role:cd-salesforce,cmd:get_account', {accId: userId}, function (err, res){
+        var accId = null;
+        accId = res.accId;
+        if(accId && dojoObj.application && dojoObj.application.championDetails) {
+          updateSalesForceChampionDetails(userId, dojoObj);
+          step2UpdateLead(dojoObj.application.championDetails, accId);
+          salesForceSaveChanges();
         }
-        if(setupDojoObj.phone) lead.Phone = setupDojoObj.phone;
+      });
+
+      var step2UpdateLead = function (championDetails, accId) {
+        lead.Company = (dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "<n/a>";
+        lead.LastName = (dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "no user";
+        lead.Email = (dojoObj.application.championDetails && dojoObj.application.championDetails.email) ? dojoObj.application.championDetails.email : "nobody@coderDojo.com"; 
+        lead.PlatformUrl__c = 'https://zen.coderdojo.com/dashboard/profile/' + userId;
+        if(!lead.ChampionAccount__c && accId) lead.ChampionAccount__c = accId;
+        lead.Status = '2. Champion Registration Completed';
+      }
+    } else if(dojoObj.currentStep === 3) {
+      seneca.act('role:cd-salesforce,cmd:get_account', {accId: userId}, function (err, res){
+        var accId = null;
+        accId = res.accId;
+        if(accId && dojoObj.application && dojoObj.application.setupYourDojo) {
+          step3UpdateLead(dojoObj.application.setupYourDojo, accId);
+          salesForceSaveChanges();
+        }
+      });
+
+      var step3UpdateLead = function (setupDojoObj, accId) {
+        lead.Company = (dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "<n/a>";
+        lead.LastName = (dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "no user";
+        lead.Email = (dojoObj.application.championDetails && dojoObj.application.championDetails.email) ? dojoObj.application.championDetails.email : "nobody@coderDojo.com";
+        lead.PlatformUrl__c = 'https://zen.coderdojo.com/dashboard/profile/' + userId;
+        if(accId) lead.ChampionAccount__c = accId;
         if(setupDojoObj.findTechnicalMentors) lead.FindTechnicalMentors__c = setupDojoObj.findTechnicalMentors ;
         if(setupDojoObj.findNonTechnicalMentors) lead.FindNonTechnicalMentors__c = setupDojoObj.findNonTechnicalMentors;
         if(setupDojoObj.backgroundCheck) lead.BackgroundCheckSetUp__c = setupDojoObj.backgroundCheck;
@@ -1061,26 +1111,33 @@ module.exports = function (options) {
         lead.Status = '4. Dojo Set Up Completed';
       }
     } else if (dojoObj.currentStep === 4) {
-
-      if(dojoObj.converted === true) {
-
-        dojoObj.Verified__c === false;
-        updateSalesForceChampionDetails(userId + "-a", dojoObj, dojoAction);
-      } else {
-
-      if(dojoObj.application && dojoObj.application.dojoListing) {
-        var dojoListingObj = dojoObj.application.dojoListing;
-        if (dojoListingObj.name) {
-          lead.Company = dojoListingObj.name;
-          lead.Name = dojoListingObj.name;
+      seneca.act('role:cd-salesforce,cmd:get_account', {accId: userId}, function (err, res){
+        var accId = null;
+        accId = res.accId;
+        if(dojoObj.converted === true) {
+          dojoObj.Verified__c === false;
+          updateSalesForceChampionDetails(dojoObj.id, dojoObj, dojoAction);
+        } else {
+          if(accId && dojoObj.application && dojoObj.application.dojoListing) {
+            step4UpdateLead(dojoObj.application.dojoListing, accId);
+          }
         }
+        salesForceSaveChanges();
+      });
+
+      var step4UpdateLead = function(dojoListingObj, accId) {
+        lead.Company = (!lead.Company && dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "<n/a>";
+        lead.LastName = (!lead.LastName && dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "no user";
+        lead.Email = (!lead.Email && dojoObj.application.championDetails && dojoObj.application.championDetails.email) ? dojoObj.application.championDetails.email : "nobody@coderDojo.com";
+        lead.PlatformUrl__c = 'https://zen.coderdojo.com/dashboard/profile/' + userId;
+        if(!lead.ChampionAccount__c && accId) lead.ChampionAccount__c = accId;
+        if(dojoListingObj.name) lead.Company = dojoListingObj.name;
         if(dojoListingObj.phone) lead.Phone = dojoListingObj.phone;
-        if(dojoListingObj.name) lead.Name = dojoListingObj.name ;
         if(dojoListingObj.email) lead.Email = dojoListingObj.email;
         if(dojoListingObj.time) lead.Time__c = dojoListingObj.time;
-        if(dojoListingObj.country && dojoListingObj.country.name) lead.Country = dojoListingObj.country.name;
-        if(dojoListingObj.place && dojoListingObj.place.name) lead.City = dojoListingObj.place.name;
-        if(dojoListingObj.place && dojoListingObj.place.name) lead.State = dojoListingObj.place.admin2Name;
+        if(dojoListingObj.country && dojoListingObj.country.countryName) lead.Country = dojoListingObj.country.countryName;
+        if(dojoListingObj.placeName && dojoListingObj.place.nameWithHierarchy) lead.City = dojoListingObj.place.nameWithHierarchy;
+        if(dojoListingObj.place && dojoListingObj.place.admin2Name) lead.State = dojoListingObj.place.admin2Name;
         if(dojoListingObj.address1) lead.Street = dojoListingObj.address1;
         if (dojoListingObj.place && dojoListingObj.place.latitude && dojoListingObj.place.longitude) {
           lead.Coordinates__Latitude__s = dojoListingObj.place.latitude;
@@ -1093,46 +1150,59 @@ module.exports = function (options) {
         if(dojoListingObj.googleGroup) lead.GoogleGroupURL__c = dojoListingObj.googleGroup;
         if(dojoListingObj.website) lead.Website = dojoListingObj.website;
         if(dojoListingObj.twitter) lead.Twitter__c = dojoListingObj.twitter;
-        if(dojoListingObj.supporterImage) lead.SupportersImageURL__c = dojoListingObj.supporterImage;
+        if(dojoListingObj.twitter) lead.Twitter__c = dojoListingObj.twitter;
+        if(dojoListingObj.linkedIn) lead.Linkedin__c = dojoListingObj.linkedIn;
         if(dojoListingObj.mailingList) lead.MailingList__c = dojoListingObj.mailingList;
         lead.Status = '5. Dojo Listing Created';
       }
-    }
     } else if(dojoObj.currentStep === 5) {
-
       if(dojoObj.converted === true) {
- 
-        dojoObj.Verified__c === true;
-        updateSalesForceChampionDetails(userId + "-a", dojoObj, dojoAction);
+        if(dojoAction == "verify") {
+          dojoObj.Verified__c === true;
+        }
+        else if(dojoAction == "delete") {
+          dojoObj.Deleted__c === true;
+        }
+        updateSalesForceChampionDetails(dojoObj.id, dojoObj, dojoAction);
+        salesForceSaveChanges();
       } else {
-        lead.Status = '7. Dojo Listing Verified';
-        lead.PlatformId__c = userId + "-a";
+        if(dojoAction == "verify") {
+          lead.Status = '7. Dojo Listing Verified';
+        } else if(dojoAction == "delete") {
+          lead.Deleted__c === true;
+        }
+        lead.PlatformId__c = dojoObj.id;
         convertAccount = true;
+        salesForceSaveChanges();
       }
     }
 
-    if(dojoObj.converted !== true) {
-      seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
-        if (err) return seneca.log.error('Error saving Lead in SalesForce!', err);
-        seneca.log.info('Lead saved in SalesForce', lead, res);
-        if (convertAccount === true) {
-          seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: res.id$}, function (err, res){
-            if (err) return seneca.log.error('Error converting Lead to Account in SalesForce!', err);
-            seneca.log.info('Lead converted to Account in SalesForce', lead, res);
-            seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojoObj.id}, function (err, res) {
-              if (err) { return done(err) };
-              if (res) {
+    function salesForceSaveChanges() {
+      if(dojoObj.converted !== true) {
+        seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
+          if (err) return seneca.log.error('Error saving Lead in SalesForce!', err);
+          
+          seneca.log.info('Lead saved in SalesForce', lead, res);
+          if (convertAccount === true) {
+            seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: res.id$}, function (err, res){
+              if (err) return seneca.log.error('Error converting Lead to Account in SalesForce!', err);
+              
+              seneca.log.info('Lead converted to Account in SalesForce', lead, res);
+              seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojoObj.id}, function (err, res) {
+                if (err) { return done(err) };
+                if (!res) { return done() };
+                
                 var dojoLead = res;
                 dojoLead.converted = true;
                 var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
                 dojoLeadEntity.save$(dojoLead, function(err, res){
-                  if(err) return cb(err);
+                  if(err) return done(err);
                 });
-              }
+              });
             });
-          });
-        }
-      });
+          }
+        });
+      }
     }
   }
 
