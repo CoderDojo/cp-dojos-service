@@ -732,10 +732,6 @@ module.exports = function (options) {
           // need to deal with better, but stops the system from crashing for now. 
           if(!dojo.dojoLeadId) return;
 
-console.log("FROGS: ");
-console.log(dojo);
-
-          //dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
           dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
             if (err) {
               return done(err)
@@ -837,8 +833,6 @@ console.log(dojo);
     var user = args.user;
     var query = {userId:user.id, dojoId:args.id};
 
-  //  console.log(args);
-
     async.waterfall([
       async.apply(isUserChampionAndDojoAdmin, query, user),
       deleteDojo,
@@ -885,10 +879,6 @@ console.log(dojo);
         ent.deletedAt = new Date();
 
         seneca.make$(DOJO_LEADS_ENTITY_NS).save$(ent, done);
-    
-          /*seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: ent, dojoAction: "delete"}, function (err, dojoLead) {
-            if (err)  return done(err);
-          });*/
       });
     }
     function deleteSalesForce(dojoLead, done) {
@@ -902,17 +892,11 @@ console.log(dojo);
             if(err) return done(err);
             var lead;
             lead = response.data$();
-
-            //console.log(lead);
-
             if(lead) {
               seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: "delete"}, function (err, response) {
-
-              //seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: "delete"}, function (err, response) {
                 if (err)  return done(err);
               });
             }
-
           });
         }
         done(null, response);
@@ -988,10 +972,6 @@ console.log(dojo);
   }
 
   function updateSalesForceChampionDetails(userId, dojoObj, dojoAction) {
-    console.log("INSIDE SFC");
-    console.log(dojoObj.currentStep);
-    console.log(dojoAction);
-
     var account = {
       PlatformId__c: userId
     };
@@ -1014,10 +994,8 @@ console.log(dojo);
       if (dojoObj.application.championDetails.address1)
         account.BillingStreet = dojoObj.application.championDetails.address1;
       if (dojoObj.application.championDetails.place.latitude && dojoObj.application.championDetails.place.longitude) {
-//        account.Coordinates__Latitude__s = dojoObj.application.championDetails.place.latitude;
-//        account.Coordinates__Longitude__s = dojoObj.application.championDetails.place.longitude;
-          account.Coordinates__Latitude__s = dojoObj.application.championDetails.coordinates.split(", ")[0];
-          account.Coordinates__Longitude__s = dojoObj.application.championDetails.coordinates.split(", ")[1];
+        account.Coordinates__Latitude__s = dojoObj.application.championDetails.place.latitude;
+        account.Coordinates__Longitude__s = dojoObj.application.championDetails.place.longitude;
       }
       if (dojoObj.application.championDetails.projects)
         account.Projects__c = dojoObj.application.championDetails.projects;
@@ -1049,8 +1027,6 @@ console.log(dojo);
         account.Deleted__c = 1;
       }
     }
-    console.log(userId);
-    console.log(account);
 
     seneca.act('role:cd-salesforce,cmd:save_account', {userId: userId, account: account}, function (err, res){
       if (err) return seneca.log.error('Error saving champion account in SalesForce!', err);
@@ -1063,12 +1039,8 @@ console.log(dojo);
   function updateSalesForce(userId, dojoObj, dojoAction) {
     var convertAccount = false;
 
-    console.log("INSIDE SF");
-    console.log(dojoObj);
-
     var lead = {
       PlatformId__c: userId,
-      //PlatformId__c: leadId
     };
 
     if(dojoObj.currentStep === 2) {
@@ -1138,7 +1110,6 @@ console.log(dojo);
         accId = res.accId;
         if(dojoObj.converted === true) {
           dojoObj.Verified__c === false;
-          //updateSalesForceChampionDetails(userId + "-a", dojoObj, dojoAction);
           updateSalesForceChampionDetails(dojoObj.id, dojoObj, dojoAction);
         } else {
           if(accId && dojoObj.application && dojoObj.application.dojoListing) {
@@ -1163,10 +1134,8 @@ console.log(dojo);
         if(dojoListingObj.place && dojoListingObj.place.admin2Name) lead.State = dojoListingObj.place.admin2Name;
         if(dojoListingObj.address1) lead.Street = dojoListingObj.address1;
         if (dojoListingObj.place && dojoListingObj.place.latitude && dojoListingObj.place.longitude) {
-          //lead.Coordinates__Latitude__s = dojoListingObj.place.latitude;
-          //lead.Coordinates__Longitude__s = dojoListingObj.place.longitude;
-          lead.Coordinates__Latitude__s = dojoListingObj.coordinates.split(", ")[0];
-          lead.Coordinates__Longitude__s = dojoListingObj.coordinates.split(", ")[1];
+          lead.Coordinates__Latitude__s = dojoListingObj.place.latitude;
+          lead.Coordinates__Longitude__s = dojoListingObj.place.longitude;
         }
         if(dojoListingObj.notes) lead.Notes__c = dojoListingObj.notes;
         if(dojoListingObj.needMentors) lead.NeedMentors__c = dojoListingObj.needMentors;
@@ -1181,10 +1150,6 @@ console.log(dojo);
         lead.Status = '5. Dojo Listing Created';
       }
     } else if(dojoObj.currentStep === 5) {
-      
-      console.log(dojoObj.converted);
-      console.log(dojoAction);
-
       if(dojoObj.converted === true) {
         if(dojoAction == "verify") {
           dojoObj.Verified__c === true;
@@ -1192,9 +1157,7 @@ console.log(dojo);
         else if(dojoAction == "delete") {
           dojoObj.Deleted__c === true;
         }
-        //updateSalesForceChampionDetails(userId + "-a", dojoObj, dojoAction);
-
-updateSalesForceChampionDetails(dojoObj.id, dojoObj, dojoAction);
+        updateSalesForceChampionDetails(dojoObj.id, dojoObj, dojoAction);
         salesForceSaveChanges();
       } else {
         if(dojoAction == "verify") {
@@ -1202,7 +1165,6 @@ updateSalesForceChampionDetails(dojoObj.id, dojoObj, dojoAction);
         } else if(dojoAction == "delete") {
           lead.Deleted__c === true;
         }
-        //lead.PlatformId__c = userId + "-a";
         lead.PlatformId__c = dojoObj.id;
         convertAccount = true;
         salesForceSaveChanges();
