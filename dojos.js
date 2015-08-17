@@ -621,6 +621,28 @@ module.exports = function (options) {
 
     async.waterfall([
       function (cb){
+        if(dojo.geoPoint){
+          seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint}, function(err, res){
+            if(err) console.error(err);
+            if(!res) return cb();
+
+            res = res[0];
+            dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
+            dojo.place = {'name': res.city};
+            dojo.place = {'toponymName': res.city};
+            dojo.state = {"toponymName": res.administrativeLevels.level1long};
+            dojo.country = {"countryName": res.country, "alpha2": res.countryCode};
+            dojo.admin1_code = res.administrativeLevels.level1short;
+            dojo.admin1_name = res.administrativeLevels.level1long;
+            dojo.admin2_code = res.administrativeLevels.level2short;
+            dojo.admin2_name = res.administrativeLevels.level2long;
+            cb()
+          });
+        } else {
+          cb();
+        }
+      },
+      function (cb){
         var urlSlug = {urlSlug: new RegExp('^' + baseSlug,  'i')};
         seneca.make$(ENTITY_NS).list$(urlSlug,function(err, dojos){
           if(err){
@@ -686,74 +708,8 @@ module.exports = function (options) {
        * - if verified changed to false, clear verifiedAt and verifiedBy
       */
       function (currentDojoState, done) {
-        if (!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) &&
-          dojo.verified === 1) {
 
-          dojo.verifiedAt = new Date();
-          dojo.verifiedBy = args.user.id;
-
-          if(!dojo.dojoLeadId) return done(null, dojo);
-
-          dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
-            if (err) {
-              return done(err)
-            }
-            dojoLead = dojoLead.data$();
-            dojoLead.completed = true;
-
-            dojoLead.currentStep = 5;  // salesforce trigger to set the Dojo Listing Verified...
-
-            //update dojoLead
-            seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead, dojoAction: "verify"}, function (err, dojoLead) {
-
-              if (err) {
-                return done(err)
-              }
-
-              //create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
-              if (!currentDojoState.email){
-                seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo, subject: emailSubject}, function (err, organizationEmail) {
-                  if (err) {
-                    return done(err)
-                  }
-
-                  if (organizationEmail) {
-                    dojo.email = organizationEmail.primaryEmail;
-                  }
-                  done(null, dojo);
-                })
-              } else done(null, dojo);
-            });
-          });
-        } else if(!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) && dojo.verified === 0){
-          dojo.verifiedAt = null;
-          dojo.verifiedBy = null;
-
-          // need to deal with better, but stops the system from crashing for now. 
-          if(!dojo.dojoLeadId) return;
-
-          dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
-            if (err) {
-              return done(err)
-            }
-            dojoLead = dojoLead.data$();
-            dojoLead.completed = false;
-            dojoLead.currentStep = 4;  // reset state in salesforce
-
-            //update dojoLead
-            seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead, dojoAction: "verify"}, function (err, dojoLead) {
-              if (err) {
-                return done(err)
-              }
-
-              done(null, dojo);
-            });
-          });
-        } else done(null, dojo);
-
-      },
-      function (dojo, done) {
-        if(dojo.coordinates){
+        if(dojo.coordinates && dojo.coordinates != currentDojoState.coordinates){
           var pair = dojo.coordinates.split(',').map(parseFloat);
           if (pair.length === 2 && _.isFinite(pair[0]) && _.isFinite(pair[1])) {
             dojo.geoPoint = {
@@ -761,7 +717,84 @@ module.exports = function (options) {
               lon: pair[1]
             }
           }
+          seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint}, function(err, res){
+            if(err) console.error(err);
+            if(!res) return updateLogic();
+
+            res = res[0];
+            dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
+            dojo.place = {'name': res.city};
+            dojo.place = {'toponymName': res.city};
+            dojo.state = {"toponymName": res.administrativeLevels.level1long};
+            dojo.country = {"countryName": res.country, "alpha2": res.countryCode};
+            dojo.admin1_code = res.administrativeLevels.level1short;
+            dojo.admin1_name = res.administrativeLevels.level1long;
+            dojo.admin2_code = res.administrativeLevels.level2short;
+            dojo.admin2_name = res.administrativeLevels.level2long;
+            updateLogic();
+          });
+        } else {
+          updateLogic();
         }
+
+        function updateLogic(){
+          if (dojo.verified && dojo.verified ===1) {
+            dojo.verifiedAt = new Date();
+            dojo.verifiedBy = args.user.id;
+            if(!dojo.dojoLeadId) return done(null, dojo);
+            dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
+              if (err) {
+                return done(err)
+              }
+              dojoLead = dojoLead.data$();
+              dojoLead.completed = true;
+              dojoLead.currentStep = 5;  // salesforce trigger to set the Dojo Listing Verified...
+              //update dojoLead
+              seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead, dojoAction: "verify"}, function (err, dojoLead) {
+                if (err) {
+                  return done(err)
+                }
+                //create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
+                if (!currentDojoState.email){
+                  seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo, subject: emailSubject}, function (err, organizationEmail) {
+                    if (err) {
+                      return done(err)
+                    }
+                    if (organizationEmail) {
+                      dojo.email = organizationEmail.primaryEmail;
+                    }
+                    done(null, dojo);
+                  })
+                } else done(null, dojo);
+              });
+            });
+          } else if (dojo.verified && dojo.verified ===1){
+            dojo.verifiedAt = null;
+            dojo.verifiedBy = null;
+            // need to deal with better, but stops the system from crashing for now. 
+            if(!dojo.dojoLeadId) return;
+            dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
+              if (err) {
+                return done(err)
+              }
+              dojoLead = dojoLead.data$();
+              dojoLead.completed = false;
+              dojoLead.currentStep = 4;  // reset state in salesforce
+              //update dojoLead
+              seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead, dojoAction: "verify"}, function (err, dojoLead) {
+                if (err) {
+                  return done(err)
+                }
+                done(null, dojo);
+              });
+            });
+          } 
+          else {
+            done(null, dojo);
+          }
+        }
+      },
+      function (dojo, done) {
         //update dojo geoPoint as well if coordinates are updated
         seneca.make$(ENTITY_NS).save$(dojo, function (err, response) {
           if (err) return done(err);
