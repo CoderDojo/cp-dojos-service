@@ -623,6 +623,7 @@ module.exports = function (options) {
       function (cb){
         if(dojo.geoPoint){
           seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint}, function(err, res){
+            if(err) console.error(err);
             if(!res) return cb();
 
             res = res[0];
@@ -717,8 +718,9 @@ module.exports = function (options) {
             }
           }
           seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint}, function(err, res){
+            if(err) console.error(err);
             if(!res) return updateLogic();
-            
+
             res = res[0];
             dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
             dojo.place = {'name': res.city};
@@ -736,8 +738,7 @@ module.exports = function (options) {
         }
 
         function updateLogic(){
-          if (!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) &&
-            dojo.verified === 1) {
+          if (dojo.verified && dojo.verified ===1) {
             dojo.verifiedAt = new Date();
             dojo.verifiedBy = args.user.id;
             if(!dojo.dojoLeadId) return done(null, dojo);
@@ -767,7 +768,7 @@ module.exports = function (options) {
                 } else done(null, dojo);
               });
             });
-          } else if(!_.isNull(dojo.verified) && !_.isUndefined(dojo.verified) && dojo.verified === 0){
+          } else if (dojo.verified && dojo.verified ===1){
             dojo.verifiedAt = null;
             dojo.verifiedBy = null;
             // need to deal with better, but stops the system from crashing for now. 
