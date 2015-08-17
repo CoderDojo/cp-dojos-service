@@ -15,6 +15,11 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'continents_lat_long'}, cmd_continents_lat_long);
   seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
   seneca.add({role: plugin, cmd: 'county_from_coordinates'}, cmd_county_from_coordinates);
+  seneca.add({role: plugin, cmd: 'reverse_geocode'}, cmd_reverse_geocode);
+
+  function cmd_reverse_geocode(args, done){
+    done()
+  }
   
   function cmd_list(args, done){
     done(new Error('action not stubbed!'), null)
