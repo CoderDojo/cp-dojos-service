@@ -1713,20 +1713,14 @@ module.exports = function (options) {
             userDojo.userTypes = [];
             userDojo.userTypes.push(joinRequest.userType);
 
-            seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
-              if(err) return done(err);
-              return done();
-            });
+            seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, done);
           } else {
             //Update cd/usersdojos
             var userDojo = response[0];
             if(!userDojo.userTypes) userDojo.userTypes = [];
             userDojo.userTypes.push(joinRequest.userType);
 
-            seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
-              if(err) return done(err);
-              return done();
-            });
+            seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, done);
           }
         });
       } else {
@@ -1896,6 +1890,7 @@ module.exports = function (options) {
           if(!userProfile.children) return cb(null, response);
           async.each(userProfile.children, function (youthUserId, cb) {
             seneca.act({role: plugin, cmd: 'load_usersdojos', query: {userId: youthUserId, dojoId: dojoId}}, function (err, youthUsersDojos) {
+              if(err) return cb(err);
               var youthUserDojo = youthUsersDojos[0];
               youthUserDojo.deleted = 1;
               youthUserDojo.deletedBy = args.user.id;
