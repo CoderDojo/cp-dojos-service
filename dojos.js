@@ -1500,7 +1500,8 @@ module.exports = function (options) {
               {title:'Ticketing Admin', name:'ticketing-admin'}
             ];
           }
-          usersDojosEntity.save$(userDojo, function (err, response) {
+
+          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
             if(err) return done(err);
             return done(null, {status:requestSuccessStatus}, inviteToken);
           });
@@ -1517,7 +1518,7 @@ module.exports = function (options) {
               {title:'Ticketing Admin', name:'ticketing-admin'}
             ];
           }
-          usersDojosEntity.save$(userDojo, function (err, response) {
+          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
             if(err) return done(err);
             return done(null, {status:requestSuccessStatus}, inviteToken);
           });
@@ -1660,7 +1661,8 @@ module.exports = function (options) {
     async.waterfall([
       loadUser,
       verifyRequest,
-      updateUser
+      updateUser,
+      tidyUpJoinRequests
     ], function (err) {
       if(err) return done(err);
       done(null, {status:requestSuccessStatus});
@@ -1710,18 +1712,15 @@ module.exports = function (options) {
             userDojo.dojoId = dojoId;
             userDojo.userTypes = [];
             userDojo.userTypes.push(joinRequest.userType);
-            usersDojosEntity.save$(userDojo, function (err, response) {
-              if(err) return done(err);
-              tidyUpJoinRequests(done);
-            });
+
+            seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, done);
           } else {
             //Update cd/usersdojos
             var userDojo = response[0];
             if(!userDojo.userTypes) userDojo.userTypes = [];
             userDojo.userTypes.push(joinRequest.userType);
-            usersDojosEntity.save$(userDojo, function (err, response) {
-              tidyUpJoinRequests(done);
-            });
+
+            seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, done);
           }
         });
       } else {
@@ -1772,7 +1771,8 @@ module.exports = function (options) {
 
     async.series([
       ownerPermissionsCheck,
-      saveUserDojo
+      saveUserDojo,
+      saveNinjasUserDojo
     ], function (err, res) {
       if(err) return done(null, {error: err.message});
       return done(null, res[1]);
@@ -1821,7 +1821,29 @@ module.exports = function (options) {
       if(userDojo.userPermissions) {
         userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
       }
+      if(userDojo.userTypes) userDojo.userTypes = _.uniq(userDojo.userTypes);
       usersDojosEntity.save$(userDojo, done);
+    }
+
+    function saveNinjasUserDojo(done) {
+      seneca.act({role: 'cd-profiles', cmd: 'list_query', query: {userId: userDojo.userId}}, function (err, userProfiles) {
+        if(err) return done(err);
+        var userProfile = userProfiles[0];
+        if(!userProfile.children) return done();
+        async.each(userProfile.children, function (youthUserId, cb) {
+          seneca.act({role: 'cd-profiles', cmd: 'list_query', query: {userId: youthUserId}}, function (err, youthProfiles) {
+            if(err) return cb(err);
+            var youthProfile = youthProfiles[0];
+            var youthUserDojo = {
+              userId: youthUserId,
+              dojoId: userDojo.dojoId,
+              owner: 0,
+              userTypes: [youthProfile.userType]
+            };
+            seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);  
+          });
+        }, done);
+      });
     }
 
   }
@@ -1860,7 +1882,27 @@ module.exports = function (options) {
       usersDojo.deletedBy = args.user.id;
       usersDojo.deletedAt = new Date();
 
-      seneca.make$(USER_DOJO_ENTITY_NS).save$(usersDojo, cb);
+      //Remove ninjas.
+      seneca.make$(USER_DOJO_ENTITY_NS).save$(usersDojo, function (err, response) {
+        seneca.act({role: 'cd-profiles', cmd: 'list_query', query: {userId: args.user.id}}, function (err, userProfiles) {
+          if(err) return cb(err);
+          var userProfile = userProfiles[0];
+          if(!userProfile.children) return cb(null, response);
+          async.each(userProfile.children, function (youthUserId, cb) {
+            seneca.act({role: plugin, cmd: 'load_usersdojos', query: {userId: youthUserId, dojoId: dojoId}}, function (err, youthUsersDojos) {
+              if(err) return cb(err);
+              var youthUserDojo = youthUsersDojos[0];
+              youthUserDojo.deleted = 1;
+              youthUserDojo.deletedBy = args.user.id;
+              youthUserDojo.deletedAt = new Date();
+              seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
+            });
+          }, function (err, res) {
+            if(err) return cb(err);
+            return cb(null, response);
+          });
+        });
+      });
     }
 
     function loadUserAndDojoDetails(usersDojo, cb) {
