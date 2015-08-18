@@ -673,7 +673,6 @@ module.exports = function (options) {
           userDojo.userTypes = _.uniq(userDojo.userTypes);
           userDojo.userPermissions = [
             {title:'Dojo Admin', name:'dojo-admin'},
-            {title:'Forum Admin', name:'forum-admin'},
             {title:'Ticketing Admin', name:'ticketing-admin'}
           ];
           userDojo.deleted = 0;
@@ -1498,7 +1497,6 @@ module.exports = function (options) {
           if(inviteToken.userType === 'champion') {
             userDojo.userPermissions = [
               {title:'Dojo Admin', name:'dojo-admin'},
-              {title:'Forum Admin', name:'forum-admin'},
               {title:'Ticketing Admin', name:'ticketing-admin'}
             ];
           }
@@ -1516,7 +1514,6 @@ module.exports = function (options) {
           if(inviteToken.userType === 'champion') {
             userDojo.userPermissions = [
               {title:'Dojo Admin', name:'dojo-admin'},
-              {title:'Forum Admin', name:'forum-admin'},
               {title:'Ticketing Admin', name:'ticketing-admin'}
             ];
           }
@@ -1928,8 +1925,7 @@ module.exports = function (options) {
   function cmd_get_user_permissions(args, done) {
     var userPermissions = [
       {title:'Dojo Admin', name:'dojo-admin'},
-      {title:'Ticketing Admin',name:'ticketing-admin'},
-      {title:'Forum Admin', name:'forum-admin'}
+      {title:'Ticketing Admin',name:'ticketing-admin'}
     ];
     done(null, userPermissions);
   }
