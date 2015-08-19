@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node service.js",
-    "test": "bash -c 'source ./config/development.env; ./node_modules/.bin/lab -l'",
+    "test": "bash -c 'source ./config/development.env; ./node_modules/.bin/lab -l -t 53'",
     "covrep": "bash test/covrep.sh"
   },
   "pre-commit": [
