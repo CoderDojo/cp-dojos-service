@@ -623,8 +623,14 @@ module.exports = function (options) {
       function (cb){
         if(dojo.geoPoint){
           seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint}, function(err, res){
-            if(err) console.error(err);
-            if(!res) return cb();
+            if(err){
+              console.log(err);
+              return cb();
+            }
+            if(!res){
+              console.error('No result when reverse geocoding');
+              return cb();
+            }
 
             res = res[0];
             dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
@@ -717,8 +723,14 @@ module.exports = function (options) {
             }
           }
           seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint}, function(err, res){
-            if(err) console.error(err);
-            if(!res) return updateLogic();
+            if(err){
+              console.error(err);
+              return updateLogic();
+            }
+            if(!res){
+              console.error('No result when reverse geocoding');
+              return updateLogic();
+            }
 
             res = res[0];
             dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
