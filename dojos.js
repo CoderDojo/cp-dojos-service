@@ -737,7 +737,7 @@ module.exports = function (options) {
             }
             if(res.error){
               console.error(res.error);
-              return cb();
+              return updateLogic();
             }
 
             res = res[0];
