@@ -638,10 +638,10 @@ module.exports = function (options) {
             dojo.place = {'toponymName': res.city};
             dojo.state = {"toponymName": res.administrativeLevels.level1long};
             dojo.country = {"countryName": res.country, "alpha2": res.countryCode};
-            dojo.admin1_code = res.administrativeLevels.level1short;
-            dojo.admin1_name = res.administrativeLevels.level1long;
-            dojo.admin2_code = res.administrativeLevels.level2short;
-            dojo.admin2_name = res.administrativeLevels.level2long;
+            dojo.admin1Code = res.administrativeLevels.level1short;
+            dojo.admin1Name = res.administrativeLevels.level1long;
+            dojo.admin2Code = res.administrativeLevels.level2short;
+            dojo.admin2Name = res.administrativeLevels.level2long;
             cb()
           });
         } else {
@@ -738,10 +738,10 @@ module.exports = function (options) {
             dojo.place = {'toponymName': res.city};
             dojo.state = {"toponymName": res.administrativeLevels.level1long};
             dojo.country = {"countryName": res.country, "alpha2": res.countryCode};
-            dojo.admin1_code = res.administrativeLevels.level1short;
-            dojo.admin1_name = res.administrativeLevels.level1long;
-            dojo.admin2_code = res.administrativeLevels.level2short;
-            dojo.admin2_name = res.administrativeLevels.level2long;
+            dojo.admin1Code = res.administrativeLevels.level1short;
+            dojo.admin1Name = res.administrativeLevels.level1long;
+            dojo.admin2Code = res.administrativeLevels.level2short;
+            dojo.admin2Name = res.administrativeLevels.level2long;
             updateLogic();
           });
         } else {
