@@ -622,7 +622,7 @@ module.exports = function (options) {
     async.waterfall([
       function (cb){
         if(dojo.geoPoint){
-          seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint, fatal:false}, function(err, res){
+          seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint}, function(err, res){
             if(err){
               console.log(err);
               return cb();
