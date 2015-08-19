@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node service.js",
-    "test": "bash -c 'source ./config/development.env; ./node_modules/.bin/lab -I __core-js_shared__ -f -t 53 -r html -o ./coverage/coverage.html -r lcov -o ./coverage/lcov.info -r json -o ./coverage/coverage.json'",
+    "test": "bash -c 'source ./config/development.env; ./node_modules/.bin/lab -I __core-js_shared__ -f -t 53 -r html -o ./coverage/coverage.html -r lcov -o ./coverage/lcov.info -r json -o ./coverage/coverage.json -r ./test/utils/console -o stdout'",
     "covrep": "bash test/covrep.sh"
   },
   "pre-commit": [
@@ -26,7 +26,8 @@
   "devDependencies": {
     "chai": "2.2.0",
     "pre-commit": "1.0.7",
-    "lab": "5.15.1"
+    "lab": "5.15.1",
+    "diff": "2.0.2"
   },
   "dependencies": {
     "async": "0.9.2",
