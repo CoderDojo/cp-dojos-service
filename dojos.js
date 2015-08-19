@@ -631,6 +631,10 @@ module.exports = function (options) {
               console.error('No result when reverse geocoding');
               return cb();
             }
+            if(res.error){
+              console.error(res.error);
+              return cb();
+            }
 
             res = res[0];
             dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
@@ -729,6 +733,10 @@ module.exports = function (options) {
             }
             if(!res){
               console.error('No result when reverse geocoding');
+              return updateLogic();
+            }
+            if(res.error){
+              console.error(res.error);
               return updateLogic();
             }
 
