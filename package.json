@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node service.js",
-    "test": "bash -c 'source ./config/development.env; NODE_ENV=test; istanbul cover node_modules/.bin/_mocha -- -u exports -R spec'",
+    "test": "bash -c 'source ./config/development.env; ./node_modules/.bin/lab -l'",
     "covrep": "bash test/covrep.sh"
   },
   "pre-commit": [
@@ -24,10 +24,9 @@
     "url": "https://github.com/CoderDojo/cp-core-services/issues"
   },
   "devDependencies": {
-    "mocha": "2.2.1",
     "chai": "2.2.0",
-    "istanbul": "0.3.14",
-    "pre-commit": "1.0.7"
+    "pre-commit": "1.0.7",
+    "lab": "5.15.1"
   },
   "dependencies": {
     "async": "0.9.2",
