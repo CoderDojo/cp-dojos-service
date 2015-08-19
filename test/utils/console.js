@@ -1,5 +1,6 @@
 // Copied from the hapi source, with one small modification to make test output 
-// less noisy when the coverage threshold has been met.
+// less noisy when the coverage threshold has been met.  Original file:
+// https://github.com/hapijs/lab/blob/4939eb0a407a19534e0f7d882385f19b96ccb3d8/lib/reporters/console.js
 
 // Load modules
 
