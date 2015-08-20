@@ -461,21 +461,6 @@ module.exports = function (options) {
 
   }
 
-  function cmd_dojos_by_country(args, done) {
-    var countries = args.countries;
-    var dojos = [];
-    async.each(Object.keys(countries), function(country, cb) {
-      seneca.act({role:plugin, cmd:'list'}, {query:{alpha2:country}}, function(err, response) {
-        if(err) return done(err);
-        dojos.push(response);
-        cb();
-      });
-    }, function() {
-      dojos = _.sortBy(dojos, function(dojo) { return Object.keys(dojo)[0]; });
-      done(null, dojos);
-    });
-  }
-
   function cmd_dojos_count(args, done) {
     async.waterfall([
       getDojos,
@@ -527,37 +512,28 @@ module.exports = function (options) {
   function cmd_list(args, done) {
     var query = args.query || {};
     query.limit$ = 'NULL';
-    query.verified = 1;
-    query.deleted = 0;
-    seneca.make$(ENTITY_NS).list$(query, function(err, response) {
-      if(err) return done(err);
 
-      var dojosByCountry = {};
-      response = _.sortBy(response, 'countryName');
-      _.each(response, function(dojo) {
-        if(dojo.stage !== 4) {
-          if(!dojosByCountry[dojo.countryName]) {
-            dojosByCountry[dojo.countryName] = {};
-            dojosByCountry[dojo.countryName].states = {};
-            if(!dojosByCountry[dojo.countryName].states[dojo.admin1Name]) dojosByCountry[dojo.countryName].states[dojo.admin1Name] = [];
-            dojosByCountry[dojo.countryName].states[dojo.admin1Name].push(dojo);
-          } else {
-            if(!dojosByCountry[dojo.countryName].states[dojo.admin1Name]) dojosByCountry[dojo.countryName].states[dojo.admin1Name] = [];
-            dojosByCountry[dojo.countryName].states[dojo.admin1Name].push(dojo);
-          }
-        }
+    seneca.make$(ENTITY_NS).list$(query, done);
+  }
+
+  function cmd_dojos_by_country(args, done) {
+    var query = args.query || {};
+    var dojosByCountry = {};
+
+    seneca.act({role: plugin, cmd: 'list', query: query}, function (err, dojos) {
+      if(err) return done(err);
+      _.each(dojos, function (dojo) {
+        if(!dojosByCountry[dojo.countryName]) dojosByCountry[dojo.countryName] = [];
+        dojosByCountry[dojo.countryName].push(dojo); 
       });
 
-      var countries = Object.keys(dojosByCountry);
-      _.each(countries, function(countryName) {
-        var states = Object.keys(dojosByCountry[countryName].states);
-        _.each(states, function(state) {
-          dojosByCountry[countryName].states[state] = _.sortBy(dojosByCountry[countryName].states[state], function(dojo) { return dojo.name; } );
+      _.each(Object.keys(dojosByCountry), function (countryName) {
+        dojosByCountry[countryName] = _.sortBy(dojosByCountry[countryName], function (dojos) {
+          return dojos.name;
         });
       });
-
-      done(null, dojosByCountry);
-    });
+      return done(null, dojosByCountry);
+    }); 
   }
 
   function cmd_load(args, done) {
