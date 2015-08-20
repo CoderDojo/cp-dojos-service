@@ -85,6 +85,7 @@ module.exports = function() {
 
     'email-notifications': {
       sendemail:true,
+      sendFrom: 'The CoderDojo Team <info@coderdojo.org>',
       email: {
       }
     },
