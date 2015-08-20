@@ -8,7 +8,7 @@
   },
   "scripts": {
     "start": "node service.js",
-    "test": "bash -c 'source ./config/development.env; ./node_modules/.bin/lab -I __core-js_shared__ -f -t 53 -r html -o ./coverage/coverage.html -r lcov -o ./coverage/lcov.info -r json -o ./coverage/coverage.json -r lab-quieter-reporter -o stdout'",
+    "test": "bash -c 'source ./config/development.env; ./node_modules/.bin/lab -I __core-js_shared__ -f -t 53 -r html -o ./coverage/coverage.html -r lcov -o ./coverage/lcov.info -r json -o ./coverage/coverage.json -r lab-quieter-reporter -o stdout'; # Use this to enable linting: # --linter jshint --lint --lint-errors-threshold 0 --lint-warnings-threshold 0",
     "covrep": "bash test/covrep.sh"
   },
   "pre-commit": [
