@@ -6,7 +6,8 @@ var seneca    = require('seneca')(),
     expect    = require('chai').expect,
     util      = require('util'),
     _         = require('lodash'),
-    async     = require('async');
+    async     = require('async'),
+    lab       = exports.lab = require('lab').script();
 
 var role  = "cd-dojos";
 
@@ -69,10 +70,10 @@ function create_users_dojos(obj, done) {
 
 
 
-describe('Dojo Microservice test', function(){
+lab.experiment('Dojo Microservice test', function(){
 
   // Empty Tables
-  before(function(done){
+  lab.before(function(done){
     dojosEnt.remove$({all$: true}, function(err){
       if(err) return done(err);
 
@@ -80,7 +81,7 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  before(function(done){
+  lab.before(function(done){
     usersEnt.remove$({all$: true}, function(err){
       if(err) return done(err);
 
@@ -88,7 +89,7 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  before(function(done){
+  lab.before(function(done){
     usersDojosEnt.remove$({all$: true}, function(err){
       if(err) return done(err);
 
@@ -96,7 +97,7 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  before(function(done){
+  lab.before(function(done){
     dojoLeadsEnt.remove$({all$: true}, function(err){
       if(err) return done(err);
 
@@ -111,14 +112,14 @@ describe('Dojo Microservice test', function(){
     });
   }
 
-  before(function(done){
+  lab.before(function(done){
     async.eachSeries(users, loadUsers, function(err){
       if(err) return done(err);
       done();
     });
   });
 
-  before(function(done){
+  lab.before(function(done){
     seneca.util.recurse(4, function( index, next ){
       // looks like postgres generates this field while other stores don't
       if (!using_postgres) dojos[index].userId = users[index].id
@@ -126,7 +127,7 @@ describe('Dojo Microservice test', function(){
     }, done);
   });
 
-  before(function(done){
+  lab.before(function(done){
     async.eachSeries(usersDojos, function(item, callback){
 
       dojosEnt.list$( function(err, dojos) {
@@ -140,14 +141,14 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  // describe('Search', function(){
-  //   it('Not Implemented', function(done){
+  // lab.experiment('Search', function(){
+  //   lab.test('Not Implemented', function(done){
   //     done(new Error('Not implemented'));
   //   });
   // });
 
-  describe.skip('List', function(){
-    it('list all dojos from db', function(done){
+  lab.experiment.skip('List', function(){
+    lab.test('list all dojos from db', function(done){
       seneca.act({role: role, cmd: 'list'}, function(err, dojos){
         if(err) return done(err);
         expect(dojos).not.to.be.empty;
@@ -167,8 +168,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Load', function(){
-    it('load dojo from db based on id', function(done){
+  lab.experiment('Load', function(){
+    lab.test('load dojo from db based on id', function(done){
       dojosEnt.list$(function(err, dojos){
         if(err) return done(err);
         expect(dojos).not.to.be.empty;
@@ -193,8 +194,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Find', function(){
-    it('load dojo from db based on query', function(done){
+  lab.experiment('Find', function(){
+    lab.test('load dojo from db based on query', function(done){
       dojosEnt.list$(function(err, dojos){
         if(err) return done(err);
         expect(dojos).not.to.be.empty;
@@ -219,8 +220,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Create', function(){
-    it('save dojo to db', function(done){
+  lab.experiment('Create', function(){
+    lab.test('save dojo to db', function(done){
 
       create_dojo(dojos[4], users[4],
       function(err, savedDojo){
@@ -254,8 +255,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Save dojo lead', function(){
-    it('save dojo lead to db', function(done){
+  lab.experiment('Save dojo lead', function(){
+    lab.test('save dojo lead to db', function(done){
       expect(dojoleads[0]).to.exist;
       expect(dojoleads[0].userId).to.be.ok;
 
@@ -282,9 +283,9 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Delete', function(){
+  lab.experiment('Delete', function(){
 
-    it('should not delete without correct user role', function (done) {
+    lab.test('should not delete without correct user role', function (done) {
       dojosEnt.list$({creator: users[4].id}, function(err, dojos){
 
         // console.log('dojos: ' + util.inspect(dojos));
@@ -306,8 +307,7 @@ describe('Dojo Microservice test', function(){
       }); 
     });
 
-    it('delete dojo from db', function(done){
-      this.timeout(20000);
+    lab.test('delete dojo from db', { timeout: 20000 }, function(done){
       dojosEnt.list$({creator: users[0].id}, function(err, dojos){
 
         expect(dojos).to.exist;
@@ -328,8 +328,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Load user dojo lead', function(){
-    it('load dojo lead based on user id', function(done){
+  lab.experiment('Load user dojo lead', function(){
+    lab.test('load dojo lead based on user id', function(done){
       dojoLeadsEnt.list$(function(err, dojoLeads){
 
         //console.log('expectedLead: ' + util.inspect(dojoLeads));
@@ -352,8 +352,8 @@ describe('Dojo Microservice test', function(){
   });
 
 
-  describe('Update', function(){
-    it('update dojo field', function(done){
+  lab.experiment('Update', function(){
+    lab.test('update dojo field', function(done){
       dojosEnt.list$({creator: users[3].id}, function(err, dojos){
         if(err) return done(err);
 
@@ -375,8 +375,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe.skip('My dojos', function () {
-    it('list all dojos related to user', function (done) {
+  lab.experiment.skip('My dojos', function () {
+    lab.test('list all dojos related to user', function (done) {
       if (using_postgres) {
         seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {}}, function (err, dojos) {
           if (err) return done(err);
@@ -396,8 +396,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe.skip('Dojos count (uses countries-stub)', function () {
-    it('list dojos count per geographical location', function (done) {
+  lab.experiment.skip('Dojos count (uses countries-stub)', function () {
+    lab.test('list dojos count per geographical location', function (done) {
       if (using_postgres) {
         seneca.act({role: role, cmd: 'dojos_count'}, function (err, dojos) {
           if (err) return done(err);
@@ -428,8 +428,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe.skip('Dojos by country', function(){
-    it('list dojos by country', function(done){
+  lab.experiment.skip('Dojos by country', function(){
+    lab.test('list dojos by country', function(done){
       seneca.act({role: role, cmd: 'dojos_by_country', countries:{US:'', BR:'', RO:''}}, function(err, dojos){
         if(err) return done(err);
 
@@ -444,8 +444,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe.skip('Dojos state count', function () {
-    it('list dojos by states in country', function (done) {
+  lab.experiment.skip('Dojos state count', function () {
+    lab.test('list dojos by states in country', function (done) {
       seneca.util.recurse(2, function (index, next) {
         create_dojo(dojos[4 + index], users[index],
           function (err, dojo) {
@@ -475,8 +475,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Bulk update', function(){
-    it('update many dojos', function(done){
+  lab.experiment('Bulk update', function(){
+    lab.test('update many dojos', function(done){
       seneca.util.recurse(2, function( index, next ){
         create_dojo(dojos[4+index], users[index],
           function(err, dojo){
@@ -516,8 +516,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Bulk delete', function(){
-    it.skip('delete many dojos', function(done){
+  lab.experiment('Bulk delete', function(){
+    lab.test.skip('delete many dojos', function(done){
       dojosEnt.list$({alpha2:'UK'}, function(err, dojos){
         if(err) return done(err);
         // console.log('dojos: ' + util.inspect(dojos));
@@ -538,8 +538,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe.skip('Get stats', function () {
-    it('list each dojo stats', function (done) {
+  lab.experiment.skip('Get stats', function () {
+    lab.test('list each dojo stats', function (done) {
       if (using_postgres) {
         seneca.act({role: role, cmd: 'get_stats'}, function (err, dojos) {
           if (err) return done(err);
@@ -568,8 +568,8 @@ describe('Dojo Microservice test', function(){
   });
 
 
-  describe('Load dojo lead', function(){
-    it('load dojo lead based on its id', function(done){
+  lab.experiment('Load dojo lead', function(){
+    lab.test('load dojo lead based on its id', function(done){
       dojoLeadsEnt.list$(function(err, dojoLeads){
 
       // console.log('expectedLead: ' + util.inspect(dojoLeads[0]));
@@ -593,8 +593,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Load setup dojo steps', function(){
-    it('load dojo wizard steps', function(done){
+  lab.experiment('Load setup dojo steps', function(){
+    lab.test('load dojo wizard steps', function(done){
       seneca.act({role: role, cmd: 'load_setup_dojo_steps'}, function(err, dojoSteps){
         if(err) return done(err);
 
@@ -623,8 +623,8 @@ describe('Dojo Microservice test', function(){
     });
   });
 
-  describe('Load users dojos', function(){
-    it('load usersDojo based on query', function(done){
+  lab.experiment('Load users dojos', function(){
+    lab.test('load usersDojo based on query', function(done){
       seneca.util.recurse(2, function( index, next ){
       create_dojo(dojos[4+index], users[index],
         function(err, dojo){
