@@ -26,6 +26,7 @@ module.exports = function( options ) {
       if(!args.to) return done(null, {ok: false, why: 'No recipient set.'});
       seneca.act({
         role: 'mail', cmd: 'send',
+        from: options.sendFrom,
         code: args.code,
         to: args.to,
         subject: args.subject,
