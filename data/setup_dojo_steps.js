@@ -37,11 +37,11 @@ module.exports = [
         requiredMessage:'You must locate a suitable venue before continuing.'
       },
       {
-        title:'Ensure health and saftey best practices are met',
+        title:'Ensure health and safety best practices are met',
         name:'ensureHealthAndSafety',
         required:false,
         textField:true,
-        placeholder:'Please add a comment on how you’ve met local health and safety best practices in your region',
+        placeholder:'Please add a comment on how you\'ve met local health and safety best practices in your region',
         taoIcon:true
       },
       {
@@ -49,7 +49,7 @@ module.exports = [
         name:'ensureInsuranceCover',
         required:false,
         textField:true,
-        placeholder:'Please add a comment on how you’ve met public liability best practices in your region',
+        placeholder:'Please add a comment on how you\'ve met public liability best practices in your region',
         taoIcon:true
       }
     ]
