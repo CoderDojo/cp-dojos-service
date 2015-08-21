@@ -103,6 +103,17 @@ lab.experiment('Dojo Microservice test', function(){
   });
 
   lab.experiment('List', function(){
+    lab.test('executes', function(done){
+      seneca.act({role: role, cmd: 'list'}, function(err, dojos){
+        if(err) return done(err);
+
+        expect(dojos).to.be.an('array');
+        expect(dojos).to.have.length(0);
+
+        done();
+      });
+    });
+
     lab.test.skip('list all dojos from db', function(done){
       seneca.act({role: role, cmd: 'list'}, function(err, dojos){
         if(err) return done(err);
@@ -308,8 +319,12 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
 
-  lab.experiment.skip('My dojos', function () {
-    lab.test('list all dojos related to user', function (done) {
+  lab.experiment('My dojos', function () {
+    lab.test('executes', function (done) {
+      seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {}}, done);
+    });
+
+    lab.test.skip('list all dojos related to user', function (done) {
       seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {}}, function (err, dojos) {
         if (err) return done(err);
 
@@ -322,8 +337,12 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
 
-  lab.experiment.skip('Dojos count (uses countries-stub)', function () {
-    lab.test('list dojos count per geographical location', function (done) {
+  lab.experiment('Dojos count (uses countries-stub)', function () {
+    lab.test('executes', function (done) {
+      seneca.act({role: role, cmd: 'dojos_count'}, done);
+    });
+
+    lab.test.skip('list dojos count per geographical location', function (done) {
       seneca.act({role: role, cmd: 'dojos_count'}, function (err, dojos) {
         if (err) return done(err);
         dojos = dojos.dojos;
@@ -347,8 +366,12 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
 
-  lab.experiment.skip('Dojos by country', function(){
-    lab.test('list dojos by country', function(done){
+  lab.experiment('Dojos by country', function(){
+    lab.test('executes', function(done){
+      seneca.act({role: role, cmd: 'dojos_by_country', countries:{US:'', BR:'', RO:''}}, done);
+    });
+
+    lab.test.skip('list dojos by country', function(done){
       seneca.act({role: role, cmd: 'dojos_by_country', countries:{US:'', BR:'', RO:''}}, function(err, dojos){
         if(err) return done(err);
 
@@ -361,8 +384,12 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
 
-  lab.experiment.skip('Dojos state count', function () {
-    lab.test('list dojos by states in country', function (done) {
+  lab.experiment('Dojos state count', function () {
+    lab.test('executes', function (done) {
+      seneca.act({role: role, cmd: 'dojos_state_count', country: 'UK'}, done);
+    });
+
+    lab.test.skip('list dojos by states in country', function (done) {
       seneca.util.recurse(2, function (index, next) {
         create_dojo(dojos[4 + index], users[index],
           function (err, dojo) {
@@ -427,6 +454,10 @@ lab.experiment('Dojo Microservice test', function(){
   });
 
   lab.experiment('Bulk delete', function(){
+    lab.test.skip('executes', function(done){
+      seneca.act({role: role, cmd: 'bulk_delete', dojos:dojos, user: {roles: ['cdf-admin']}}, done);
+    });
+
     lab.test.skip('delete many dojos', function(done){
       dojosEnt.list$({alpha2:'UK'}, function(err, dojos){
         if(err) return done(err);
@@ -448,8 +479,13 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
 
-  lab.experiment.skip('Get stats', function () {
-    lab.test('list each dojo stats', function (done) {
+  lab.experiment('Get stats', function () {
+
+    lab.test.skip('executes', function (done) {
+      seneca.act({role: role, cmd: 'get_stats'}, done);
+    });
+
+    lab.test.skip('list each dojo stats', function (done) {
 
       seneca.act({role: role, cmd: 'get_stats'}, function (err, dojos) {
         if (err) return done(err);
@@ -550,6 +586,212 @@ lab.experiment('Dojo Microservice test', function(){
           });
         });
       });
+    });
+  });
+
+  lab.experiment('search', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'search' }, done);
+    });
+  });
+  lab.experiment('list', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'list' }, done);
+    });
+  });
+  lab.experiment('load', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'load' }, done);
+    });
+  });
+  lab.experiment('find', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'find' }, done);
+    });
+  });
+  lab.experiment('create', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'create' }, done);
+    });
+  });
+  lab.experiment('update', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'update' }, done);
+    });
+  });
+  lab.experiment('delete', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'delete' }, done);
+    });
+  });
+  lab.experiment('my_dojos', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'my_dojos' }, done);
+    });
+  });
+  lab.experiment('dojos_count', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'dojos_count' }, done);
+    });
+  });
+  lab.experiment('dojos_by_country', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'dojos_by_country' }, done);
+    });
+  });
+  lab.experiment('dojos_state_count', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'dojos_state_count' }, done);
+    });
+  });
+  lab.experiment('bulk_update', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'bulk_update' }, done);
+    });
+  });
+  lab.experiment('bulk_delete', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'bulk_delete' }, done);
+    });
+  });
+  lab.experiment('get_stats', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'get_stats' }, done);
+    });
+  });
+  lab.experiment('save_dojo_lead', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'save_dojo_lead' }, done);
+    });
+  });
+  lab.experiment('update_dojo_lead', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'update_dojo_lead' }, done);
+    });
+  });
+  lab.experiment('load_user_dojo_lead', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'load_user_dojo_lead' }, done);
+    });
+  });
+  lab.experiment('load_dojo_lead', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'load_dojo_lead' }, done);
+    });
+  });
+  lab.experiment('load_setup_dojo_steps', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'load_setup_dojo_steps' }, done);
+    });
+  });
+  lab.experiment('load_usersdojos', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'load_usersdojos' }, done);
+    });
+  });
+  lab.experiment('load_dojo_users', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'load_dojo_users' }, done);
+    });
+  });
+  lab.experiment('send_email', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'send_email' }, done);
+    });
+  });
+  lab.experiment('generate_user_invite_token', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'generate_user_invite_token' }, done);
+    });
+  });
+  lab.experiment('accept_user_invite', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'accept_user_invite' }, done);
+    });
+  });
+  lab.experiment('request_user_invite', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'request_user_invite' }, done);
+    });
+  });
+  lab.experiment('load_dojo_champion', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'lead_dojo_champion' }, done);
+    });
+  });
+  lab.experiment('accept_user_request', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'accept_user_request' }, done);
+    });
+  });
+  lab.experiment('dojos_for_user', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'dojos_for_user' }, done);
+    });
+  });
+  lab.experiment('save_usersdojos', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'save_usersdojos' }, done);
+    });
+  });
+  lab.experiment('remove_usersdojos', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'remove_usersdojos' }, done);
+    });
+  });
+  lab.experiment('get_user_types', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'get_user_types' }, done);
+    });
+  });
+  lab.experiment('get_user_permissions', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'get_user_permissions' }, done);
+    });
+  });
+  lab.experiment('create_dojo_email', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'create_dojo_email' }, done);
+    });
+  });
+  lab.experiment('search_dojo_leads', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'search_dojo_leads' }, done);
+    });
+  });
+  lab.experiment('uncompleted_dojos', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'uncompleted_dojos' }, done);
+    });
+  });
+  lab.experiment('get_dojo_config', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'get_dojo_config' }, done);
+    });
+  });
+  lab.experiment('load_dojo_admins', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'load_dojo_admins' }, done);
+    });
+  });
+  lab.experiment('update_founder', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'update_founder' }, done);
+    });
+  });
+  lab.experiment('search_nearest_dojos', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'search_nearest_dojos' }, done);
+    });
+  });
+  lab.experiment('search_bounding_box', function () {
+    lab.test.skip('executes', function (done) {
+      seneca.act({ role: role, cmd: 'search_bounding_box' }, done);
+    });
+  });
+  lab.experiment('list_query', function () {
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'list_query' }, done);
     });
   });
 
