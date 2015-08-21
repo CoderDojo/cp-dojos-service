@@ -16,7 +16,7 @@ var dojos     = require('./fixtures/dojos.json');
 var dojoleads = require('./fixtures/dojoleads.json');
 var usersDojos= require('./fixtures/usersdojos.json');
 
-console.log('using configuration', JSON.stringify(config, null, 4));
+console.info('using configuration', JSON.stringify(config, null, 4));
 seneca.options(config);
 
 seneca
@@ -109,19 +109,12 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
 
-  // lab.experiment('Search', function(){
-  //   lab.test('Not Implemented', function(done){
-  //     done(new Error('Not implemented'));
-  //   });
-  // });
-
   lab.experiment('List', function(){
     lab.test.skip('list all dojos from db', function(done){
       seneca.act({role: role, cmd: 'list'}, function(err, dojos){
         if(err) return done(err);
-        expect(dojos).not.to.be.empty;
 
-        // console.log('dojos: ' + util.inspect(dojos));
+        expect(dojos).not.to.be.empty;
 
         var dojosNo = 0;
         _.each(dojos, function(element){
@@ -243,8 +236,6 @@ lab.experiment('Dojo Microservice test', function(){
     lab.test('should not delete without correct user role', function (done) {
       dojosEnt.list$({creator: users[4].id}, function(err, dojos){
 
-        // console.log('dojos: ' + util.inspect(dojos));
-
         expect(dojos).to.exist;
         expect(dojos.length).to.be.equal(1);
         expect(dojos[0]).to.be.ok;
@@ -287,17 +278,11 @@ lab.experiment('Dojo Microservice test', function(){
     lab.test('load dojo lead based on user id', function(done){
       dojoLeadsEnt.list$(function(err, dojoLeads){
 
-        //console.log('expectedLead: ' + util.inspect(dojoLeads));
-
         expect(dojoLeads).not.to.be.empty;
         expect(dojoLeads[0].userId).to.be.ok;
 
-        //console.log('dojoLead_userId: ' + dojoLeads[0].user_id);
-
         seneca.act({role: role, cmd: 'load_user_dojo_lead', id: dojoLeads[0].user_id}, function(err, loadedLead){
           if(err) return done(err);
-
-          // console.log('loadedLead: ' + util.inspect(loadedLead));
 
           expect(loadedLead).not.to.exist;
           done();
@@ -336,8 +321,6 @@ lab.experiment('Dojo Microservice test', function(){
         seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {}}, function (err, dojos) {
           if (err) return done(err);
 
-          // console.log('dojos: ' + util.inspect(dojos))
-
           expect(dojos).to.exist;
           expect(dojos.total).to.be.equal(1);
           expect(dojos.records[0]).to.be.ok;
@@ -357,8 +340,6 @@ lab.experiment('Dojo Microservice test', function(){
         seneca.act({role: role, cmd: 'dojos_count'}, function (err, dojos) {
           if (err) return done(err);
           dojos = dojos.dojos;
-
-          // console.log('dojos: ' + util.inspect(dojos.continents));
 
           expect(dojos.continents).to.exist;
           expect(dojos.continents).to.include.keys(['EU', 'NA', 'SA']);
@@ -388,8 +369,6 @@ lab.experiment('Dojo Microservice test', function(){
       seneca.act({role: role, cmd: 'dojos_by_country', countries:{US:'', BR:'', RO:''}}, function(err, dojos){
         if(err) return done(err);
 
-        // console.log('dojos: ' + util.inspect(dojos));
-
         expect(dojos).to.exist;
         expect(dojos.length).to.be.equal(3);
         expect(util.inspect(dojos).toString()).to.contain.any('America', 'Brazil', 'Romania');
@@ -413,8 +392,6 @@ lab.experiment('Dojo Microservice test', function(){
         if (using_postgres) {
           seneca.act({role: role, cmd: 'dojos_state_count', country: 'UK'}, function (err, dojos) {
             if (err) return done(err);
-
-            // console.log('dojos: ' + util.inspect(dojos));
 
             expect(dojos).to.exist;
             expect(dojos.UK).to.exist;
@@ -443,7 +420,7 @@ lab.experiment('Dojo Microservice test', function(){
 
         dojosEnt.list$({alpha2:'UK'}, function(err, dojos){
           if(err) return done(err);
-          // console.log('dojos: ' + util.inspect(dojos));
+
           expect(dojos).not.to.be.empty;
 
           var value = 'updated.';
@@ -475,7 +452,7 @@ lab.experiment('Dojo Microservice test', function(){
     lab.test.skip('delete many dojos', function(done){
       dojosEnt.list$({alpha2:'UK'}, function(err, dojos){
         if(err) return done(err);
-        // console.log('dojos: ' + util.inspect(dojos));
+
         expect(dojos).not.to.be.empty;
 
         seneca.act({role: role, cmd: 'bulk_delete', dojos:dojos, user: {roles: ['cdf-admin']}}, function(err, dojos){
@@ -498,8 +475,6 @@ lab.experiment('Dojo Microservice test', function(){
       if (using_postgres) {
         seneca.act({role: role, cmd: 'get_stats'}, function (err, dojos) {
           if (err) return done(err);
-
-          // console.log('dojos: ' + util.inspect(dojos));
 
           expect(dojos).not.to.be.empty;
           expect(dojos.EU).to.exist;
@@ -527,15 +502,11 @@ lab.experiment('Dojo Microservice test', function(){
     lab.test('load dojo lead based on its id', function(done){
       dojoLeadsEnt.list$(function(err, dojoLeads){
 
-      // console.log('expectedLead: ' + util.inspect(dojoLeads[0]));
-
       expect(dojoLeads).not.to.be.empty;
       expect(dojoLeads[0].id).to.be.ok;
 
         seneca.act({role: role, cmd: 'load_dojo_lead', id: dojoLeads[0].id}, function(err, loadedLead){
           if(err) return done(err);
-
-          // console.log('loadedLead: ' + util.inspect(loadedLead));
 
           expect(loadedLead).to.exist;
           expect(loadedLead.userId).to.be.ok;
@@ -553,7 +524,6 @@ lab.experiment('Dojo Microservice test', function(){
       seneca.act({role: role, cmd: 'load_setup_dojo_steps'}, function(err, dojoSteps){
         if(err) return done(err);
 
-        // console.log('dojoSteps: ' + util.inspect(dojoSteps));
         expect(dojoSteps).to.not.be.empty;
 
         var all_keys = [];
@@ -566,8 +536,6 @@ lab.experiment('Dojo Microservice test', function(){
             expect(element[key]).to.be.ok;
           });
         });
-
-        // console.log('all_keys: ' + util.inspect(all_keys));
 
         // TODO: find a way to feed array into include assertion
         expect(all_keys).to.include('title')
@@ -591,8 +559,6 @@ lab.experiment('Dojo Microservice test', function(){
 
         usersDojosEnt.list$(function(err, dojos){
 
-        // console.log('allDojos: ' + util.inspect(dojos));
-
         expect(dojos).not.to.be.empty;
         expect(dojos[0].id).to.be.ok;
 
@@ -600,8 +566,6 @@ lab.experiment('Dojo Microservice test', function(){
           seneca.act({role: role, cmd: 'load_usersdojos', query: {userId: dojos[1].userId}},
           function(err, loadedDojos){
             if(err) return done(err);
-
-            //console.log('loadedDojos: ' + util.inspect(loadedDojos));
 
             expect(loadedDojos).to.exist;
             expect(loadedDojos.length).to.equal(3); //cause one of them is deleted during tests
