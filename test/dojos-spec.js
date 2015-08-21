@@ -45,27 +45,17 @@ function create_dojo (obj, creator, done){
   seneca.act({role: role, cmd: 'create', dojo: obj, user: {id: creator.id, roles: ['cdf-admin']}},
   function(err, savedDojo){
     if(err) return done(err);
-    // console.log('savedDojo: ' + util.inspect(savedDojo));
+
     expect(savedDojo.id).to.be.ok;
 
-    if (!using_postgres) {
-      usersDojosEnt.list$({dojo_id: savedDojo.dojo_id}, function(err, loadedDojo){
-        if(err) return done(err);
+    if (using_postgres) return done(null, savedDojo);
 
-        // console.log('loadedDojo: ' + util.inspect(loadedDojo));
-
-        done(null, loadedDojo);
-      });
-    }
-    else done(null, savedDojo);
+    usersDojosEnt.list$({dojo_id: savedDojo.dojo_id}, done);
   });
 }
 
 function create_users_dojos(obj, done) {
-  seneca.act({role: role, cmd: 'save_usersdojos', userDojo: obj}, function(err, res){
-    console.log(res.dojoId);
-    done();
-  });
+  seneca.act({role: role, cmd: 'save_usersdojos', userDojo: obj}, done);
 }
 
 
@@ -74,49 +64,27 @@ lab.experiment('Dojo Microservice test', function(){
 
   // Empty Tables
   lab.before(function(done){
-    dojosEnt.remove$({all$: true}, function(err){
-      if(err) return done(err);
-
-      done();
-    });
+    dojosEnt.remove$({all$: true}, done);
   });
 
   lab.before(function(done){
-    usersEnt.remove$({all$: true}, function(err){
-      if(err) return done(err);
-
-      done();
-    });
+    usersEnt.remove$({all$: true}, done);
   });
 
   lab.before(function(done){
-    usersDojosEnt.remove$({all$: true}, function(err){
-      if(err) return done(err);
-
-      done();
-    });
+    usersDojosEnt.remove$({all$: true}, done);
   });
 
   lab.before(function(done){
-    dojoLeadsEnt.remove$({all$: true}, function(err){
-      if(err) return done(err);
-
-      done();
-    });
+    dojoLeadsEnt.remove$({all$: true}, done);
   });
 
   var loadUsers = function(user, cb){
-    usersEnt.save$(user, function(err, user){
-      if(err) return cb(err);
-      else cb();
-    });
+    usersEnt.save$(user, cb);
   }
 
   lab.before(function(done){
-    async.eachSeries(users, loadUsers, function(err){
-      if(err) return done(err);
-      done();
-    });
+    async.eachSeries(users, loadUsers, done);
   });
 
   lab.before(function(done){
@@ -147,8 +115,8 @@ lab.experiment('Dojo Microservice test', function(){
   //   });
   // });
 
-  lab.experiment.skip('List', function(){
-    lab.test('list all dojos from db', function(done){
+  lab.experiment('List', function(){
+    lab.test.skip('list all dojos from db', function(done){
       seneca.act({role: role, cmd: 'list'}, function(err, dojos){
         if(err) return done(err);
         expect(dojos).not.to.be.empty;
@@ -174,16 +142,11 @@ lab.experiment('Dojo Microservice test', function(){
         if(err) return done(err);
         expect(dojos).not.to.be.empty;
 
-        // console.log('dojos: ' + util.inspect(dojos));
-        // console.log('dojos[0].id: ' + util.inspect(dojos[0].id));
-
         expect(dojos[0].id).to.exist;
         expect(dojos[0].id).to.be.ok;
 
         seneca.act({role: role, cmd: 'load', id: dojos[0].id}, function(err, dojoFound){
           if(err) return done(err);
-
-          // console.log('dojoFound: ' + util.inspect(dojoFound));
 
           expect(dojoFound).to.exist;
           expect(dojoFound).to.be.ok;
@@ -200,16 +163,11 @@ lab.experiment('Dojo Microservice test', function(){
         if(err) return done(err);
         expect(dojos).not.to.be.empty;
 
-        // console.log('dojos: ' + util.inspect(dojos));
-        // console.log('dojos[0].id: ' + util.inspect(dojos[0].id));
-
         expect(dojos[0].id).to.exist;
         expect(dojos[0].id).to.be.ok;
 
         seneca.act({role: role, cmd: 'find', query: { id: dojos[0].id }}, function(err, dojoFound){
           if(err) return done(err);
-
-          // console.log('dojoFound: ' + util.inspect(dojoFound));
 
           expect(dojoFound).to.exist;
           expect(dojoFound).to.be.ok;
@@ -230,9 +188,6 @@ lab.experiment('Dojo Microservice test', function(){
         dojosEnt.load$({creator: users[4].id}, function(err, loadedDojo){
           if(err) return done(err);
           expect(dojos).not.to.be.empty;
-
-          // console.log('savedDojo: ' + util.inspect(savedDojo));
-          // console.log('loadedDojo: ' + util.inspect(loadedDojo));
 
           expect(loadedDojo).to.exist;
           expect(loadedDojo).to.be.ok;
