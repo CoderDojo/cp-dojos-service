@@ -11,10 +11,10 @@ var seneca    = require('seneca')(),
 
 var role  = "cd-dojos";
 
-var users     = JSON.parse(fs.readFileSync(__dirname + '/fixtures/users.json', 'utf8'));
-var dojos     = JSON.parse(fs.readFileSync(__dirname + '/fixtures/dojos.json', 'utf8'));
-var dojoleads = JSON.parse(fs.readFileSync(__dirname + '/fixtures/dojoleads.json', 'utf8'));
-var usersDojos= JSON.parse(fs.readFileSync(__dirname + '/fixtures/usersdojos.json', 'utf8'));
+var users     = require('./fixtures/users.json');
+var dojos     = require('./fixtures/dojos.json');
+var dojoleads = require('./fixtures/dojoleads.json');
+var usersDojos= require('./fixtures/usersdojos.json');
 
 console.log('using configuration', JSON.stringify(config, null, 4));
 seneca.options(config);
