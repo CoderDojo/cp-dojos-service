@@ -16,7 +16,6 @@ var dojos     = require('./fixtures/dojos.json');
 var dojoleads = require('./fixtures/dojoleads.json');
 var usersDojos= require('./fixtures/usersdojos.json');
 
-console.info('using configuration', JSON.stringify(config, null, 4));
 seneca.options(config);
 
 seneca
