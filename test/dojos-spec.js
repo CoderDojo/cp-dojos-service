@@ -23,9 +23,6 @@ seneca
   .use(__dirname + '/stubs/cd-profiles.js')
   .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}});
 
-var using_postgres = false; // can be set to true for debugging
-if (using_postgres) seneca.use('postgresql-store', config["postgresql-store"]);
-
 var usersEnt      = seneca.make$("sys/user"),
     dojosEnt      = seneca.make$("cd/dojos"),
     usersDojosEnt = seneca.make$("cd/usersdojos"),
@@ -47,9 +44,7 @@ function create_dojo (obj, creator, done){
 
     expect(savedDojo.id).to.be.ok;
 
-    if (using_postgres) return done(null, savedDojo);
-
-    usersDojosEnt.list$({dojo_id: savedDojo.dojo_id}, done);
+    done(null, savedDojo);
   });
 }
 
@@ -88,8 +83,7 @@ lab.experiment('Dojo Microservice test', function(){
 
   lab.before(function(done){
     seneca.util.recurse(4, function( index, next ){
-      // looks like postgres generates this field while other stores don't
-      if (!using_postgres) dojos[index].userId = users[index].id
+      dojos[index].userId = users[index].id
       create_dojo(dojos[index], users[index], next);
     }, done);
   });
@@ -316,50 +310,40 @@ lab.experiment('Dojo Microservice test', function(){
 
   lab.experiment.skip('My dojos', function () {
     lab.test('list all dojos related to user', function (done) {
-      if (using_postgres) {
-        seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {}}, function (err, dojos) {
-          if (err) return done(err);
+      seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {}}, function (err, dojos) {
+        if (err) return done(err);
 
-          expect(dojos).to.exist;
-          expect(dojos.total).to.be.equal(1);
-          expect(dojos.records[0]).to.be.ok;
+        expect(dojos).to.exist;
+        expect(dojos.total).to.be.equal(1);
+        expect(dojos.records[0]).to.be.ok;
 
-          done();
-        });
-      } else {
-        var err = new Error('POSTGRES SPECIFIC: dojos.js makes postgres-specific query which is not supported in other stores: query:{ids:array_of_ids} in cmd_my_dojos');
-        done(err);
-      }
+       done();
+      });
     });
   });
 
   lab.experiment.skip('Dojos count (uses countries-stub)', function () {
     lab.test('list dojos count per geographical location', function (done) {
-      if (using_postgres) {
-        seneca.act({role: role, cmd: 'dojos_count'}, function (err, dojos) {
-          if (err) return done(err);
-          dojos = dojos.dojos;
+      seneca.act({role: role, cmd: 'dojos_count'}, function (err, dojos) {
+        if (err) return done(err);
+        dojos = dojos.dojos;
 
-          expect(dojos.continents).to.exist;
-          expect(dojos.continents).to.include.keys(['EU', 'NA', 'SA']);
-          expect(dojos.continents.EU.countries).to.include.keys(['RO', 'RU']);
-          expect(dojos.continents.NA.countries).to.include.keys(['US']);
-          expect(dojos.continents.SA.countries).to.include.keys(['BR']);
+        expect(dojos.continents).to.exist;
+        expect(dojos.continents).to.include.keys(['EU', 'NA', 'SA']);
+        expect(dojos.continents.EU.countries).to.include.keys(['RO', 'RU']);
+        expect(dojos.continents.NA.countries).to.include.keys(['US']);
+        expect(dojos.continents.SA.countries).to.include.keys(['BR']);
 
-          var total = 0;
-          _.each(dojos.continents, function (element) {
-            expect(element.total).to.exist;
-            total += element.total;
-          });
-
-          expect(total).to.be.equal(4);
-
-          done();
+        var total = 0;
+        _.each(dojos.continents, function (element) {
+          expect(element.total).to.exist;
+          total += element.total;
         });
-      } else {
-        var err = new Error('POSTGRES SPECIFIC: dojos.js makes postgres-specific query which is not supported in other stores: query:{limit$:\'NULL\'} in cmd_my_dojos');
-        done(err);
-      }
+
+        expect(total).to.be.equal(4);
+
+        done();
+      });
     });
   });
 
@@ -388,20 +372,15 @@ lab.experiment('Dojo Microservice test', function(){
           });
       }, function (err, data) {
 
-        if (using_postgres) {
-          seneca.act({role: role, cmd: 'dojos_state_count', country: 'UK'}, function (err, dojos) {
-            if (err) return done(err);
+        seneca.act({role: role, cmd: 'dojos_state_count', country: 'UK'}, function (err, dojos) {
+          if (err) return done(err);
 
-            expect(dojos).to.exist;
-            expect(dojos.UK).to.exist;
-            expect(Object.keys(dojos.UK).length).to.equal(2);
+          expect(dojos).to.exist;
+          expect(dojos.UK).to.exist;
+          expect(Object.keys(dojos.UK).length).to.equal(2);
 
-            done();
-          });
-        } else {
-          var err = new Error('POSTGRES SPECIFIC: dojos.js makes postgres-specific query which is not supported in other stores: query:{limit$:\'NULL\'} in cmd_my_dojos');
-          done(err);
-        }
+          done();
+        });
       });
     });
   });
@@ -471,28 +450,23 @@ lab.experiment('Dojo Microservice test', function(){
 
   lab.experiment.skip('Get stats', function () {
     lab.test('list each dojo stats', function (done) {
-      if (using_postgres) {
-        seneca.act({role: role, cmd: 'get_stats'}, function (err, dojos) {
-          if (err) return done(err);
 
-          expect(dojos).not.to.be.empty;
-          expect(dojos.EU).to.exist;
-          expect(dojos.EU.length).to.equal(2);
-          expect(dojos.EU.toString()).to.contain.all('Romania', 'Russia');
-          expect(dojos.NA).to.exist;
-          expect(dojos.NA.length).to.equal(1);
-          expect(dojos.NA.toString()).to.contain('America');
-          expect(dojos.SA).to.exist;
-          expect(dojos.SA.length).to.equal(1);
-          expect(dojos.SA.toString()).to.contain('Brazil');
+      seneca.act({role: role, cmd: 'get_stats'}, function (err, dojos) {
+        if (err) return done(err);
 
-          done();
-        });
-      }
-      else {
-        var err = new Error('POSTGRES SPECIFIC: cd/stat is a postgres view - a feature unavailable in other stores');
-        done(err);
-      }
+        expect(dojos).not.to.be.empty;
+        expect(dojos.EU).to.exist;
+        expect(dojos.EU.length).to.equal(2);
+        expect(dojos.EU.toString()).to.contain.all('Romania', 'Russia');
+        expect(dojos.NA).to.exist;
+        expect(dojos.NA.length).to.equal(1);
+        expect(dojos.NA.toString()).to.contain('America');
+        expect(dojos.SA).to.exist;
+        expect(dojos.SA.length).to.equal(1);
+        expect(dojos.SA.toString()).to.contain('Brazil');
+
+        done();
+      });
     });
   });
 
@@ -501,8 +475,8 @@ lab.experiment('Dojo Microservice test', function(){
     lab.test('load dojo lead based on its id', function(done){
       dojoLeadsEnt.list$(function(err, dojoLeads){
 
-      expect(dojoLeads).not.to.be.empty;
-      expect(dojoLeads[0].id).to.be.ok;
+        expect(dojoLeads).not.to.be.empty;
+        expect(dojoLeads[0].id).to.be.ok;
 
         seneca.act({role: role, cmd: 'load_dojo_lead', id: dojoLeads[0].id}, function(err, loadedLead){
           if(err) return done(err);
