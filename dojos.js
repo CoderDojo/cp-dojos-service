@@ -174,10 +174,10 @@ module.exports = function (options) {
 
   function cmd_create_dojo_email(args, done) {
     if (!args.dojo) {
-      return done('Dojo data is missing.');
+      return done(new Error('Dojo data is missing.'));
     }
 
-    if(options['google-api'].enabled === false) {
+    if(!_.get(options, 'google-api.enabled')) {
       return done();
     }
 

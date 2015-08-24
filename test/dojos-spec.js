@@ -770,8 +770,15 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
   lab.experiment('create_dojo_email', function () {
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'create_dojo_email' }, done);
+    lab.test('requires dojo arg', function (done) {
+      seneca.act({ role: role, cmd: 'create_dojo_email' }, function (err) {
+        expect(err.message.indexOf('Dojo data is missing..') >= 0).to.be.ok;
+        done();
+      });
+    });
+
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'create_dojo_email', dojo: {} }, done);
     });
   });
   lab.experiment('search_dojo_leads', function () {
