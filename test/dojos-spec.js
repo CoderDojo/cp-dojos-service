@@ -704,7 +704,7 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
  
-  function mockSeneca (cmd, result) {
+  function mockSeneca (role, cmd, result) {
     var called = false;
     seneca.add({ role: role, cmd: cmd }, function (args, done) {
       if (called) return this.parent(args,done);
@@ -716,14 +716,14 @@ lab.experiment('Dojo Microservice test', function(){
   lab.experiment('generate_user_invite_token', function () {
     lab.test('executes', function (done) {
       // Mock the next call to dojos/load to return something  
-      mockSeneca('load', {});
+      mockSeneca(role, 'load', {});
       seneca.act({ role: role, cmd: 'generate_user_invite_token', user: {} }, done);
     });
   });
 
   lab.experiment('accept_user_invite', function () {
     lab.test('executes', function (done) {
-      mockSeneca('load', {});
+      mockSeneca(role, 'load', {});
       seneca.act({ role: role, cmd: 'accept_user_invite', data: {} }, done);
     });
   });
@@ -803,10 +803,35 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
   lab.experiment('update_founder', function () {
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'update_founder' }, done);
+    lab.test('requires founder arg', function (done) {
+      seneca.act({ role: role, cmd: 'update_founder' }, function (err) {
+        expect(err.message.indexOf('Founder is empty') >= 0).to.be.ok;
+        done();
+      });
+    });
+
+    lab.test('requires cdf-admin user role', function (done) {
+      seneca.act({ role: role, cmd: 'update_founder', user: {}, founder: { dojoId: 'x' } }, function (err) {
+        expect(err.message.indexOf('Unauthorized') >= 0).to.be.ok;
+        done();
+      });
+    });
+
+    lab.test('requires previous founder', function (done) {
+      mockSeneca('cd-users', 'load', { roles: ['cdf-admin'] });
+      seneca.act({ role: role, cmd: 'update_founder', user: {}, founder: { dojoId: 'x' } }, function (err) {
+        expect(err.message.indexOf('Cannot find previous founder') >= 0).to.be.ok;
+        done();
+      });
+    });
+
+    lab.test('executes', function (done) {
+      mockSeneca('cd-users', 'load', { roles: ['cdf-admin'] });
+      mockSeneca('cd-dojos', 'load_usersdojos', [{ id: 'y' }]);
+      seneca.act({ role: role, cmd: 'update_founder', user: {}, founder: { dojoId: 'x' } }, done);
     });
   });
+
   lab.experiment('search_nearest_dojos', function () {
     lab.test.skip('executes', function (done) {
       seneca.act({ role: role, cmd: 'search_nearest_dojos' }, done);
