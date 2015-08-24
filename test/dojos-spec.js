@@ -3,6 +3,7 @@
 var seneca    = require('seneca')(),
     config    = require(__dirname + '/../config/config.js')(),
     fs        = require('fs'),
+    pg        = require('pg'),
     expect    = require('chai').expect,
     util      = require('util'),
     _         = require('lodash'),
@@ -37,6 +38,13 @@ var usersEnt      = seneca.make$("sys/user"),
 process.on('SIGINT', function() {
   process.exit(0);
 });
+
+(function mockPg () {
+  var client = { query: _.noop, end: _.noop };
+  sinon.mock(client).expects('query').atLeast(1).callsArgWith(2, null, { rows: [] });
+  sinon.mock(pg).expects('connect').atLeast(1).callsArgWith(1, null, client);
+})();
+      
 
 // NOTE: all tests are basic
 //       they just follow the happy scenario for each exposed action
@@ -103,79 +111,6 @@ lab.experiment('Dojo Microservice test', function(){
     }, function(err){
       if(err) return done(err);
       done();
-    });
-  });
-
-  lab.experiment('List', function(){
-    lab.test('executes', function(done){
-      seneca.act({role: role, cmd: 'list'}, function(err, dojos){
-        if(err) return done(err);
-
-        expect(dojos).to.be.an('array');
-        expect(dojos).to.have.length(0);
-
-        done();
-      });
-    });
-
-    lab.test.skip('list all dojos from db', function(done){
-      seneca.act({role: role, cmd: 'list'}, function(err, dojos){
-        if(err) return done(err);
-
-        expect(dojos).not.to.be.empty;
-
-        var dojosNo = 0;
-        _.each(dojos, function(element){
-          expect(element).to.be.ok;
-          dojosNo += 1;
-        })
-
-        expect(dojosNo).to.be.equal(4);
-
-        done();
-      });
-    });
-  });
-
-  lab.experiment('Load', function(){
-    lab.test('load dojo from db based on id', function(done){
-      dojosEnt.list$(function(err, dojos){
-        if(err) return done(err);
-        expect(dojos).not.to.be.empty;
-
-        expect(dojos[0].id).to.exist;
-        expect(dojos[0].id).to.be.ok;
-
-        seneca.act({role: role, cmd: 'load', id: dojos[0].id}, function(err, dojoFound){
-          if(err) return done(err);
-
-          expect(dojoFound).to.exist;
-          expect(dojoFound).to.be.ok;
-
-          done();
-        });
-      });
-    });
-  });
-
-  lab.experiment('Find', function(){
-    lab.test('load dojo from db based on query', function(done){
-      dojosEnt.list$(function(err, dojos){
-        if(err) return done(err);
-        expect(dojos).not.to.be.empty;
-
-        expect(dojos[0].id).to.exist;
-        expect(dojos[0].id).to.be.ok;
-
-        seneca.act({role: role, cmd: 'find', query: { id: dojos[0].id }}, function(err, dojoFound){
-          if(err) return done(err);
-
-          expect(dojoFound).to.exist;
-          expect(dojoFound).to.be.ok;
-
-          done();
-        });
-      });
     });
   });
 
@@ -782,9 +717,8 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
   lab.experiment('search_dojo_leads', function () {
-    // TODO ?
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'search_dojo_leads' }, done);
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'search_dojo_leads', query: {} }, done);
     });
   });
   lab.experiment('uncompleted_dojos', function () {
@@ -834,17 +768,16 @@ lab.experiment('Dojo Microservice test', function(){
 
   lab.experiment('search_nearest_dojos', function () {
     lab.test('executes', function (done) {
-      var client = { query: _.noop, end: _.noop };
-      sinon.mock(client).expects('query').once().callsArgWith(2, null, { rows: [] });
-      sinon.mock(require('pg')).expects('connect').once().callsArgWith(1, null, client);
       seneca.act({ role: role, cmd: 'search_nearest_dojos', query: {} }, done);
     });
   });
+
   lab.experiment('search_bounding_box', function () {
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'search_bounding_box' }, done);
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'search_bounding_box', query: {} }, done);
     });
   });
+
   lab.experiment('list_query', function () {
     lab.test('executes', function (done) {
       seneca.act({ role: role, cmd: 'list_query' }, done);

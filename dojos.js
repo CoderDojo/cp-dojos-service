@@ -2027,13 +2027,15 @@ module.exports = function (options) {
   }
 
   function cmd_search_bounding_box(args, done) {
-    options.postgresql.database = options.postgresql.name;
-    options.postgresql.user = options.postgresql.username;
+    var localPgOptions = _.defaults({}, options.postgresql);
+    localPgOptions.database = _.get(options, 'postgresql.name');
+    localPgOptions.user = _.get(options, 'postgresql.username');
+
     var searchLat = args.query.lat;
     var searchLon = args.query.lon;
     var boundsRadius = args.query.radius;
 
-    pg.connect(options.postgresql, function (err, client) {
+    pg.connect(localPgOptions, function (err, client) {
       if(err) return done(err);
       client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 AND verified != 0 AND earth_box(ll_to_earth($1, $2), $3) @> ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8) ORDER BY distance_from_search_location ASC", [searchLat, searchLon, boundsRadius], function (err, results) {
         if(err) return done(err);
