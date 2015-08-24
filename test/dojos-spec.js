@@ -703,23 +703,27 @@ lab.experiment('Dojo Microservice test', function(){
       seneca.act({ role: role, cmd: 'send_email', payload: { content: {} } }, done);
     });
   });
+ 
+  function mockSeneca (cmd, result) {
+    var called = false;
+    seneca.add({ role: role, cmd: cmd }, function (args, done) {
+      if (called) return this.parent(args,done);
+      called = true;
+      done(null, result);
+    });
+  }
+
   lab.experiment('generate_user_invite_token', function () {
     lab.test('executes', function (done) {
       // Mock the next call to dojos/load to return something  
-      var called = false;
-
-      seneca.add({ role: role, cmd: 'load' }, function (args, done) {
-        if (called) return this.parent(args,done);
-        called = true;
-        done(null, {});
-      });
-
+      mockSeneca('load', {});
       seneca.act({ role: role, cmd: 'generate_user_invite_token', user: {} }, done);
     });
   });
   lab.experiment('accept_user_invite', function () {
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'accept_user_invite' }, done);
+    lab.test('executes', function (done) {
+      mockSeneca('load', {});
+      seneca.act({ role: role, cmd: 'accept_user_invite', data: {} }, done);
     });
   });
   lab.experiment('request_user_invite', function () {
