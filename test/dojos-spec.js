@@ -7,6 +7,7 @@ var seneca    = require('seneca')(),
     util      = require('util'),
     _         = require('lodash'),
     async     = require('async'),
+    sinon     = require('sinon'),
     lab       = exports.lab = require('lab').script();
 
 var role  = "cd-dojos";
@@ -703,8 +704,17 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
   lab.experiment('generate_user_invite_token', function () {
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'generate_user_invite_token' }, done);
+    lab.test('executes', function (done) {
+      // Mock the next call to dojos/load to return something  
+      var called = false;
+
+      seneca.add({ role: role, cmd: 'load' }, function (args, done) {
+        if (called) return this.parent(args,done);
+        called = true;
+        done(null, {});
+      });
+
+      seneca.act({ role: role, cmd: 'generate_user_invite_token', user: {} }, done);
     });
   });
   lab.experiment('accept_user_invite', function () {
