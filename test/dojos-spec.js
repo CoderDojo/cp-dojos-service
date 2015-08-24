@@ -54,7 +54,14 @@ function mockSeneca (role, cmd, result) {
   });
 }
 
-      
+function mockSenecaError (role, cmd) {
+  var called = false;
+  seneca.add({ role: role, cmd: cmd }, function (args, done) {
+    if (called) return this.parent(args,done);
+    called = true;
+    done(new Error('MOCK ERROR'));
+  });
+}
 
 // NOTE: all tests are basic
 //       they just follow the happy scenario for each exposed action
@@ -714,26 +721,31 @@ lab.experiment('Dojo Microservice test', function(){
       seneca.act({ role: role, cmd: 'create_dojo_email', dojo: {} }, done);
     });
   });
+
   lab.experiment('search_dojo_leads', function () {
     lab.test('executes', function (done) {
       seneca.act({ role: role, cmd: 'search_dojo_leads', query: {} }, done);
     });
   });
+
   lab.experiment('uncompleted_dojos', function () {
     lab.test('executes', function (done) {
       seneca.act({ role: role, cmd: 'uncompleted_dojos', user: {} }, done);
     });
   });
+
   lab.experiment('get_dojo_config', function () {
     lab.test('executes', function (done) {
       seneca.act({ role: role, cmd: 'get_dojo_config' }, done);
     });
   });
+
   lab.experiment('load_dojo_admins', function () {
     lab.test('executes', function (done) {
       seneca.act({ role: role, cmd: 'load_dojo_admins' }, done);
     });
   });
+
   lab.experiment('update_founder', function () {
     lab.test('requires founder arg', function (done) {
       seneca.act({ role: role, cmd: 'update_founder' }, function (err) {
@@ -761,6 +773,35 @@ lab.experiment('Dojo Microservice test', function(){
       mockSeneca('cd-users', 'load', { roles: ['cdf-admin'] });
       mockSeneca('cd-dojos', 'load_usersdojos', [{ id: 'y' }]);
       seneca.act({ role: role, cmd: 'update_founder', user: {}, founder: { dojoId: 'x' } }, done);
+    });
+
+    lab.test('handles error in cd-users/load', function (done) {
+      mockSenecaError('cd-users', 'load');
+      seneca.act({ role: role, cmd: 'update_founder', user: {}, founder: { dojoId: 'x' } }, function (err) {
+        expect(err.message.indexOf('MOCK ERROR') >= 0).to.be.ok;
+        done();
+      });
+    });
+
+    lab.test('handles error in cd-dojos/load_usersdojos for previous founder', function (done) {
+      mockSeneca('cd-users', 'load', { roles: ['cdf-admin'] });
+      mockSenecaError('cd-dojos', 'load_usersdojos');
+      seneca.act({ role: role, cmd: 'update_founder', user: {}, founder: { dojoId: 'x' } }, function (err) {
+        expect(err.message.indexOf('MOCK ERROR') >= 0).to.be.ok;
+        done();
+      });
+    });
+
+    lab.test('handles error in cd-dojos/load_usersdojos for current founder', function (done) {
+      mockSenecaError('cd-dojos', 'load_usersdojos');
+      mockSeneca('cd-users', 'load', { roles: ['cdf-admin'] });
+      mockSeneca('cd-dojos', 'load_usersdojos', [{ id: 'y' }]);
+      mockSeneca('cd-dojos', 'save_usersdojos', { id: 'y' });
+
+      seneca.act({ role: role, cmd: 'update_founder', user: {}, founder: { dojoId: 'x' } }, function (err) {
+        expect(err.message.indexOf('MOCK ERROR') >= 0).to.be.ok;
+        done();
+      });
     });
   });
 

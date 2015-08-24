@@ -116,19 +116,13 @@ module.exports = function (options) {
         }
 
         var userDojo = usersDojos[0];
-
-        if(_.isEmpty(userDojo)){
-          return done(new Error('Cannot find previous founder'));
-        }
-
         return done(null, userDojo);
-
       });
     }
 
     function updatePreviousFounderUserDojo(userDojo, done){
       if(_.isEmpty(userDojo)){
-        return done();
+        return done(new Error('Cannot find previous founder'));
       }
 
       userDojo.owner = 0;
