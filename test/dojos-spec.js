@@ -782,13 +782,14 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
   lab.experiment('search_dojo_leads', function () {
+    // TODO ?
     lab.test.skip('executes', function (done) {
       seneca.act({ role: role, cmd: 'search_dojo_leads' }, done);
     });
   });
   lab.experiment('uncompleted_dojos', function () {
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'uncompleted_dojos' }, done);
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'uncompleted_dojos', user: {} }, done);
     });
   });
   lab.experiment('get_dojo_config', function () {
