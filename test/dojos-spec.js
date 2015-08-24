@@ -23,6 +23,7 @@ seneca
   .use(__dirname + '/stubs/cd-countries.js')
   .use(__dirname + '/stubs/cd-profiles.js')
   .use(__dirname + '/stubs/cd-users.js')
+  .use(__dirname + '/stubs/email-notifications.js')
   .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}});
 
 var usersEnt      = seneca.make$("sys/user"),
@@ -697,8 +698,8 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
   lab.experiment('send_email', function () {
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'send_email' }, done);
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'send_email', payload: { content: {} } }, done);
     });
   });
   lab.experiment('generate_user_invite_token', function () {
