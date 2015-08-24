@@ -1,5 +1,7 @@
 'use strict';
 
+        process.env.SALESFORCE_ENABLED='true';
+
 var seneca    = require('seneca')(),
     config    = require(__dirname + '/../config/config.js')(),
     fs        = require('fs'),
@@ -24,6 +26,7 @@ seneca
   .use(__dirname + '/stubs/cd-agreements.js')
   .use(__dirname + '/stubs/cd-countries.js')
   .use(__dirname + '/stubs/cd-profiles.js')
+  .use(__dirname + '/stubs/cd-salesforce.js')
   .use(__dirname + '/stubs/cd-users.js')
   .use(__dirname + '/stubs/email-notifications.js')
   .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}});
@@ -178,7 +181,6 @@ lab.experiment('Dojo Microservice test', function(){
 
         dojoLeadsEnt.load$({userId:dojoleads[0].userId}, function(err, loadedLead){
           if(err) return done(err);
-
 
           expect(loadedLead).to.exist;
           expect(loadedLead.userId).to.be.ok;
@@ -608,6 +610,26 @@ lab.experiment('Dojo Microservice test', function(){
   lab.experiment('save_dojo_lead', function () {
     lab.test('executes', function (done) {
       seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: {} }, done);
+    });
+
+    lab.test('executes step 1', function (done) {
+      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 1 } }, done);
+    });
+
+    lab.test('executes step 2', function (done) {
+      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 2, application: { championDetails: {} } } }, done);
+    });
+
+    lab.test('executes step 3', function (done) {
+      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 3 } }, done);
+    });
+
+    lab.test('executes step 4', function (done) {
+      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 4 } }, done);
+    });
+
+    lab.test('executes step 5', function (done) {
+      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 5 } }, done);
     });
   });
 
