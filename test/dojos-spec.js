@@ -720,15 +720,17 @@ lab.experiment('Dojo Microservice test', function(){
       seneca.act({ role: role, cmd: 'generate_user_invite_token', user: {} }, done);
     });
   });
+
   lab.experiment('accept_user_invite', function () {
     lab.test('executes', function (done) {
       mockSeneca('load', {});
       seneca.act({ role: role, cmd: 'accept_user_invite', data: {} }, done);
     });
   });
+
   lab.experiment('request_user_invite', function () {
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'request_user_invite' }, done);
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'request_user_invite', data: {} }, done);
     });
   });
   lab.experiment('load_dojo_champion', function () {
