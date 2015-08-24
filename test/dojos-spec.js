@@ -651,8 +651,8 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
   lab.experiment('bulk_delete', function () {
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'bulk_delete' }, done);
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'bulk_delete', dojos: [] }, done);
     });
   });
   lab.experiment('get_stats', function () {
