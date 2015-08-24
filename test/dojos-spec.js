@@ -755,7 +755,8 @@ lab.experiment('Dojo Microservice test', function(){
   });
   lab.experiment('remove_usersdojos', function () {
     lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'remove_usersdojos' }, done);
+      // TODO mock load$
+      seneca.act({ role: role, cmd: 'remove_usersdojos', data: {} }, done);
     });
   });
   lab.experiment('get_user_types', function () {
