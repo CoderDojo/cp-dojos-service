@@ -29,6 +29,7 @@ module.exports = function (options) {
   var setupDojoSteps = require('./data/setup_dojo_steps');
   var dojoConfig = require('./data/dojos_config');
   var so = seneca.options();
+  var protocol = process.env.PROTOCOL || 'http';
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
@@ -1401,7 +1402,7 @@ module.exports = function (options) {
 
     function sendEmail(userTypeTitle, dojo, done) {
       var content = {
-        link: 'http://'+zenHostname+'/dashboard/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
+        link: protocol + '://'+zenHostname+'/dashboard/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
         userType: userTypeTitle,
         dojoName: dojo.name,
         year: moment(new Date()).format('YYYY')
@@ -1577,7 +1578,7 @@ module.exports = function (options) {
       if(!champion) return done();
       var championEmail = champion.email;
       var content = {
-        link:'http://'+zenHostname+'/dashboard/accept_dojo_user_request/'+user.id+'/'+inviteToken,
+        link: protocol + '://'+zenHostname+'/dashboard/accept_dojo_user_request/'+user.id+'/'+inviteToken,
         name:user.name,
         email:user.email,
         dojoName:dojo.name,
