@@ -1036,9 +1036,9 @@ module.exports = function (options) {
         account.BillingState = dojoObj.application.championDetails.place.admin2Name;
       if (dojoObj.application.championDetails.address1)
         account.BillingStreet = dojoObj.application.championDetails.address1;
-      if (dojoObj.application.championDetails.place.latitude && dojoObj.application.championDetails.place.longitude) {
-        account.Coordinates__Latitude__s = dojoObj.application.championDetails.place.latitude;
-        account.Coordinates__Longitude__s = dojoObj.application.championDetails.place.longitude;
+      if (dojoObj.application.championDetails.coordinates) {
+        account.Coordinates__Latitude__s = dojoObj.application.championDetails.coordinates.split(',')[0];
+        account.Coordinates__Longitude__s = dojoObj.application.championDetails.coordinates.split(',')[1];
       }
       if (dojoObj.application.championDetails.projects)
         account.Projects__c = dojoObj.application.championDetails.projects;
@@ -1176,9 +1176,9 @@ module.exports = function (options) {
         if(dojoListingObj.placeName && dojoListingObj.place.nameWithHierarchy) lead.City = dojoListingObj.place.nameWithHierarchy;
         if(dojoListingObj.place && dojoListingObj.place.admin2Name) lead.State = dojoListingObj.place.admin2Name;
         if(dojoListingObj.address1) lead.Street = dojoListingObj.address1;
-        if (dojoListingObj.place && dojoListingObj.place.latitude && dojoListingObj.place.longitude) {
-          lead.Coordinates__Latitude__s = dojoListingObj.place.latitude;
-          lead.Coordinates__Longitude__s = dojoListingObj.place.longitude;
+        if (dojoListingObj.coordinates) {
+          lead.Coordinates__Latitude__s = dojoListingObj.coordinates.split(',')[0];
+          lead.Coordinates__Longitude__s = dojoListingObj.coordinates.split(',')[1];
         }
         if(dojoListingObj.notes) lead.Notes__c = dojoListingObj.notes;
         if(dojoListingObj.needMentors) lead.NeedMentors__c = dojoListingObj.needMentors;
@@ -1187,8 +1187,7 @@ module.exports = function (options) {
         if(dojoListingObj.googleGroup) lead.GoogleGroupURL__c = dojoListingObj.googleGroup;
         if(dojoListingObj.website) lead.Website = dojoListingObj.website;
         if(dojoListingObj.twitter) lead.Twitter__c = dojoListingObj.twitter;
-        if(dojoListingObj.twitter) lead.Twitter__c = dojoListingObj.twitter;
-        if(dojoListingObj.linkedIn) lead.Linkedin__c = dojoListingObj.linkedIn;
+        if(dojoListingObj.supporterImage) lead.SupportersImageURL__c = dojoListingObj.supporterImage;
         if(dojoListingObj.mailingList) lead.MailingList__c = dojoListingObj.mailingList;
         lead.Status = '5. Dojo Listing Created';
       }
