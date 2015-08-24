@@ -557,6 +557,11 @@ lab.experiment('Dojo Microservice test', function(){
     lab.test('executes', function (done) {
       seneca.act({ role: role, cmd: 'update', user: {} }, done);
     });
+
+    lab.test.skip('executes coordinate verification', function (done) {
+      // TODO mock load$ in checkDojoExists
+      seneca.act({ role: role, cmd: 'update', user: {}, dojo: { coordinates: [ 1,2 ] } }, done); 
+    });
   });
 
   lab.experiment('delete', function () {
