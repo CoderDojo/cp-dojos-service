@@ -71,6 +71,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'search_nearest_dojos'}, cmd_search_nearest_dojos);
   seneca.add({role: plugin, cmd: 'search_bounding_box'}, cmd_search_bounding_box);
   seneca.add({role: plugin, cmd: 'list_query'}, cmd_list_query);
+  seneca.add({role: plugin, cmd: 'find_dojolead'}, cmd_find_dojolead);
 
   function cmd_update_dojo_founder(args, done){
     var founder = args.founder;
@@ -546,6 +547,14 @@ module.exports = function (options) {
   function cmd_find(args, done) {
     if(args.query){ args.query.deleted = 0 }
     seneca.make$(ENTITY_NS).load$(args.query, function(err, response) {
+      if(err) return done(err);
+      done(null, response);
+    });
+  }
+
+  function cmd_find_dojolead(args, done) {
+    if(! args.query) return done;
+    seneca.make$(DOJO_LEADS_ENTITY_NS).load$(args.query, function(err, response) {
       if(err) return done(err);
       done(null, response);
     });
