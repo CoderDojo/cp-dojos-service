@@ -259,10 +259,6 @@ lab.experiment('Dojo Microservice test', function(){
   });
 
   lab.experiment('My dojos', function () {
-    lab.test('executes', function (done) {
-      seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {}}, done);
-    });
-
     lab.test.skip('list all dojos related to user', function (done) {
       seneca.act({role: role, cmd: 'my_dojos', user: users[0], search: {}}, function (err, dojos) {
         if (err) return done(err);
@@ -277,10 +273,6 @@ lab.experiment('Dojo Microservice test', function(){
   });
 
   lab.experiment('Dojos count (uses countries-stub)', function () {
-    lab.test('executes', function (done) {
-      seneca.act({role: role, cmd: 'dojos_count'}, done);
-    });
-
     lab.test.skip('list dojos count per geographical location', function (done) {
       seneca.act({role: role, cmd: 'dojos_count'}, function (err, dojos) {
         if (err) return done(err);
@@ -306,10 +298,6 @@ lab.experiment('Dojo Microservice test', function(){
   });
 
   lab.experiment('Dojos by country', function(){
-    lab.test('executes', function(done){
-      seneca.act({role: role, cmd: 'dojos_by_country', countries:{US:'', BR:'', RO:''}}, done);
-    });
-
     lab.test.skip('list dojos by country', function(done){
       seneca.act({role: role, cmd: 'dojos_by_country', countries:{US:'', BR:'', RO:''}}, function(err, dojos){
         if(err) return done(err);
@@ -324,10 +312,6 @@ lab.experiment('Dojo Microservice test', function(){
   });
 
   lab.experiment('Dojos state count', function () {
-    lab.test('executes', function (done) {
-      seneca.act({role: role, cmd: 'dojos_state_count', country: 'UK'}, done);
-    });
-
     lab.test.skip('list dojos by states in country', function (done) {
       seneca.util.recurse(2, function (index, next) {
         create_dojo(dojos[4 + index], users[index],
@@ -393,10 +377,6 @@ lab.experiment('Dojo Microservice test', function(){
   });
 
   lab.experiment('Bulk delete', function(){
-    lab.test.skip('executes', function(done){
-      seneca.act({role: role, cmd: 'bulk_delete', dojos:dojos, user: {roles: ['cdf-admin']}}, done);
-    });
-
     lab.test.skip('delete many dojos', function(done){
       dojosEnt.list$({alpha2:'UK'}, function(err, dojos){
         if(err) return done(err);
@@ -419,10 +399,6 @@ lab.experiment('Dojo Microservice test', function(){
   });
 
   lab.experiment('Get stats', function () {
-
-    lab.test.skip('executes', function (done) {
-      seneca.act({role: role, cmd: 'get_stats'}, done);
-    });
 
     lab.test.skip('list each dojo stats', function (done) {
 
