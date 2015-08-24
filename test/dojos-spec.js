@@ -833,8 +833,11 @@ lab.experiment('Dojo Microservice test', function(){
   });
 
   lab.experiment('search_nearest_dojos', function () {
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'search_nearest_dojos' }, done);
+    lab.test('executes', function (done) {
+      var client = { query: _.noop, end: _.noop };
+      sinon.mock(client).expects('query').once().callsArgWith(2, null, { rows: [] });
+      sinon.mock(require('pg')).expects('connect').once().callsArgWith(1, null, client);
+      seneca.act({ role: role, cmd: 'search_nearest_dojos', query: {} }, done);
     });
   });
   lab.experiment('search_bounding_box', function () {
