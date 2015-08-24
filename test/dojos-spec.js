@@ -19,6 +19,7 @@ var usersDojos= require('./fixtures/usersdojos.json');
 seneca.options(config);
 
 seneca
+  .use(__dirname + '/stubs/cd-agreements.js')
   .use(__dirname + '/stubs/cd-countries.js')
   .use(__dirname + '/stubs/cd-profiles.js')
   .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}});
@@ -590,8 +591,8 @@ lab.experiment('Dojo Microservice test', function(){
   });
 
   lab.experiment('search', function () {
-    lab.test.skip('executes', function (done) {
-      seneca.act({ role: role, cmd: 'search' }, done);
+    lab.test('executes', function (done) {
+      seneca.act({ role: role, cmd: 'search', query: {} }, done);
     });
   });
   lab.experiment('list', function () {

@@ -8,19 +8,9 @@ module.exports = function(options) {
   var ENTITY_NS = 'cd/agreements';
 
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
-  seneca.add({role: plugin, cmd: 'count'}, cmd_count);
 
   function cmd_list(args, done) {
-    var seneca = this;
-
-    function get_user_agreements(userId, done) {
-      // probably should return: []
-      done(new Error('action not stubbed!'), null)
-    }
-  }
-
-  function cmd_count(args, done){
-    done(new Error('action not stubbed!'), null)
+    done(null, []);
   }
 
   return {
