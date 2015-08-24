@@ -4,6 +4,7 @@
     "userId": 1000,
     "email": "lead1@example.com",
     "currentStep": 0,
-    "completed": false
+    "completed": false,
+    "mysql_dojo_id": 23
   }
 ]
