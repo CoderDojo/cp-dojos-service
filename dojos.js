@@ -461,21 +461,6 @@ module.exports = function (options) {
 
   }
 
-  function cmd_dojos_by_country(args, done) {
-    var countries = args.countries;
-    var dojos = [];
-    async.each(Object.keys(countries), function(country, cb) {
-      seneca.act({role:plugin, cmd:'list'}, {query:{alpha2:country}}, function(err, response) {
-        if(err) return done(err);
-        dojos.push(response);
-        cb();
-      });
-    }, function() {
-      dojos = _.sortBy(dojos, function(dojo) { return Object.keys(dojo)[0]; });
-      done(null, dojos);
-    });
-  }
-
   function cmd_dojos_count(args, done) {
     async.waterfall([
       getDojos,
@@ -527,37 +512,28 @@ module.exports = function (options) {
   function cmd_list(args, done) {
     var query = args.query || {};
     query.limit$ = 'NULL';
-    query.verified = 1;
-    query.deleted = 0;
-    seneca.make$(ENTITY_NS).list$(query, function(err, response) {
-      if(err) return done(err);
 
-      var dojosByCountry = {};
-      response = _.sortBy(response, 'countryName');
-      _.each(response, function(dojo) {
-        if(dojo.stage !== 4) {
-          if(!dojosByCountry[dojo.countryName]) {
-            dojosByCountry[dojo.countryName] = {};
-            dojosByCountry[dojo.countryName].states = {};
-            if(!dojosByCountry[dojo.countryName].states[dojo.admin1Name]) dojosByCountry[dojo.countryName].states[dojo.admin1Name] = [];
-            dojosByCountry[dojo.countryName].states[dojo.admin1Name].push(dojo);
-          } else {
-            if(!dojosByCountry[dojo.countryName].states[dojo.admin1Name]) dojosByCountry[dojo.countryName].states[dojo.admin1Name] = [];
-            dojosByCountry[dojo.countryName].states[dojo.admin1Name].push(dojo);
-          }
-        }
+    seneca.make$(ENTITY_NS).list$(query, done);
+  }
+
+  function cmd_dojos_by_country(args, done) {
+    var query = args.query || {};
+    var dojosByCountry = {};
+
+    seneca.act({role: plugin, cmd: 'list', query: query}, function (err, dojos) {
+      if(err) return done(err);
+      _.each(dojos, function (dojo) {
+        if(!dojosByCountry[dojo.countryName]) dojosByCountry[dojo.countryName] = [];
+        dojosByCountry[dojo.countryName].push(dojo); 
       });
 
-      var countries = Object.keys(dojosByCountry);
-      _.each(countries, function(countryName) {
-        var states = Object.keys(dojosByCountry[countryName].states);
-        _.each(states, function(state) {
-          dojosByCountry[countryName].states[state] = _.sortBy(dojosByCountry[countryName].states[state], function(dojo) { return dojo.name; } );
+      _.each(Object.keys(dojosByCountry), function (countryName) {
+        dojosByCountry[countryName] = _.sortBy(dojosByCountry[countryName], function (dojos) {
+          return dojos.name;
         });
       });
-
-      done(null, dojosByCountry);
-    });
+      return done(null, dojosByCountry);
+    }); 
   }
 
   function cmd_load(args, done) {
@@ -631,6 +607,10 @@ module.exports = function (options) {
               console.error('No result when reverse geocoding');
               return cb();
             }
+            if(res.error){
+              console.error(res.error);
+              return cb();
+            }
 
             res = res[0];
             dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
@@ -638,10 +618,10 @@ module.exports = function (options) {
             dojo.place = {'toponymName': res.city};
             dojo.state = {"toponymName": res.administrativeLevels.level1long};
             dojo.country = {"countryName": res.country, "alpha2": res.countryCode};
-            dojo.admin1_code = res.administrativeLevels.level1short;
-            dojo.admin1_name = res.administrativeLevels.level1long;
-            dojo.admin2_code = res.administrativeLevels.level2short;
-            dojo.admin2_name = res.administrativeLevels.level2long;
+            dojo.admin1Code = res.administrativeLevels.level1short;
+            dojo.admin1Name = res.administrativeLevels.level1long;
+            dojo.admin2Code = res.administrativeLevels.level2short;
+            dojo.admin2Name = res.administrativeLevels.level2long;
             cb()
           });
         } else {
@@ -731,6 +711,10 @@ module.exports = function (options) {
               console.error('No result when reverse geocoding');
               return updateLogic();
             }
+            if(res.error){
+              console.error(res.error);
+              return updateLogic();
+            }
 
             res = res[0];
             dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
@@ -738,10 +722,10 @@ module.exports = function (options) {
             dojo.place = {'toponymName': res.city};
             dojo.state = {"toponymName": res.administrativeLevels.level1long};
             dojo.country = {"countryName": res.country, "alpha2": res.countryCode};
-            dojo.admin1_code = res.administrativeLevels.level1short;
-            dojo.admin1_name = res.administrativeLevels.level1long;
-            dojo.admin2_code = res.administrativeLevels.level2short;
-            dojo.admin2_name = res.administrativeLevels.level2long;
+            dojo.admin1Code = res.administrativeLevels.level1short;
+            dojo.admin1Name = res.administrativeLevels.level1long;
+            dojo.admin2Code = res.administrativeLevels.level2short;
+            dojo.admin2Name = res.administrativeLevels.level2long;
             updateLogic();
           });
         } else {
@@ -1043,9 +1027,9 @@ module.exports = function (options) {
         account.BillingState = dojoObj.application.championDetails.place.admin2Name;
       if (dojoObj.application.championDetails.address1)
         account.BillingStreet = dojoObj.application.championDetails.address1;
-      if (dojoObj.application.championDetails.place.latitude && dojoObj.application.championDetails.place.longitude) {
-        account.Coordinates__Latitude__s = dojoObj.application.championDetails.place.latitude;
-        account.Coordinates__Longitude__s = dojoObj.application.championDetails.place.longitude;
+      if (dojoObj.application.championDetails.coordinates) {
+        account.Coordinates__Latitude__s = dojoObj.application.championDetails.coordinates.split(',')[0];
+        account.Coordinates__Longitude__s = dojoObj.application.championDetails.coordinates.split(',')[1];
       }
       if (dojoObj.application.championDetails.projects)
         account.Projects__c = dojoObj.application.championDetails.projects;
@@ -1183,9 +1167,9 @@ module.exports = function (options) {
         if(dojoListingObj.placeName && dojoListingObj.place.nameWithHierarchy) lead.City = dojoListingObj.place.nameWithHierarchy;
         if(dojoListingObj.place && dojoListingObj.place.admin2Name) lead.State = dojoListingObj.place.admin2Name;
         if(dojoListingObj.address1) lead.Street = dojoListingObj.address1;
-        if (dojoListingObj.place && dojoListingObj.place.latitude && dojoListingObj.place.longitude) {
-          lead.Coordinates__Latitude__s = dojoListingObj.place.latitude;
-          lead.Coordinates__Longitude__s = dojoListingObj.place.longitude;
+        if (dojoListingObj.coordinates) {
+          lead.Coordinates__Latitude__s = dojoListingObj.coordinates.split(',')[0];
+          lead.Coordinates__Longitude__s = dojoListingObj.coordinates.split(',')[1];
         }
         if(dojoListingObj.notes) lead.Notes__c = dojoListingObj.notes;
         if(dojoListingObj.needMentors) lead.NeedMentors__c = dojoListingObj.needMentors;
@@ -1194,8 +1178,7 @@ module.exports = function (options) {
         if(dojoListingObj.googleGroup) lead.GoogleGroupURL__c = dojoListingObj.googleGroup;
         if(dojoListingObj.website) lead.Website = dojoListingObj.website;
         if(dojoListingObj.twitter) lead.Twitter__c = dojoListingObj.twitter;
-        if(dojoListingObj.twitter) lead.Twitter__c = dojoListingObj.twitter;
-        if(dojoListingObj.linkedIn) lead.Linkedin__c = dojoListingObj.linkedIn;
+        if(dojoListingObj.supporterImage) lead.SupportersImageURL__c = dojoListingObj.supporterImage;
         if(dojoListingObj.mailingList) lead.MailingList__c = dojoListingObj.mailingList;
         lead.Status = '5. Dojo Listing Created';
       }
