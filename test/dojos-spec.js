@@ -351,6 +351,33 @@ lab.experiment('Dojo Microservice test', function(){
     });
   });
 
+  lab.experiment('Find Dojo Lead', function(){
+    lab.test('load dojolead from db based on query', function(done){
+      dojoLeadsEnt.list$(function(err, dojoLeads){
+        if(err) return done(err);
+
+        expect(dojoLeads).not.to.be.empty;
+
+        // console.log('dojoLeads: ' + util.inspect(dojoLeads));
+        // console.log('dojoLeads[0].id: ' + util.inspect(dojoLeads[0].id));
+
+        expect(dojoLeads[0].mysql_dojo_id).to.exist;
+        expect(dojoLeads[0].mysql_dojo_id).to.be.ok;
+
+        seneca.act({role: role, cmd: 'find_dojolead', query: { mysql_dojo_id: dojoLeads[0].mysql_dojo_id }}, function(err, dojoLeadFound){
+          if(err) return done(err);
+
+          // console.log('dojoLeadFound: ' + util.inspect(dojoLeadFound));
+
+          expect(dojoLeadFound).to.exist;
+          expect(dojoLeadFound).to.be.ok;
+
+          done();
+        });
+      });
+    });
+  });
+
 
   lab.experiment('Update', function(){
     lab.test('update dojo field', function(done){
