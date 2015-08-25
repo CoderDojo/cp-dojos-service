@@ -385,9 +385,17 @@ module.exports = function (options) {
     async.waterfall([
       function (done) {
         var query = args.query;
-        if(query.name) query.name = new RegExp(query.name, 'i');
-        if(query.email) query.email = new RegExp(query.email, 'i');
-        if(query.creatorEmail) query.creatorEmail = new RegExp(query.creatorEmail, 'i');
+        if(query.name) query.name = new RegExp(escapeRegExp(query.name), 'i');
+        if(query.email) query.email = new RegExp(escapeRegExp(query.email), 'i');
+        if(query.creatorEmail) query.creatorEmail = new RegExp(escapeRegExp(query.creatorEmail), 'i');
+
+        // taken from https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions
+        // needed because if a userCreator email is abc+xyz@example.com, it breaks the input string for
+        // building the regExps
+        function escapeRegExp(string){
+          return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        }
+
         seneca.act({role: plugin, cmd: 'list_query', query: query}, done);
       },
       function (searchResult, done) {
