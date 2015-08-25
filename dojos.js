@@ -552,14 +552,6 @@ module.exports = function (options) {
     });
   }
 
-  function cmd_find_dojolead(args, done) {
-    if(! args.query) return done;
-    seneca.make$(DOJO_LEADS_ENTITY_NS).load$(args.query, function(err, response) {
-      if(err) return done(err);
-      done(null, response);
-    });
-  }
-
   // user can only create X number of dojos
   function wrapCheckRateLimitCreateDojo(f) {
     return function(args, done) {
@@ -1311,6 +1303,14 @@ module.exports = function (options) {
 
         return done(null, results[0]);
       });
+  }
+
+  function cmd_find_dojolead(args, done) {
+    if(! args.query) return done;
+    seneca.make$(DOJO_LEADS_ENTITY_NS).load$(args.query, function(err, response) {
+      if(err) return done(err);
+      done(null, response);
+    });
   }
 
 
