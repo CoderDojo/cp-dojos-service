@@ -601,38 +601,6 @@ module.exports = function (options) {
 
     async.waterfall([
       function (cb){
-        if(dojo.geoPoint){
-          seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint, fatal$:false}, function(err, res){
-            if(err){
-              console.log(err);
-              return cb();
-            }
-            if(!res){
-              console.error('No result when reverse geocoding');
-              return cb();
-            }
-            if(res.error){
-              console.error(res.error);
-              return cb();
-            }
-
-            res = res[0];
-            dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
-            dojo.place = {'name': res.city};
-            dojo.place = {'toponymName': res.city};
-            dojo.state = {"toponymName": res.administrativeLevels.level1long};
-            dojo.country = {"countryName": res.country, "alpha2": res.countryCode};
-            dojo.admin1Code = res.administrativeLevels.level1short;
-            dojo.admin1Name = res.administrativeLevels.level1long;
-            dojo.admin2Code = res.administrativeLevels.level2short;
-            dojo.admin2Name = res.administrativeLevels.level2long;
-            cb()
-          });
-        } else {
-          cb();
-        }
-      },
-      function (cb){
         var urlSlug = {urlSlug: new RegExp('^' + baseSlug,  'i')};
         seneca.make$(ENTITY_NS).list$(urlSlug,function(err, dojos){
           if(err){
@@ -706,35 +674,9 @@ module.exports = function (options) {
               lon: pair[1]
             }
           }
-          seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint, fatal$:false}, function(err, res){
-            if(err){
-              console.error(err);
-              return updateLogic();
-            }
-            if(!res){
-              console.error('No result when reverse geocoding');
-              return updateLogic();
-            }
-            if(res.error){
-              console.error(res.error);
-              return updateLogic();
-            }
-
-            res = res[0];
-            dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
-            dojo.place = {'name': res.city};
-            dojo.place = {'toponymName': res.city};
-            dojo.state = {"toponymName": res.administrativeLevels.level1long};
-            dojo.country = {"countryName": res.country, "alpha2": res.countryCode};
-            dojo.admin1Code = res.administrativeLevels.level1short;
-            dojo.admin1Name = res.administrativeLevels.level1long;
-            dojo.admin2Code = res.administrativeLevels.level2short;
-            dojo.admin2Name = res.administrativeLevels.level2long;
-            updateLogic();
-          });
-        } else {
-          updateLogic();
         }
+        
+        updateLogic();
 
         function updateLogic(){
           if (dojo.verified && dojo.verified ===1) {
@@ -1757,7 +1699,7 @@ module.exports = function (options) {
       async.each(response, function (userDojoLink, cb) {
         seneca.act({role:plugin, cmd:'load', id:userDojoLink.dojoId}, function (err, response) {
           if(err) return cb(err);
-          dojos.push(response);
+          if(response) dojos.push(response);
           cb();
         });
       }, function (err) {
