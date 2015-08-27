@@ -28,7 +28,6 @@ require('./migrate-psql-db.js')(function (err) {
   }
   console.log("Migrations ok");
   seneca.listen()
-    .client({type: 'tcp', port: 10302, pin: 'role:cd-countries,cmd:*'})
     .client({type: 'tcp', port: 10303, pin: 'role:cd-users,cmd:*'})
     .client({type: 'tcp', port: 10303, pin: 'role:cd-agreements,cmd:*'})
     .client({type: 'tcp', port: 10303, pin: 'role:cd-profiles,cmd:*'})
