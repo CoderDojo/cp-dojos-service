@@ -531,6 +531,8 @@ module.exports = function (options) {
     var query = args.query || {};
     query.limit$ = 'NULL';
 
+    if(query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []); 
+
     seneca.make$(ENTITY_NS).list$(query, done);
   }
 
