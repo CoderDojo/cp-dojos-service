@@ -10,6 +10,12 @@ var randomstring = require('randomstring');
 var fs = require('fs');
 var moment = require('moment');
 var pg = require('pg');
+var request = require('request').defaults({ json: true });
+var isoc = require('isoc');
+var countries = require('./data/countries');
+var continents = require('./data/continents');
+var countriesList = require('countries-list');
+var geocoder = require('node-geocoder')('google', 'https', {'apiKey': process.env.GOOGLE_MAPS_KEY});
 
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
@@ -73,6 +79,14 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'search_bounding_box'}, cmd_search_bounding_box);
   seneca.add({role: plugin, cmd: 'list_query'}, cmd_list_query);
   seneca.add({role: plugin, cmd: 'find_dojolead'}, cmd_find_dojolead);
+  // from countries service
+  seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
+  seneca.add({role: plugin, cmd: 'list_countries'}, cmd_list_countries);
+  seneca.add({role: plugin, cmd: 'list_places'}, cmd_list_places);
+  seneca.add({role: plugin, cmd: 'countries_lat_long'}, cmd_countries_lat_long);
+  seneca.add({role: plugin, cmd: 'continents_lat_long'}, cmd_continents_lat_long);
+  seneca.add({role: plugin, cmd: 'continent_codes'}, cmd_get_continent_codes);
+  seneca.add({role: plugin, cmd: 'reverse_geocode'}, cmd_reverse_geocode);
 
   function cmd_update_dojo_founder(args, done){
     var founder = args.founder;
@@ -1992,6 +2006,94 @@ module.exports = function (options) {
         return done(null, results.rows);
       });
     });
+  }
+
+  
+  // from countries service
+  
+  function cmd_reverse_geocode(args, done){
+    var coords = args.coords;
+
+    geocoder.reverse(coords, function(err, res){
+      if(err) res.error = err;
+      done(null, res);
+    });
+  }
+
+  function cmd_countries_continents(args, done) {
+    done(null, countriesList);
+  }
+
+  function cmd_list_countries(args, done){
+    function calculateContinent (alpha2) {
+      return countriesList.countries[alpha2].continent;
+    }
+
+    var transformed = _.chain(isoc)
+      .filter('status', 'officially-assigned')
+      .map(function (country) {
+        return {
+          countryName: country.name.short,
+          countryNumber: country.numeric,
+          continent: calculateContinent(country.alpha2),
+          alpha2: country.alpha2,
+          alpha3: country.alpha3
+        };
+      })
+      .value();
+
+    return done(null, transformed);
+  }
+
+  function cmd_list_places(args, done) {
+    var options = {
+      url: 'https://maps.googleapis.com/maps/api/place/autocomplete/json',
+      method: 'GET',
+      qs: {
+        key: process.env.GOOGLE_MAPS_KEY,
+        types: '(cities)',
+        components: 'country:' + args.search.countryCode,
+        input: args.search.search
+      }
+    };
+
+    request(options, function (error, response, data) {
+      if (error) { return done(error); }
+      if (data && data.error_message) {
+        return done(new Error('Google Maps API error: ' + data.error_message));
+      }
+
+      var status = response.statusCode;
+
+      if (status >= 400) {
+        console.error(data);
+        return done(new Error('Got a ' + status + ' status code from the Google Maps API.'));
+      }
+
+      var places = _.chain(data.predictions)
+        .map('description')
+        .map(function (name) {
+           var parts = name.split(',');
+           if (parts.length === 1) { return name; }
+             // Remove the country from the end of the string
+             return parts.slice(0,-1).join(',');
+           })
+        .value();
+
+      done(null, places);
+    });
+  }
+
+  function cmd_continents_lat_long(args, done) {
+    done(null, continents.coordinatesByAlpha2);
+  }
+
+  function cmd_countries_lat_long(args, done) {
+    done(null, countries.coordinatesByAlpha2);
+  }
+
+  function cmd_get_continent_codes(args, done){
+    done(null, continents.alpha2ByName);
   }
 
   return {
