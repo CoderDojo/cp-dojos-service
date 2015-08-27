@@ -29,6 +29,7 @@ module.exports = function (options) {
   var setupDojoSteps = require('./data/setup_dojo_steps');
   var dojoConfig = require('./data/dojos_config');
   var so = seneca.options();
+  var protocol = process.env.PROTOCOL || 'http';
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
@@ -71,6 +72,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'search_nearest_dojos'}, cmd_search_nearest_dojos);
   seneca.add({role: plugin, cmd: 'search_bounding_box'}, cmd_search_bounding_box);
   seneca.add({role: plugin, cmd: 'list_query'}, cmd_list_query);
+  seneca.add({role: plugin, cmd: 'find_dojolead'}, cmd_find_dojolead);
 
   function cmd_update_dojo_founder(args, done){
     var founder = args.founder;
@@ -116,19 +118,13 @@ module.exports = function (options) {
         }
 
         var userDojo = usersDojos[0];
-
-        if(_.isEmpty(userDojo)){
-          return done(new Error('Cannot find previous founder'));
-        }
-
         return done(null, userDojo);
-
       });
     }
 
     function updatePreviousFounderUserDojo(userDojo, done){
       if(_.isEmpty(userDojo)){
-        return done();
+        return done(new Error('Cannot find previous founder'));
       }
 
       userDojo.owner = 0;
@@ -174,10 +170,10 @@ module.exports = function (options) {
 
   function cmd_create_dojo_email(args, done) {
     if (!args.dojo) {
-      return done('Dojo data is missing.');
+      return done(new Error('Dojo data is missing.'));
     }
 
-    if(options['google-api'].enabled === false) {
+    if(!_.get(options, 'google-api.enabled')) {
       return done();
     }
 
@@ -383,9 +379,17 @@ module.exports = function (options) {
     async.waterfall([
       function (done) {
         var query = args.query;
-        if(query.name) query.name = new RegExp(query.name, 'i');
-        if(query.email) query.email = new RegExp(query.email, 'i');
-        if(query.creatorEmail) query.creatorEmail = new RegExp(query.creatorEmail, 'i');
+        if(query.name) query.name = new RegExp(escapeRegExp(query.name), 'i');
+        if(query.email) query.email = new RegExp(escapeRegExp(query.email), 'i');
+        if(query.creatorEmail) query.creatorEmail = new RegExp(escapeRegExp(query.creatorEmail), 'i');
+
+        // taken from https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions
+        // needed because if a userCreator email is abc+xyz@example.com, it breaks the input string for
+        // building the regExps
+        function escapeRegExp(string){
+          return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        }
+
         seneca.act({role: plugin, cmd: 'list_query', query: query}, done);
       },
       function (searchResult, done) {
@@ -597,38 +601,6 @@ module.exports = function (options) {
 
     async.waterfall([
       function (cb){
-        if(dojo.geoPoint){
-          seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint, fatal$:false}, function(err, res){
-            if(err){
-              console.log(err);
-              return cb();
-            }
-            if(!res){
-              console.error('No result when reverse geocoding');
-              return cb();
-            }
-            if(res.error){
-              console.error(res.error);
-              return cb();
-            }
-
-            res = res[0];
-            dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
-            dojo.place = {'name': res.city};
-            dojo.place = {'toponymName': res.city};
-            dojo.state = {"toponymName": res.administrativeLevels.level1long};
-            dojo.country = {"countryName": res.country, "alpha2": res.countryCode};
-            dojo.admin1Code = res.administrativeLevels.level1short;
-            dojo.admin1Name = res.administrativeLevels.level1long;
-            dojo.admin2Code = res.administrativeLevels.level2short;
-            dojo.admin2Name = res.administrativeLevels.level2long;
-            cb()
-          });
-        } else {
-          cb();
-        }
-      },
-      function (cb){
         var urlSlug = {urlSlug: new RegExp('^' + baseSlug,  'i')};
         seneca.make$(ENTITY_NS).list$(urlSlug,function(err, dojos){
           if(err){
@@ -702,35 +674,9 @@ module.exports = function (options) {
               lon: pair[1]
             }
           }
-          seneca.act({role: 'cd-countries', cmd: 'reverse_geocode', coords: dojo.geoPoint, fatal$:false}, function(err, res){
-            if(err){
-              console.error(err);
-              return updateLogic();
-            }
-            if(!res){
-              console.error('No result when reverse geocoding');
-              return updateLogic();
-            }
-            if(res.error){
-              console.error(res.error);
-              return updateLogic();
-            }
-
-            res = res[0];
-            dojo.address1 = (res.streetNumber || '') + ' ' + (res.streetName || '');
-            dojo.place = {'name': res.city};
-            dojo.place = {'toponymName': res.city};
-            dojo.state = {"toponymName": res.administrativeLevels.level1long};
-            dojo.country = {"countryName": res.country, "alpha2": res.countryCode};
-            dojo.admin1Code = res.administrativeLevels.level1short;
-            dojo.admin1Name = res.administrativeLevels.level1long;
-            dojo.admin2Code = res.administrativeLevels.level2short;
-            dojo.admin2Name = res.administrativeLevels.level2long;
-            updateLogic();
-          });
-        } else {
-          updateLogic();
         }
+        
+        updateLogic();
 
         function updateLogic(){
           if (dojo.verified && dojo.verified ===1) {
@@ -1304,6 +1250,10 @@ module.exports = function (options) {
       });
   }
 
+  function cmd_find_dojolead(args, done) {
+    if(!args.query) return done;
+    seneca.make$(DOJO_LEADS_ENTITY_NS).load$(args.query, done);
+  }
 
   /**
    * Returns the uncompleted dojo lead for a certain user.
@@ -1420,7 +1370,7 @@ module.exports = function (options) {
 
     function sendEmail(userTypeTitle, dojo, done) {
       var content = {
-        link: 'http://'+zenHostname+'/dashboard/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
+        link: protocol + '://'+zenHostname+'/dashboard/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
         userType: userTypeTitle,
         dojoName: dojo.name,
         year: moment(new Date()).format('YYYY')
@@ -1596,7 +1546,7 @@ module.exports = function (options) {
       if(!champion) return done();
       var championEmail = champion.email;
       var content = {
-        link:'http://'+zenHostname+'/dashboard/accept_dojo_user_request/'+user.id+'/'+inviteToken,
+        link: protocol + '://'+zenHostname+'/dashboard/accept_dojo_user_request/'+user.id+'/'+inviteToken,
         name:user.name,
         email:user.email,
         dojoName:dojo.name,
@@ -1749,7 +1699,7 @@ module.exports = function (options) {
       async.each(response, function (userDojoLink, cb) {
         seneca.act({role:plugin, cmd:'load', id:userDojoLink.dojoId}, function (err, response) {
           if(err) return cb(err);
-          dojos.push(response);
+          if(response) dojos.push(response);
           cb();
         });
       }, function (err) {
@@ -2008,12 +1958,14 @@ module.exports = function (options) {
   }
 
   function cmd_search_nearest_dojos(args, done) {
-    options.postgresql.database = options.postgresql.name;
-    options.postgresql.user = options.postgresql.username;
+    var localPgOptions = _.defaults({}, options.postgresql);
+    localPgOptions.database = _.get(options, 'postgresql.name');
+    localPgOptions.user = _.get(options, 'postgresql.username');
+
     var searchLat = args.query.lat;
     var searchLon = args.query.lon;
 
-    pg.connect(options.postgresql, function (err, client) {
+    pg.connect(localPgOptions, function (err, client) {
       if(err) return done(err);
       client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND verified != 0 AND deleted != 1 ORDER BY distance_from_search_location ASC LIMIT 10", [searchLat, searchLon], function (err, results) {
         if(err) return done(err);
@@ -2024,13 +1976,15 @@ module.exports = function (options) {
   }
 
   function cmd_search_bounding_box(args, done) {
-    options.postgresql.database = options.postgresql.name;
-    options.postgresql.user = options.postgresql.username;
+    var localPgOptions = _.defaults({}, options.postgresql);
+    localPgOptions.database = _.get(options, 'postgresql.name');
+    localPgOptions.user = _.get(options, 'postgresql.username');
+
     var searchLat = args.query.lat;
     var searchLon = args.query.lon;
     var boundsRadius = args.query.radius;
 
-    pg.connect(options.postgresql, function (err, client) {
+    pg.connect(localPgOptions, function (err, client) {
       if(err) return done(err);
       client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 AND verified != 0 AND earth_box(ll_to_earth($1, $2), $3) @> ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8) ORDER BY distance_from_search_location ASC", [searchLat, searchLon, boundsRadius], function (err, results) {
         if(err) return done(err);

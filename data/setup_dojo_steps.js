@@ -132,7 +132,7 @@ module.exports = [
         textField:true,
         placeholder:'Please feel free to add comments or more information here',
         infoIcon:true,
-        infoText:'Please see Online Safety 101 for Mentors <a href="https://docs.google.com/document/d/1DDwpYKBltkJXH15pr_p2Ig0_9l4Uq2TdE7zG_9QsdjI/edit?usp=sharing">here</a> and Online Safety 101 for Ninjas <a href="https://docs.google.com/document/d/1BIhYjhOiTxeFdbBRVouBZQRWLQD_v-gCkCIYtDcP2CM/edit?usp=sharing">here</a>',
+        infoText:'Please see Online Safety 101 for Mentors <a href=\'https://docs.google.com/document/d/1DDwpYKBltkJXH15pr_p2Ig0_9l4Uq2TdE7zG_9QsdjI/edit?usp=sharing\' target=\'_blank\'>here</a> and Online Safety 101 for Ninjas <a href=\'https://docs.google.com/document/d/1BIhYjhOiTxeFdbBRVouBZQRWLQD_v-gCkCIYtDcP2CM/edit?usp=sharing\' target=\'_blank\'>here</a>',
         taoIcon:true
       },
       {
@@ -156,14 +156,14 @@ module.exports = [
       {
         title:'Our Dojo will work to engage with and improve the greater CoderDojo movement by:',
         subList: true,
-        subListItems: [ "Communicating with the CoderDojo Foundation",
-          "Contributing to Kata, the community knowledge base at kata.coderdojo.com",
-          "Connecting with local and international Dojos to share insights and supports" ],
+        subListItems: [ 'Communicating with the CoderDojo Foundation',
+          'Contributing to Kata, the community knowledge base at kata.coderdojo.com',
+          'Connecting with local and international Dojos to share insights and supports' ],
         name:'engageCoderDojoMovement',
         textField:true,
         placeholder:'Please feel free to add comments or more information here',
         infoIcon:true,
-        infoText:'See more information on the supports available to you <a href="https://coderdojo.com/organise-a-dojo/community-support/">here</a>',
+        infoText:'See more information on the supports available to you <a href=\'https://coderdojo.com/organise-a-dojo/community-support/\' target=\'_blank\'>here</a>',
         taoIcon:true
       }
     ]
