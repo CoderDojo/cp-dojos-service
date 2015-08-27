@@ -1319,12 +1319,18 @@ module.exports = function (options) {
   }
 
   function cmd_load_dojo_users(args, done) {
-    var query  = args.query;
+    var query  = args.query || {};
+    var userListQuery = {};
+    if(query.sort$) {
+      userListQuery.sort$ = query.sort$;
+      delete query.sort$;
+    }
 
     seneca.act({role:plugin, cmd:'load_usersdojos', query: query}, function (err, response) {
       if(err) return done(err);
       var userIds = _.pluck(response, 'userId');
-      seneca.act({role:'cd-users', cmd:'list', ids:userIds}, done);
+      userListQuery.ids = userIds;
+      seneca.act({role:'cd-users', cmd:'list', query: userListQuery}, done);
     });
   }
 
