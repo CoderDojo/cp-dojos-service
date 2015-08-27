@@ -22,7 +22,7 @@ module.exports = [
         textField:true,
         placeholder:'Please describe how you have background checked your team',
         infoIcon:true,
-        infoText:'This is specific to the legislation in your jurisdiction. Please comment below giving us more information or contact a CoderDojo Foundation staff member at info@coderdojo.com.',
+        infoText:'This is specific to the legislation in your jurisdiction. Please comment below giving us more information or contact a CoderDojo Foundation staff member at <a href=\'mailto:info@coderdojo.com\'>info@coderdojo.com</a>',
         taoIcon:true
       }
     ]
@@ -68,7 +68,7 @@ module.exports = [
         name:'planContent',
         required:false,
         infoIcon:true,
-        infoText:'See <a href="http://kata.coderdojo.com/wiki/Learning_Resource">Kata</a>, the CoderDojo community wiki for more information on learning resources'
+        infoText:'See <a href=\'http://kata.coderdojo.com/wiki/Learning_Resource\' target=\'_blank\'>Kata</a>, the CoderDojo community wiki for more information on learning resources'
       },
       {
         title:'Setup ticketing and registration for your Dojo',
@@ -109,7 +109,7 @@ module.exports = [
         required:true,
         requiredMessage:'required.',
         infoIcon:true,
-        infoText:'Please read CoderDojo ECHO, our guide to the Ethos, Culture, Happiness and Outcomes of CoderDojo <a href="http://kata.coderdojo.com/wiki/Guiding_Principles_and_Philosophies">here</a>',
+        infoText:'Please read CoderDojo ECHO, our guide to the Ethos, Culture, Happiness and Outcomes of CoderDojo <a href=\'http://kata.coderdojo.com/wiki/Guiding_Principles_and_Philosophies\' target=\'_blank\'>here</a>',
         taoIcon:true,
       },
       {
@@ -118,7 +118,7 @@ module.exports = [
         textField:true,
         placeholder:'Please feel free to add comments or more information here',
         infoIcon:true,
-        infoText:'Please see Online Safety 101 for Mentors <a href="https://docs.google.com/document/d/1DDwpYKBltkJXH15pr_p2Ig0_9l4Uq2TdE7zG_9QsdjI/edit?usp=sharing">here</a> and Online Safety 101 for Ninjas <a href="https://docs.google.com/document/d/1BIhYjhOiTxeFdbBRVouBZQRWLQD_v-gCkCIYtDcP2CM/edit?usp=sharing">here</a>',
+        infoText:'Please see Online Safety 101 for Mentors <a href=\'https://docs.google.com/document/d/1DDwpYKBltkJXH15pr_p2Ig0_9l4Uq2TdE7zG_9QsdjI/edit?usp=sharing\' target=\'_blank\'>here</a> and Online Safety 101 for Ninjas <a href=\'https://docs.google.com/document/d/1BIhYjhOiTxeFdbBRVouBZQRWLQD_v-gCkCIYtDcP2CM/edit?usp=sharing\' target=\'_blank\'>here</a>',
         taoIcon:true
       },
       {
@@ -127,7 +127,7 @@ module.exports = [
         textField:true,
         placeholder:'Please feel free to add comments or more information here',
         infoIcon:true,
-        infoText:'You can see more information on Data Protection <a href="https://docs.google.com/document/d/18XQNYEMQrBDJoR0Gt1ryC6CzxDEd_k41p4PEeKYtIxE/edit?usp=sharing"here</a>',
+        infoText:'You can see more information on Data Protection <a href=\'https://docs.google.com/document/d/18XQNYEMQrBDJoR0Gt1ryC6CzxDEd_k41p4PEeKYtIxE/edit?usp=sharing\' target=\'_blank\'>here</a>',
         taoIcon:true
       },
       {
@@ -136,20 +136,20 @@ module.exports = [
         textField:true,
         placeholder:'Please feel free to add comments or more information here',
         infoIcon:true,
-        infoText:'You can see more information on our inclusion policy <a href="http://kata.coderdojo.com/wiki/Guiding_Principles_and_Philosophies#Inclusion_Policy">here</a>',
+        infoText:'You can see more information on our inclusion policy <a href=\'http://kata.coderdojo.com/wiki/Guiding_Principles_and_Philosophies#Inclusion_Policy\' target=\'_blank\'>here</a>',
         taoIcon:true
       },
       {
         title:'We will work to help engage with and improve the greater CoderDojo movement by',
         subList: true,
-        subListItems: [ "Communicating with the CoderDojo Foundation",
-          "Contributing to Kata, the community knowledge base at kata.coderdojo.com",
-          "Connecting with local and international Dojos to share insights and supports" ],
+        subListItems: [ 'Communicating with the CoderDojo Foundation',
+          'Contributing to Kata, the community knowledge base at kata.coderdojo.com',
+          'Connecting with local and international Dojos to share insights and supports' ],
         name:'engageCoderDojoMovement',
         textField:true,
         placeholder:'Please feel free to add comments or more information here',
         infoIcon:true,
-        infoText:'See more information on the supports available to you <a href="https://coderdojo.com/organise-a-dojo/community-support/">here</a>',
+        infoText:'See more information on the supports available to you <a href=\'https://coderdojo.com/organise-a-dojo/community-support/\' target=\'_blank\'>here</a>',
         taoIcon:true
       }
     ]
