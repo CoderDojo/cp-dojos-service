@@ -632,7 +632,7 @@ module.exports = function (options) {
         userDojo.owner = 1;
         userDojo.userTypes = ['champion'];
         //add user type from users profile.
-        seneca.act({role: 'cd-profiles', cmd: 'list_query', query:{userId: user.id}}, function (err, response) {
+        seneca.act({role: 'cd-profiles', cmd: 'list', query:{userId: user.id}}, function (err, response) {
           if(err) return cb(err);
           var profile = response[0];
           userDojo.userTypes.push(profile.userType);
@@ -1770,12 +1770,12 @@ module.exports = function (options) {
     }
 
     function saveNinjasUserDojo(done) {
-      seneca.act({role: 'cd-profiles', cmd: 'list_query', query: {userId: userDojo.userId}}, function (err, userProfiles) {
+      seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: userDojo.userId}}, function (err, userProfiles) {
         if(err) return done(err);
         var userProfile = userProfiles[0];
         if(!userProfile.children) return done();
         async.each(userProfile.children, function (youthUserId, cb) {
-          seneca.act({role: 'cd-profiles', cmd: 'list_query', query: {userId: youthUserId}}, function (err, youthProfiles) {
+          seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: youthUserId}}, function (err, youthProfiles) {
             if(err) return cb(err);
             var youthProfile = youthProfiles[0];
             var youthUserDojo = {
@@ -1828,7 +1828,7 @@ module.exports = function (options) {
 
       //Remove ninjas.
       seneca.make$(USER_DOJO_ENTITY_NS).save$(usersDojo, function (err, response) {
-        seneca.act({role: 'cd-profiles', cmd: 'list_query', query: {userId: args.user.id}}, function (err, userProfiles) {
+        seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: args.user.id}}, function (err, userProfiles) {
           if(err) return cb(err);
           var userProfile = userProfiles[0];
           if(!userProfile.children) return cb(null, response);
