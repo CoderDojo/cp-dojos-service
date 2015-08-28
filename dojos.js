@@ -988,7 +988,7 @@ module.exports = function (options) {
       if (dojoObj.application.championDetails.youthExperience)
         account.ExperienceWorkingWithYouth__c = dojoObj.application.championDetails.youthExperience;
       if (dojoObj.application.championDetails.twitter)
-        account.Twitter__c = dojoObj.application.championDetails.twitter;
+        account.Twitter__c = "https://twitter.com/" + dojoObj.application.championDetails.twitter;
       if (dojoObj.application.championDetails.linkedIn)
         account.Linkedin__c = dojoObj.application.championDetails.linkedIn;
       if (dojoObj.application.championDetails.notes)
@@ -1044,7 +1044,7 @@ module.exports = function (options) {
         lead.Company = (dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "<n/a>";
         lead.LastName = (dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "no user";
         lead.Email = (dojoObj.application.championDetails && dojoObj.application.championDetails.email) ? dojoObj.application.championDetails.email : "nobody@coderDojo.com"; 
-        lead.PlatformUrl__c = 'https://zen.coderdojo.com/dashboard/profile/' + userId;
+        lead.PlatformURL__c = 'https://zen.coderdojo.com/dojo/' + userId;
         if(!lead.ChampionAccount__c && accId) lead.ChampionAccount__c = accId;
         lead.Status = '2. Champion Registration Completed';
       }
@@ -1062,7 +1062,7 @@ module.exports = function (options) {
         lead.Company = (dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "<n/a>";
         lead.LastName = (dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "no user";
         lead.Email = (dojoObj.application.championDetails && dojoObj.application.championDetails.email) ? dojoObj.application.championDetails.email : "nobody@coderDojo.com";
-        lead.PlatformUrl__c = 'https://zen.coderdojo.com/dashboard/profile/' + userId;
+        lead.PlatformUrl__c = 'https://zen.coderdojo.com/dojo/' + userId;
         if(accId) lead.ChampionAccount__c = accId;
         if(setupDojoObj.findTechnicalMentors) lead.FindTechnicalMentors__c = setupDojoObj.findTechnicalMentors ;
         if(setupDojoObj.findNonTechnicalMentors) lead.FindNonTechnicalMentors__c = setupDojoObj.findNonTechnicalMentors;
@@ -1109,7 +1109,7 @@ module.exports = function (options) {
         lead.Company = (!lead.Company && dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "<n/a>";
         lead.LastName = (!lead.LastName && dojoObj.application.championDetails && dojoObj.application.championDetails.name) ? dojoObj.application.championDetails.name : "no user";
         lead.Email = (!lead.Email && dojoObj.application.championDetails && dojoObj.application.championDetails.email) ? dojoObj.application.championDetails.email : "nobody@coderDojo.com";
-        lead.PlatformUrl__c = 'https://zen.coderdojo.com/dashboard/profile/' + userId;
+        lead.PlatformUrl__c = 'https://zen.coderdojo.com/dojo/' + userId;
         if(!lead.ChampionAccount__c && accId) lead.ChampionAccount__c = accId;
         if(dojoListingObj.name) lead.Company = dojoListingObj.name;
         if(dojoListingObj.phone) lead.Phone = dojoListingObj.phone;
@@ -1125,11 +1125,11 @@ module.exports = function (options) {
         }
         if(dojoListingObj.notes) lead.Notes__c = dojoListingObj.notes;
         if(dojoListingObj.needMentors) lead.NeedMentors__c = dojoListingObj.needMentors;
-        if(dojoListingObj.stage) lead.Stage__c = dojoListingObj.stage;
+        lead.Stage__c = getSalesforceStageText(dojoListingObj.stage)
         if(dojoListingObj.private) lead.Private__c = dojoListingObj.private;
         if(dojoListingObj.googleGroup) lead.GoogleGroupURL__c = dojoListingObj.googleGroup;
         if(dojoListingObj.website) lead.Website = dojoListingObj.website;
-        if(dojoListingObj.twitter) lead.Twitter__c = dojoListingObj.twitter;
+        if(dojoListingObj.twitter) lead.Twitter__c = "https://twitter.com/" + dojoListingObj.twitter;
         if(dojoListingObj.supporterImage) lead.SupportersImageURL__c = dojoListingObj.supporterImage;
         if(dojoListingObj.mailingList) lead.MailingList__c = dojoListingObj.mailingList;
         lead.Status = '5. Dojo Listing Created';
@@ -1182,6 +1182,17 @@ module.exports = function (options) {
           }
         });
       }
+    }
+  }
+
+  function getSalesforceStageText(stage) {
+    switch(parseInt(stage)) {
+      case 0: return "In Planning";
+      case 1: return "Active - Just show up";
+      case 2: return "Register Ahead";
+      case 3: return "Dojo full sorry";
+      case 4: return "Inactive";
+      default: return "unknown";
     }
   }
 
