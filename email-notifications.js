@@ -20,6 +20,7 @@ module.exports = function( options ) {
   function send_notification(args, done) {
     if (options.sendemail && options.email) {
       var email = options.email[args.code];
+      console.log('*** args.code = ' + args.code);
       if (!fs.existsSync(path.join(__dirname, '/email-templates/', args.code))) {
         args.code = args.code.substring(0, args.code.length-5) + 'en_US';
       }
