@@ -19,16 +19,13 @@ module.exports = function( options ) {
 
   function send_notification(args, done) {
     if (options.sendemail && options.email) {
-      var email = options.email[args.code];
-      console.log('*** args.code = ' + args.code);
-      if (!fs.existsSync(path.join(__dirname, '/email-templates/', args.code))) {
-        args.code = args.code.substring(0, args.code.length-5) + 'en_US';
-      }
+      var emailCode = args.code + args.locality;
+      if (!fs.existsSync(path.join(__dirname, '/email-templates/', emailCode))) emailCode = args.code + 'en_US';
       if(!args.to) return done(null, {ok: false, why: 'No recipient set.'});
       seneca.act({
         role: 'mail', cmd: 'send',
         from: options.sendFrom,
-        code: args.code,
+        code: emailCode,
         to: args.to,
         subject: args.subject,
         content: args.content

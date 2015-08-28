@@ -230,22 +230,14 @@ module.exports = function (options) {
               return done(err)
             }
 
-            var locality = args.locality || 'en_us';
-            var code = 'google-email-pass-' + locality.toLowerCase();
-
-            var templates = {};
-
-            try {
-              templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
-              templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'));
-            } catch(err){
-              code = 'google-email-pass-' + DEFAULT_LANG;
-            }
+            var locality = args.locality || 'en_US';
+            var code = 'google-email-pass-';
 
             //send dojo creator an email with dojo's newly created email address and it's temp password
             var payload = {
               to: dojoCreator.email,
               code: code,
+              locality: locality,
               content: {temp_pass: tempPass, dojo: dojo.name, email: googleNewAccountData.primaryEmail}
             };
             seneca.act({role: plugin, cmd: 'send_email', payload: payload}, function (err, res) {
@@ -1341,7 +1333,8 @@ module.exports = function (options) {
     content.year = moment(new Date()).format('YYYY');
     var emailCode = payload.code;
     var emailSubject = payload.subject;
-    seneca.act({role:'email-notifications', cmd: 'send', to:to, content:content, code:emailCode, subject: emailSubject}, done);
+    var emailLocality = payload.locality;
+    seneca.act({role:'email-notifications', cmd: 'send', to:to, content:content, code:emailCode, locality: emailLocality, subject: emailSubject}, done);
   }
 
   function cmd_generate_user_invite_token(args, done) {
@@ -1397,17 +1390,9 @@ module.exports = function (options) {
       };
 
       var locality = args.locality || 'en_US';
-      var code = 'invite-user-' + locality;
-      var templates = {};
-
-      try {
-        templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
-        templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'));
-      }catch(err){
-        code = 'invite-user-' + DEFAULT_LANG;
-      }
-
-      var payload = {to:inviteEmail, code:code, content:content, subject: emailSubject};
+      var code = 'invite-user-';
+      
+      var payload = {to:inviteEmail, code:code, locality: locality, content:content, subject: emailSubject};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
     }
   }
@@ -1574,17 +1559,9 @@ module.exports = function (options) {
       };
 
       var locality = args.locality || 'en_US';
-      var code = 'user-request-to-join-' + locality;
-      var templates = {};
-
-      try{
-        templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
-        templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'))
-      } catch(err) {
-        code = 'user-request-to-join-' + DEFAULT_LANG;
-      }
-
-      var payload = {to:championEmail, code:code, content:content, subject: emailSubject};
+      var code = 'user-request-to-join-';
+      
+      var payload = {to:championEmail, code:code, locality: locality, content:content, subject: emailSubject};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
     }
 
@@ -1909,17 +1886,9 @@ module.exports = function (options) {
       };
 
       var locality = args.locality || 'en_US';
-      var code = 'user-left-dojo-' + locality;
-      var templates = {};
-
-      try {
-        templates.html = fs.statSync(path.join(so.mail.folder, code, 'html.ejs'));
-        templates.text = fs.statSync(path.join(so.mail.folder, code, 'text.ejs'));
-      } catch(err){
-        code = 'user-left-dojo-' + DEFAULT_LANG;
-      }
-
-      var payload = {to:champion.email, code: code, content:content, subject: emailSubject};
+      var code = 'user-left-dojo-';
+      
+      var payload = {to:champion.email, code: code, locality: locality, content:content, subject: emailSubject};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, cb);
     }
   }
