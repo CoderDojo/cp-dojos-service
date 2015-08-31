@@ -537,6 +537,7 @@ module.exports = function (options) {
 
     if(query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []); 
 
+    console.log('*** dojos cmd_list query = ' + JSON.stringify(query));
     seneca.make$(ENTITY_NS).list$(query, done);
   }
 
