@@ -176,6 +176,18 @@ module.exports = function (options) {
         userDojo.userTypes.push('champion');
       }
 
+      if(!userDojo.userPermissions){
+        userDojo.userPermissions = [];
+      }
+
+      if(!_.contains(userDojo.userPermissions, 'dojo-admin')){
+        userDojo.userPermissions.push({title: 'Dojo Admin', name: 'dojo-admin'});
+      }
+
+      if(!_.contains(userDojo.userPermissions, 'ticketing-admin')){
+        userDojo.userPermissions.push({title: 'Ticketing Admin', name: 'ticketing-admin'});
+      }
+
       userDojo.owner = 1;
 
       seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
