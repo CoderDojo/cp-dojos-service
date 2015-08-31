@@ -1405,7 +1405,6 @@ module.exports = function (options) {
     var inviteToken = data.inviteToken;
     var currentUserEmail = data.currentUserEmail;
     var currentUserId = data.currentUserId;
-    var requestSuccessStatus = 0;
 
     async.waterfall([
       loadInviteToken,
@@ -1433,7 +1432,6 @@ module.exports = function (options) {
     }
 
     function addUserToDojo(inviteToken, done) {
-      requestSuccessStatus = 1;
       var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
       //Add user to dojo users if not already added.
       seneca.act({role:plugin, cmd:'load_usersdojos', query:{userId:currentUserId, dojoId:dojoId}}, function (err, response) {
@@ -1455,7 +1453,7 @@ module.exports = function (options) {
 
           seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
             if(err) return done(err);
-            return done(null, {status:requestSuccessStatus}, inviteToken);
+            return done(null, inviteToken);
           });
         } else {
           //userDojo entity already exists.
@@ -1472,28 +1470,20 @@ module.exports = function (options) {
           }
           seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
             if(err) return done(err);
-            return done(null, {status:requestSuccessStatus}, inviteToken);
+            return done(null, inviteToken);
           });
         }
       });
     }
 
-    function deleteInviteToken(requestStatus, inviteToken, done) {
+    function deleteInviteToken(inviteToken, done) {
       var inviteTokenId = inviteToken.id;
-      seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, response) {
+      seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
         if(err) return done(err);
-        var dojo = response;
-        var indexToRemove;
-        _.each(dojo.userInvites, function (userInvite, inviteIndex) {
-          if(_.isEqual(inviteToken, userInvite)) {
-            indexToRemove = inviteIndex;
-            return;
-          }
-        });
-        dojo.userInvites.splice(indexToRemove, 1);
+        dojo.userInvites = _.without(dojo.userInvites, _.findWhere(dojo.userInvites, {id: inviteToken.id}))
         seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, function (err, response) {
           if(err) return done(err);
-          return done(null, {status: requestSuccessStatus});
+          return done();
         });
       });
     }
