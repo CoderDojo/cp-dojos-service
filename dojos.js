@@ -685,7 +685,7 @@ module.exports = function (options) {
         updateLogic();
 
         function updateLogic(){
-          if (dojo.verified && dojo.verified ===1) {
+          if (dojo.hasOwnProperty("verified") && dojo.verified === 1) {
             dojo.verifiedAt = new Date();
             dojo.verifiedBy = args.user.id;
             if(!dojo.dojoLeadId) return done(null, dojo);
@@ -715,11 +715,11 @@ module.exports = function (options) {
                 } else done(null, dojo);
               });
             });
-          } else if (dojo.verified && dojo.verified ===1){
+          } else if (dojo.hasOwnProperty("verified") && dojo.verified === 0){
             dojo.verifiedAt = null;
             dojo.verifiedBy = null;
             // need to deal with better, but stops the system from crashing for now. 
-            if(!dojo.dojoLeadId) return;
+            if(!dojo.dojoLeadId) return done();
             dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
               if (err) {
                 return done(err)
@@ -736,6 +736,9 @@ module.exports = function (options) {
               });
             });
           } 
+          else if (dojo.hasOwnProperty("editDojoFlag") && dojo.editDojoFlag === true) {
+            //saveDojoLead
+          }
           else {
             done(null, dojo);
           }
