@@ -523,6 +523,8 @@ module.exports = function (options) {
     var query = args.query || {};
     query.limit$ = 'NULL';
 
+    if(query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []); 
+
     seneca.make$(ENTITY_NS).list$(query, done);
   }
 
@@ -630,7 +632,7 @@ module.exports = function (options) {
         userDojo.owner = 1;
         userDojo.userTypes = ['champion'];
         //add user type from users profile.
-        seneca.act({role: 'cd-profiles', cmd: 'list_query', query:{userId: user.id}}, function (err, response) {
+        seneca.act({role: 'cd-profiles', cmd: 'list', query:{userId: user.id}}, function (err, response) {
           if(err) return cb(err);
           var profile = response[0];
           userDojo.userTypes.push(profile.userType);
@@ -1417,7 +1419,6 @@ module.exports = function (options) {
     var inviteToken = data.inviteToken;
     var currentUserEmail = data.currentUserEmail;
     var currentUserId = data.currentUserId;
-    var requestSuccessStatus = 0;
 
     async.waterfall([
       loadInviteToken,
@@ -1445,7 +1446,6 @@ module.exports = function (options) {
     }
 
     function addUserToDojo(inviteToken, done) {
-      requestSuccessStatus = 1;
       var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
       //Add user to dojo users if not already added.
       seneca.act({role:plugin, cmd:'load_usersdojos', query:{userId:currentUserId, dojoId:dojoId}}, function (err, response) {
@@ -1467,7 +1467,7 @@ module.exports = function (options) {
 
           seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
             if(err) return done(err);
-            return done(null, {status:requestSuccessStatus}, inviteToken);
+            return done(null, inviteToken);
           });
         } else {
           //userDojo entity already exists.
@@ -1484,28 +1484,20 @@ module.exports = function (options) {
           }
           seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
             if(err) return done(err);
-            return done(null, {status:requestSuccessStatus}, inviteToken);
+            return done(null, inviteToken);
           });
         }
       });
     }
 
-    function deleteInviteToken(requestStatus, inviteToken, done) {
+    function deleteInviteToken(inviteToken, done) {
       var inviteTokenId = inviteToken.id;
-      seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, response) {
+      seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
         if(err) return done(err);
-        var dojo = response;
-        var indexToRemove;
-        _.each(dojo.userInvites, function (userInvite, inviteIndex) {
-          if(_.isEqual(inviteToken, userInvite)) {
-            indexToRemove = inviteIndex;
-            return;
-          }
-        });
-        dojo.userInvites.splice(indexToRemove, 1);
+        dojo.userInvites = _.without(dojo.userInvites, _.findWhere(dojo.userInvites, {id: inviteToken.id}))
         seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, function (err, response) {
           if(err) return done(err);
-          return done(null, {status: requestSuccessStatus});
+          return done();
         });
       });
     }
@@ -1782,12 +1774,12 @@ module.exports = function (options) {
     }
 
     function saveNinjasUserDojo(done) {
-      seneca.act({role: 'cd-profiles', cmd: 'list_query', query: {userId: userDojo.userId}}, function (err, userProfiles) {
+      seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: userDojo.userId}}, function (err, userProfiles) {
         if(err) return done(err);
         var userProfile = userProfiles[0];
         if(!userProfile.children) return done();
         async.each(userProfile.children, function (youthUserId, cb) {
-          seneca.act({role: 'cd-profiles', cmd: 'list_query', query: {userId: youthUserId}}, function (err, youthProfiles) {
+          seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: youthUserId}}, function (err, youthProfiles) {
             if(err) return cb(err);
             var youthProfile = youthProfiles[0];
             var youthUserDojo = {
@@ -1840,7 +1832,7 @@ module.exports = function (options) {
 
       //Remove ninjas.
       seneca.make$(USER_DOJO_ENTITY_NS).save$(usersDojo, function (err, response) {
-        seneca.act({role: 'cd-profiles', cmd: 'list_query', query: {userId: args.user.id}}, function (err, userProfiles) {
+        seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: args.user.id}}, function (err, userProfiles) {
           if(err) return cb(err);
           var userProfile = userProfiles[0];
           if(!userProfile.children) return cb(null, response);
