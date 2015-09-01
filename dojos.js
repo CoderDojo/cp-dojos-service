@@ -407,8 +407,7 @@ module.exports = function (options) {
         function escapeRegExp(string){
           return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         }
-
-        seneca.act({role: plugin, cmd: 'list_query', query: query}, done);
+        seneca.act({role: plugin, cmd: 'list', query: query}, done);
       },
       function (searchResult, done) {
         var dojos = searchResult;
@@ -533,10 +532,8 @@ module.exports = function (options) {
 
   function cmd_list(args, done) {
     var query = args.query || {};
-    query.limit$ = 'NULL';
-
+    if(!query.limit$) query.limit$ = 'NULL';
     if(query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []); 
-
     seneca.make$(ENTITY_NS).list$(query, done);
   }
 
