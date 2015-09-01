@@ -45,7 +45,7 @@ module.exports = [
         name:'ensureHealthAndSafety',
         required:false,
         textField:true,
-        placeholder:'Please add a comment on how you’ve met local health and safety best practices in your region',
+        placeholder:'Please add a comment on how you\'ve met local health and safety best practices in your region',
         infoIcon:true,
         infoText:'The main points to be aware of in a Dojo setting is extension cables! Make sure these are strapped to the floor and don’t cover pathways.',
         taoIcon:true
