@@ -327,7 +327,7 @@ module.exports = function (options) {
 
   function cmd_uncompleted_dojos(args, done) {
     var query = {creator: args.user.id, deleted: 0};
-    seneca.act({role: plugin, cmd: 'search', query: query}, function(err, dojos){
+    seneca.act({role: plugin, cmd: 'list', query: query}, function(err, dojos){
       if(err){ return done(err) }
       if(dojos.length > 0) {
         var uncompletedDojos = [];
@@ -407,8 +407,7 @@ module.exports = function (options) {
         function escapeRegExp(string){
           return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         }
-
-        seneca.act({role: plugin, cmd: 'list_query', query: query}, done);
+        seneca.act({role: plugin, cmd: 'list', query: query}, done);
       },
       function (searchResult, done) {
         var dojos = searchResult;
@@ -533,10 +532,8 @@ module.exports = function (options) {
 
   function cmd_list(args, done) {
     var query = args.query || {};
-    query.limit$ = 'NULL';
-
+    if(!query.limit$) query.limit$ = 'NULL';
     if(query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []); 
-
     seneca.make$(ENTITY_NS).list$(query, done);
   }
 
