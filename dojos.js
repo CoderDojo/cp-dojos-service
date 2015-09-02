@@ -327,7 +327,7 @@ module.exports = function (options) {
 
   function cmd_uncompleted_dojos(args, done) {
     var query = {creator: args.user.id, deleted: 0};
-    seneca.act({role: plugin, cmd: 'search', query: query}, function(err, dojos){
+    seneca.act({role: plugin, cmd: 'list', query: query}, function(err, dojos){
       if(err){ return done(err) }
       if(dojos.length > 0) {
         var uncompletedDojos = [];
