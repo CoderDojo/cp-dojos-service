@@ -1083,7 +1083,7 @@ module.exports = function (options) {
     }
 
     seneca.act('role:cd-salesforce,cmd:save_account', {userId: userId, account: account}, function (err, res){
-      if (err) return seneca.log.error('Error saving champion account in SalesForce!', err);
+      if(err) return done(null, dojoObj);
       seneca.log.info('Account saved in SalesForce', account, res);
     });
   }
@@ -1099,6 +1099,7 @@ module.exports = function (options) {
 
     if(dojoObj.currentStep === 2) {
       seneca.act('role:cd-salesforce,cmd:get_account', {accId: userId}, function (err, res){
+        if(err) return done(null, dojoObj);
         var accId = null;
         accId = res.accId;
         if(accId && dojoObj.application && dojoObj.application.championDetails) {
@@ -1118,6 +1119,7 @@ module.exports = function (options) {
       }
     } else if(dojoObj.currentStep === 3) {
       seneca.act('role:cd-salesforce,cmd:get_account', {accId: userId}, function (err, res){
+        if(err) return done(null, dojoObj);
         var accId = null;
         accId = res.accId;
         if(accId && dojoObj.application && dojoObj.application.setupYourDojo) {
@@ -1160,7 +1162,7 @@ module.exports = function (options) {
       }
     } else if (dojoObj.currentStep === 4) {
       seneca.act('role:cd-salesforce,cmd:get_account', {accId: userId}, function (err, res){
-        if(err) return err;
+        if(err) return done(null, dojoObj);
         var accId = null;
         accId = res.accId;
         if(dojoAction == "update") {
@@ -1240,23 +1242,23 @@ module.exports = function (options) {
     function salesForceSaveChanges() {
       if(dojoObj.converted !== true) {
         seneca.act('role:cd-salesforce,cmd:save_lead', {userId: userId, lead: lead}, function (err, res){
-          if (err) return seneca.log.error('Error saving Lead in SalesForce!', err);
+          if(err) return done(null, lead);
           
           seneca.log.info('Lead saved in SalesForce', lead, res);
           if (convertAccount === true) {
             seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: res.id$}, function (err, res){
-              if (err) return seneca.log.error('Error converting Lead to Account in SalesForce!', err);
+              if(err) return done(null, lead);
               
               seneca.log.info('Lead converted to Account in SalesForce', lead, res);
               seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojoObj.id}, function (err, res) {
-                if (err) { return done(err) };
-                if (!res) { return done() };
+                if(err) return done(null, lead);
+                if(!res) return done(null, lead);
                 
                 var dojoLead = res;
                 dojoLead.converted = true;
                 var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
                 dojoLeadEntity.save$(dojoLead, function(err, res){
-                  if(err) return done(err);
+                  if(err) return done(null, lead);
                   return done();
                 });
               });
