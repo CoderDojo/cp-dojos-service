@@ -850,7 +850,8 @@ module.exports = function (options) {
   function cmd_delete(args, done){
     // TODO - there must be other data to remove if we delete a dojo??
     var user = args.user;
-    var query = {userId:user.id, dojoId:args.id};
+    var dojo = args.dojo;
+    var query = {userId:user.id, dojoId:dojo.id};
 
     async.waterfall([
       async.apply(isUserChampionAndDojoAdmin, query, user),
@@ -865,13 +866,13 @@ module.exports = function (options) {
 
     function deleteDojo(hasPermission, done) {
       if(hasPermission) {
-        var dojo = {
-          id: args.id,
+        var saveDojo = {
+          id: dojo.id,
           deleted: 1,
-          deletedBy: args.user.id,
+          deletedBy: user.id,
           deletedAt: new Date()
         };
-        seneca.make$(ENTITY_NS).save$(dojo, done);
+        seneca.make$(ENTITY_NS).save$(saveDojo, done);
 
       } else {
         var err = new Error('cmd_delete/permission-error');
@@ -881,54 +882,42 @@ module.exports = function (options) {
       }
     }
     function deleteUsersDojos(dojo, done){
-      seneca.make$(USER_DOJO_ENTITY_NS).load$({dojoId: args.id}, function(err, ent) {
+      seneca.make$(USER_DOJO_ENTITY_NS).load$({dojoId: dojo.id}, function(err, ent) {
         if (err) return done(err);
 
         ent.deleted = 1;
-        ent.deletedBy = args.user.id;
+        ent.deletedBy = user.id;
         ent.deletedAt = new Date();
 
         seneca.make$(USER_DOJO_ENTITY_NS).save$(ent, done);
       });
     }
     function deleteDojoLead(usersDojos, done){
-      if(!args.dojoLeadId) return done(new Error("no dojo lead_id"));
+      if(!dojo.dojoLeadId) return done(new Error("no dojo lead_id"));
 
-      seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: args.dojoLeadId}, function(err, ent) {
+      seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojo.dojoLeadId}, function(err, ent) {
         if (err) return done(err);
 
         ent.completed = true;
         ent.deleted = 1;
-        ent.deletedBy = args.user.id;
+        ent.deletedBy = user.id;
         ent.deletedAt = new Date();
 
         seneca.make$(DOJO_LEADS_ENTITY_NS).save$(ent, done);
       });
     }
     function deleteSalesForce(dojoLead, done) {
-      seneca.make$(ENTITY_NS).load$(args.id, function(err, response) {
+      seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojo.dojoLeadId}, function(err, res) {
         if(err) return done(err);
 
-        var dojoLeadId;
-        dojoLeadId = response.dojoLeadId;
-        if(dojoLeadId) {  
-          seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojoLeadId}, function(err, response) {
-            if(err) return done(err);
-
-            var lead;
-            lead = response.data$();
-            if(lead) {
-              seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: "delete"}, function (err, response) {
-                if (err) return done(err);
-
-                return done();
-              });
-            } else {
-              return done(null, response);
-            }
+        var lead = res.data$();
+        if(lead) {
+          seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: "delete"}, function (err, res) {
+            if (err) return done(err);
+            return done(null, res);
           });
         } else {
-          return done(null, response);
+          return done(null, res);
         }
       });
     }
@@ -936,14 +925,13 @@ module.exports = function (options) {
 
   function cmd_bulk_update(args, done){
     async.each(args.dojos, function(dojo, cb) {
-
       seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, cb);
     }, done);
   }
 
   function cmd_bulk_delete(args, done){
     async.map(args.dojos, function deleteDojo(dojo, cb) {
-      seneca.act({role: plugin, cmd: 'delete', id: dojo.id, user: args.user}, cb);
+      seneca.act({role: plugin, cmd: 'delete', dojo: dojo, user: args.user}, cb);
     }, done);
   }
 
@@ -1342,11 +1330,9 @@ module.exports = function (options) {
     async.series([
       saveLead,
       updateDojoLeadProfile
-      ], function(err, results){
-        if(err){
-          return done(err);
-        }
-
+      ],
+      function(err, results){
+        if(err) return done(err);
         return done(null, results[0]);
       });
   }
