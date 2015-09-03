@@ -877,7 +877,7 @@ module.exports = function (options) {
         var err = new Error('cmd_delete/permission-error');
         err.critical = false;
         err.httpstatus = 403;
-        return done(err);
+        done(err);
       }
     }
     function deleteUsersDojos(dojo, done){
