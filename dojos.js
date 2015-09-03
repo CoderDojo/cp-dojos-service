@@ -877,18 +877,24 @@ module.exports = function (options) {
         var err = new Error('cmd_delete/permission-error');
         err.critical = false;
         err.httpstatus = 403;
-        done(err);
+        return done(err);
       }
     }
     function deleteUsersDojos(dojo, done){
-      seneca.make$(USER_DOJO_ENTITY_NS).load$({dojoId: dojo.id}, function(err, ent) {
+      seneca.make$(USER_DOJO_ENTITY_NS).list$({dojoId: args.id}, function(err, list) {
         if (err) return done(err);
 
-        ent.deleted = 1;
-        ent.deletedBy = user.id;
-        ent.deletedAt = new Date();
+        if(list && list.length > 0) {
+          async.each(list, function(ent, cb) {
+            ent.deleted = 1;
+            ent.deletedBy = args.user.id;
+            ent.deletedAt = new Date();
 
-        seneca.make$(USER_DOJO_ENTITY_NS).save$(ent, done);
+            seneca.make$(USER_DOJO_ENTITY_NS).save$(ent, cb);
+          }, done);
+        } else {
+          return done();
+        }
       });
     }
     function deleteDojoLead(usersDojos, done){

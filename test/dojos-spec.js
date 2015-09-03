@@ -580,7 +580,7 @@ lab.experiment('Dojo Microservice test', function(){
             if(err) return done(err);
 
             expect(loadedDojos).to.exist;
-            expect(loadedDojos.length).to.equal(3); //cause one of them is deleted during tests
+            expect(loadedDojos.length).to.equal(2); //cause one of them is deleted during tests
             expect(loadedDojos[0].userId).to.be.ok;
             expect(loadedDojos[1].userId).to.be.ok;
             expect(loadedDojos[0].userId).to.equal(loadedDojos[1].userId);
