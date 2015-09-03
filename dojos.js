@@ -682,6 +682,7 @@ module.exports = function (options) {
        * - if verified changed to false, clear verifiedAt and verifiedBy
       */
       function (currentDojoState, done) {
+        if(!dojo.dojoLeadId) return done(null, dojo);
 
         if(dojo.coordinates && dojo.coordinates != currentDojoState.coordinates){
           var pair = dojo.coordinates.split(',').map(parseFloat);
@@ -698,7 +699,6 @@ module.exports = function (options) {
         function updateLogic(){
           if (dojo.hasOwnProperty("editDojoFlag") && dojo.editDojoFlag === true) {
             delete dojo.editDojoFlag;
-            if(!dojo.dojoLeadId) return done(null, dojo);
             dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
               if (err) { return done(err) }
               dojoLead = dojoLead.data$();
@@ -739,7 +739,6 @@ module.exports = function (options) {
             if (dojo.hasOwnProperty("verified") && dojo.verified === 1) {
               dojo.verifiedAt = new Date();
               dojo.verifiedBy = args.user.id;
-              if(!dojo.dojoLeadId) return done(null, dojo);
               dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
                 if (err) { return done(err) }
                 dojoLead = dojoLead.data$();
@@ -764,8 +763,6 @@ module.exports = function (options) {
             } else if (dojo.hasOwnProperty("verified") && dojo.verified === 0){
               dojo.verifiedAt = null;
               dojo.verifiedBy = null;
-              // need to deal with better, but stops the system from crashing for now. 
-              if(!dojo.dojoLeadId) return done(null, dojo);
               dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
                 if (err) { return done(err) }
                 dojoLead = dojoLead.data$();
@@ -861,7 +858,10 @@ module.exports = function (options) {
       deleteUsersDojos,
       deleteDojoLead,
       deleteSalesForce
-    ], done);
+    ], function(err, res) {
+      if(err) return done(null, {error: err});
+      return done(null, res);
+    });
 
     function deleteDojo(hasPermission, done) {
       if(hasPermission) {
@@ -892,6 +892,8 @@ module.exports = function (options) {
       });
     }
     function deleteDojoLead(usersDojos, done){
+      if(!args.dojoLeadId) return done(new Error("no dojo lead_id"));
+
       seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: args.dojoLeadId}, function(err, ent) {
         if (err) return done(err);
 
