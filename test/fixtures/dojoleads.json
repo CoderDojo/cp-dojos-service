@@ -5,6 +5,12 @@
     "email": "lead1@example.com",
     "currentStep": 0,
     "completed": false,
-    "mysql_dojo_id": 23
+    "converted": false,
+    "mysql_dojo_id": 23,
+    "application" : {
+    	"dojoListing": {
+    		"notes": "new note details"
+    	}
+    }
   }
 ]

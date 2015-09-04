@@ -171,7 +171,7 @@ lab.experiment('Dojo Microservice test', function(){
       expect(dojoleads[0]).to.exist;
       expect(dojoleads[0].userId).to.be.ok;
 
-      seneca.act({role: role, cmd: 'save_dojo_lead', dojoLead: dojoleads[0]}, function(err, savedLead){
+      seneca.act({role: role, cmd: 'save_dojo_lead', dojoLead: dojoleads[0], dojoAction: null}, function(err, savedLead){
         if(err) return done(err);
 
         expect(savedLead).to.exist;
@@ -202,7 +202,7 @@ lab.experiment('Dojo Microservice test', function(){
         expect(dojos.length).to.be.equal(1);
         expect(dojos[0]).to.be.ok;
 
-        seneca.act({role: role, cmd: 'delete', id: dojos[0].id, user: {roles: ['basic-user']}}, function(err, output){
+        seneca.act({role: role, cmd: 'delete', dojo: dojos[0], user: {roles: ['basic-user']}}, function(err, output){
           if(err) return done(err);
           dojosEnt.list$({creator: users[4].id}, function(err, dojos){
             if(err) return done(err);
@@ -222,7 +222,7 @@ lab.experiment('Dojo Microservice test', function(){
         expect(dojos.length).to.be.equal(1);
         expect(dojos[0]).to.be.ok;
 
-        seneca.act({role: role, cmd: 'delete', id: dojos[0].id, dojoLeadId: 1000, user: {roles: ['cdf-admin']}}, function(err, output){
+        seneca.act({role: role, cmd: 'delete', dojo: dojos[0], dojoLeadId: 1000, user: {roles: ['cdf-admin']}}, function(err, output){
           if(err) return done(err);
           dojosEnt.list$({id: dojos[0].id}, function(err, dojos){
             if(err) return done(err);
@@ -293,6 +293,48 @@ lab.experiment('Dojo Microservice test', function(){
         var dojo = dojos[0];
         dojo.verified = 0;
         dojo.notes = "updated";
+
+        seneca.act({role: role, cmd: 'update', dojo: dojo, user:{roles:['cdf-admin']}}, function(err, updatedDojo){
+          if(err) return done(err);
+
+          expect(updatedDojo.notes).to.be.equal("updated");
+          done();
+        });
+      });
+    });
+    lab.test('update dojo field', function(done){
+      dojosEnt.list$({creator: users[3].id}, function(err, dojos){
+        if(err) return done(err);
+
+        expect(dojos).to.exist;
+        expect(dojos.length).to.be.equal(1);
+        expect(dojos[0]).to.be.ok;
+
+        var dojo = dojos[0];
+        dojo.verified = 1;
+        dojo.notes = "updated";
+
+        seneca.act({role: role, cmd: 'update', dojo: dojo, user:{roles:['cdf-admin']}}, function(err, updatedDojo){
+          if(err) return done(err);
+
+          expect(updatedDojo.notes).to.be.equal("updated");
+          done();
+        });
+      });
+    });
+    lab.test('update dojo field', function(done){
+      dojosEnt.list$({creator: users[3].id}, function(err, dojos){
+        if(err) return done(err);
+
+        expect(dojos).to.exist;
+        expect(dojos.length).to.be.equal(1);
+        expect(dojos[0]).to.be.ok;
+
+        var dojo = dojos[0];
+        console.log(dojo);
+        dojo.verified = 0;
+        dojo.notes = "updated";
+        dojo.editDojoFlag = true;
 
         seneca.act({role: role, cmd: 'update', dojo: dojo, user:{roles:['cdf-admin']}}, function(err, updatedDojo){
           if(err) return done(err);
@@ -641,33 +683,33 @@ lab.experiment('Dojo Microservice test', function(){
 
   lab.experiment('save_dojo_lead', function () {
     lab.test('executes', function (done) {
-      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: {} }, done);
+      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: {}, dojoAction: "" }, done);
     });
 
     lab.test('executes step 1', function (done) {
-      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 1 } }, done);
+      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 1 }, dojoAction: "" }, done);
     });
 
     lab.test('executes step 2', function (done) {
-      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 2, application: { championDetails: {} } } }, done);
+      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 2, application: { championDetails: {} } }, dojoAction: "" }, done);
     });
 
     lab.test('executes step 3', function (done) {
-      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 3 } }, done);
+      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 3 }, dojoAction: "" }, done);
     });
 
     lab.test('executes step 4', function (done) {
-      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 4 } }, done);
+      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 4 }, dojoAction: "verify" }, done);
     });
 
     lab.test('executes step 5', function (done) {
-      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 5 } }, done);
+      seneca.act({ role: role, cmd: 'save_dojo_lead', dojoLead: { currentStep: 5 }, dojoAction: "delete" }, done);
     });
   });
 
   lab.experiment('update_dojo_lead', function () {
     lab.test('executes', function (done) {
-      seneca.act({ role: role, cmd: 'update_dojo_lead', dojoLead: {} }, done);
+      seneca.act({ role: role, cmd: 'update_dojo_lead', dojoLead: {}, dojoAction: "" }, done);
     });
   });
 
@@ -878,3 +920,4 @@ lab.experiment('Dojo Microservice test', function(){
   });
 
 });
+
