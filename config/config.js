@@ -1,3 +1,4 @@
+var util = require('util');
 var path = require('path');
 var assert = require('assert');
 var LogEntries = require('le_node');
@@ -34,9 +35,9 @@ module.exports = function() {
         assert.ok(process.env.LOGENTRIES_DEBUG_TOKEN, 'No LOGENTRIES_DEBUG_TOKEN set');
         led.log('debug', arguments);
       }
-      
+
       if (process.env.SENECA_DEBUG === 'true') {
-        console.log(arguments);
+        console.log(util.inspect(arguments));
       }
     }
 
