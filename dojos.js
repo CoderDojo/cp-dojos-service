@@ -91,6 +91,7 @@ module.exports = function (options) {
   function cmd_update_dojo_founder(args, done){
     var founder = args.founder;
     var seneca = this;
+
     if(_.isEmpty(founder)){
       return done(new Error('Founder is empty'));
     }
@@ -100,7 +101,8 @@ module.exports = function (options) {
       getPreviousFounderUserDojo,
       updatePreviousFounderUserDojo,
       getCurrentFounderUserDojo,
-      updateOrCreateUserDojo
+      updateOrCreateUserDojo,
+      updateDojoCreatorEmail
       ],done);
 
     function isCDFAdmin(done){
@@ -146,17 +148,13 @@ module.exports = function (options) {
       seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
     }
 
-    function getCurrentFounderUserDojo(prevFoundersUserDojo, done){
+    function getCurrentFounderUserDojo(prevFounderUserDojo, done){
       var query = {};
-
       query.userId = founder.id;
       query.dojoId = founder.dojoId;
 
       seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: query}, function(err, currentFounder){
-        if(err){
-          return done(err);
-        }
-
+        if(err) return done(err);
         return done(null, currentFounder[0]);
       });
     }
@@ -168,29 +166,41 @@ module.exports = function (options) {
         userDojo.userId = founder.id;
       }
 
-      if(!userDojo.userTypes){
-        userDojo.userTypes = [];
-      }
+      if(!userDojo.userTypes) userDojo.userTypes = [];
 
-      if(!_.contains(userDojo.userTypes, 'champion')){
-        userDojo.userTypes.push('champion');
-      }
+      if(!_.contains(userDojo.userTypes, 'champion')) userDojo.userTypes.push('champion');
 
-      if(!userDojo.userPermissions){
-        userDojo.userPermissions = [];
-      }
+      if(!userDojo.userPermissions) userDojo.userPermissions = [];
 
-      if(!_.contains(userDojo.userPermissions, 'dojo-admin')){
-        userDojo.userPermissions.push({title: 'Dojo Admin', name: 'dojo-admin'});
-      }
+      if(!_.contains(userDojo.userPermissions, 'dojo-admin')) userDojo.userPermissions.push({title: 'Dojo Admin', name: 'dojo-admin'});
 
-      if(!_.contains(userDojo.userPermissions, 'ticketing-admin')){
-        userDojo.userPermissions.push({title: 'Ticketing Admin', name: 'ticketing-admin'});
-      }
-
+      if(!_.contains(userDojo.userPermissions, 'ticketing-admin')) userDojo.userPermissions.push({title: 'Ticketing Admin', name: 'ticketing-admin'});
       userDojo.owner = 1;
-
       seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
+    }
+
+    function updateDojoCreatorEmail(userDojo, done) {
+      var userId = userDojo.userId;
+      var dojoId = userDojo.dojoId;
+
+      if(!userId || !dojoId) return done(null, {ok: false, why: 'No userId or dojoId for new Dojo creator.'});
+
+      async.waterfall([
+        loadUser,
+        updateDojo
+      ], done);
+
+      function loadUser(done) {
+        seneca.act({role: 'cd-users', cmd: 'load', id: userId}, done);
+      }
+
+      function updateDojo(user, done) {
+        seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
+          if(err) return done(err);
+          dojo.creatorEmail = user.email;
+          seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, done);
+        });
+      }
     }
   }
 
@@ -393,23 +403,23 @@ module.exports = function (options) {
   }
 
   function cmd_search(args, done) {
-    var usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
     async.waterfall([
       function (done) {
         var query = args.query;
-        if(query.name) query.name = new RegExp(escapeRegExp(query.name), 'i');
-        if(query.email) query.email = new RegExp(escapeRegExp(query.email), 'i');
-        if(query.creatorEmail) query.creatorEmail = new RegExp(escapeRegExp(query.creatorEmail), 'i');
+        if(query.name) query.name = new RegExp(query.name, 'i');
+        if(query.email) query.email = new RegExp(query.email, 'i');
+        if(query.creatorEmail) query.creatorEmail = new RegExp(query.creatorEmail, 'i');
 
         // taken from https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions
         // needed because if a userCreator email is abc+xyz@example.com, it breaks the input string for
         // building the regExps
-        function escapeRegExp(string){
-          return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        }
+        // function escapeRegExp(string){
+        //   return string.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        // }
         seneca.act({role: plugin, cmd: 'list', query: query}, done);
       },
       function (searchResult, done) {
+        if(_.isEmpty(searchResult)) return done(new Error('Search result is empty'));
         var dojos = searchResult;
         async.each(dojos, function (dojo, cb){
           seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojo.id, owner: 1}},
@@ -422,22 +432,18 @@ module.exports = function (options) {
                 dojo.creators = _.map(users, function(user){
                   return {email: user.email, id: user.id};
                 });
-                return cb(null, dojo);
+                return cb();
               });
             });
           }, function (err) {
             if(err) return done(err);
-            return done(null, searchResult);
+            return done(null, dojos);
           });
       },
       function (searchResult, done) {
         var userIds = _.chain(searchResult).pluck('creators').flatten().pluck('id').uniq().value();
-        async.waterfall([
-          function(done) {
-            seneca.act({role:'cd-agreements', cmd:'list', userIds: userIds}, done);
-          },
-          function(agreements, done) {
-            agreements = _.indexBy(agreements, 'userId');
+        seneca.act({role:'cd-agreements', cmd:'list', userIds: userIds}, function (err, agreements) {
+          agreements = _.indexBy(agreements, 'userId');
             _.each(searchResult, function(dojo) {
               dojo.agreements = [];
               _.each(dojo.creators, function(creator){
@@ -448,16 +454,10 @@ module.exports = function (options) {
               });
             });
             return done(null, searchResult);
-          }
-        ], done);
-      },
-      function(searchResult, done) {
-        return done(null, searchResult);
+        });
       }
     ], function(err, res) {
-      if (err) {
-        return done(err);
-      }
+      if (err) return done(null, {error: err});
       return done(null, res);
     });
   }
@@ -936,7 +936,7 @@ module.exports = function (options) {
     }, done);
   }
 
-  function cmd_my_dojos(args, done){
+  function cmd_my_dojos(args, done) {
     async.waterfall([
       function(done) {
         seneca.make$(USER_DOJO_ENTITY_NS).list$({userId: args.user.id, limit$: 'NULL', deleted: 0}, done);
@@ -1436,7 +1436,7 @@ module.exports = function (options) {
 
     seneca.act({role:plugin, cmd:'load_usersdojos', query: query}, function (err, response) {
       if(err) return done(err);
-      var userIds = _.pluck(response, 'userId');
+      var userIds = _.uniq(_.pluck(response, 'userId'));
       userListQuery.ids = userIds;
       seneca.act({role:'cd-users', cmd:'list', query: userListQuery}, done);
     });
