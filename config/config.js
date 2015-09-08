@@ -12,7 +12,7 @@ module.exports = function() {
 
   function log () {
     // seneca custom log handlers
-  
+
     if (process.env.LOGENTRIES_ENABLED === 'true') {
       assert.ok(process.env.LOGENTRIES_DEBUG_TOKEN, 'No LOGENTRIES_DEBUG_TOKEN set');
       var led = new LogEntries({
@@ -20,7 +20,7 @@ module.exports = function() {
         flatten: true,
         flattenArrays: true
       });
-      
+
       assert.ok(process.env.LOGENTRIES_ERRORS_TOKEN, 'No LOGENTRIES_ERROR_TOKEN set');
       var lee = new LogEntries({
         token: process.env.LOGENTRIES_ERRORS_TOKEN,
@@ -28,23 +28,27 @@ module.exports = function() {
         flattenArrays: true
       });
     }
-  
+
     function debugHandler() {
       if (process.env.LOGENTRIES_ENABLED === 'true') {
         assert.ok(process.env.LOGENTRIES_DEBUG_TOKEN, 'No LOGENTRIES_DEBUG_TOKEN set');
         led.log('debug', arguments);
       }
+      
+      if (process.env.SENECA_DEBUG === 'true') {
+        console.log(arguments);
+      }
     }
-  
+
     function errorHandler() {
       console.error(JSON.stringify(arguments));
-  
+
       if (process.env.LOGENTRIES_ENABLED === 'true') {
         assert.ok(process.env.LOGENTRIES_ERRORS_TOKEN, 'No LOGENTRIES_ERROR_TOKEN set');
         lee.log('err', arguments);
       }
     }
-  
+
     return {
       map:[{
         level:'debug', handler: debugHandler
