@@ -418,10 +418,8 @@ module.exports = function (options) {
         // }
         seneca.act({role: plugin, cmd: 'list', query: query}, done);
       },
-      function (searchResult, done) {
-        if(_.isEmpty(searchResult)) return done(new Error('Search result is empty'));
-        var dojos = searchResult;
-        async.each(dojos, function (dojo, cb){
+      function (searchResults, done) {
+        async.each(searchResults, function (dojo, cb){
           seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojo.id, owner: 1}},
             function(err, userDojos){
               if(err) return cb(err);
@@ -437,7 +435,7 @@ module.exports = function (options) {
             });
           }, function (err) {
             if(err) return done(err);
-            return done(null, dojos);
+            return done(null, searchResults);
           });
       },
       function (searchResult, done) {
