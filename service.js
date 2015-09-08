@@ -7,6 +7,7 @@ if (process.env.NEW_RELIC_ENABLED === "true") require('newrelic');
 var _ = require('lodash');
 var config = require('./config/config.js')();
 var seneca = require('seneca')(config);
+var heapdump = require('heapdump');
 
 seneca.log.info('using config', JSON.stringify(config, null, 4));
 
@@ -20,6 +21,15 @@ if(process.env.MAILTRAP_ENABLED === 'true') {
 }
 seneca.use(require('./email-notifications.js'));
 seneca.use(require('./dojos.js'), {limits: config.limits, 'google-api': config['google-api'], postgresql: config['postgresql-store']});
+
+process.on('SIGUSR2', function() {
+  var snapshot = '/tmp/cp-dojos-service-' + Date.now() + '.heapsnapshot'
+  console.log('Got SIGUSR2, creating heap snapshot: ', snapshot);
+  heapdump.writeSnapshot(snapshot, function(err, filename) {
+    if (err) console.error('Error creating snapshot:', err);
+    console.log('dump written to', filename);
+  });
+});
 
 require('./migrate-psql-db.js')(function (err) {
   if (err) {
