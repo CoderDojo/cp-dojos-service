@@ -881,17 +881,23 @@ module.exports = function (options) {
       }
     }
     function deleteUsersDojos(dojo, done){
-      seneca.make$(USER_DOJO_ENTITY_NS).load$({dojoId: dojo.id}, function(err, ent) {
+      seneca.make$(USER_DOJO_ENTITY_NS).list$({dojoId: dojo.id}, function(err, list) {
         if (err) return done(err);
 
-        ent.deleted = 1;
-        ent.deletedBy = user.id;
-        ent.deletedAt = new Date();
+        if(list && list.length > 0) {
+          async.each(list, function(ent, cb) {
+            ent.deleted = 1;
+            ent.deletedBy = user.id;
+            ent.deletedAt = new Date();
 
-        seneca.make$(USER_DOJO_ENTITY_NS).save$(ent, done);
+            seneca.make$(USER_DOJO_ENTITY_NS).save$(ent, cb);
+          }, done());
+        } else {
+          done();
+        }
       });
     }
-    function deleteDojoLead(usersDojos, done){
+    function deleteDojoLead(done){
       if(!dojo.dojoLeadId) return done(new Error("no dojo lead_id"));
 
       seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojo.dojoLeadId}, function(err, ent) {
