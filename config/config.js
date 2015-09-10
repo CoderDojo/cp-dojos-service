@@ -1,7 +1,7 @@
 var util = require('util');
 var path = require('path');
 var assert = require('assert');
-var LogEntries = require('le_node');
+if (process.env.LOGENTRIES_ENABLED === 'true') var LogEntries = require('le_node');
 var generator = require('xoauth2').createXOAuth2Generator({
   user: process.env.GMAIL_USER,
   clientId: process.env.GMAIL_CLIENT_ID,
@@ -33,6 +33,12 @@ module.exports = function() {
     function debugHandler() {
       if (process.env.LOGENTRIES_ENABLED === 'true') {
         assert.ok(process.env.LOGENTRIES_DEBUG_TOKEN, 'No LOGENTRIES_DEBUG_TOKEN set');
+        var led = new LogEntries({
+          token: process.env.LOGENTRIES_DEBUG_TOKEN,
+          flatten: true,
+          flattenArrays: true
+        });
+
         led.log('debug', arguments);
       }
 
@@ -127,6 +133,6 @@ module.exports = function() {
     },
     timeout: 120000,
     strict: {add:false,  result:false},
-    log: log()
+    // purposely commented: log: log()
   };
 }
