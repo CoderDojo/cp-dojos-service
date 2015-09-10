@@ -16,6 +16,7 @@ var countries = require('./data/countries');
 var continents = require('./data/continents');
 var countriesList = require('countries-list');
 var geocoder = require('node-geocoder')('google', 'https', {'apiKey': process.env.GOOGLE_MAPS_KEY});
+var debug = require('debug')('dojos');
 
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
@@ -531,7 +532,7 @@ module.exports = function (options) {
   function cmd_list(args, done) {
     var query = args.query || {};
     if(!query.limit$) query.limit$ = 'NULL';
-    if(query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []); 
+    if(query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []);
     seneca.make$(ENTITY_NS).list$(query, done);
   }
 
@@ -543,7 +544,7 @@ module.exports = function (options) {
       if(err) return done(err);
       _.each(dojos, function (dojo) {
         if(!dojosByCountry[dojo.countryName]) dojosByCountry[dojo.countryName] = [];
-        dojosByCountry[dojo.countryName].push(dojo); 
+        dojosByCountry[dojo.countryName].push(dojo);
       });
 
       _.each(Object.keys(dojosByCountry), function (countryName) {
@@ -552,7 +553,7 @@ module.exports = function (options) {
         });
       });
       return done(null, dojosByCountry);
-    }); 
+    });
   }
 
   function cmd_load(args, done) {
@@ -691,7 +692,7 @@ module.exports = function (options) {
             }
           }
         }
-        
+
         updateLogic();
 
         function updateLogic(){
@@ -724,7 +725,7 @@ module.exports = function (options) {
                 dojoLead.application.dojoListing.googleGroup = dojo.googleGroup;
                 dojoLead.application.dojoListing.private = dojo.private;
                 dojoLead.application.dojoListing.creatorEmail = dojo.creatorEmail;
-              
+
                 seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead, dojoAction: "update"}, function (err, dojoLead) {
                   if (err) { return done(err) }
                   done(null, dojo);
@@ -787,7 +788,7 @@ module.exports = function (options) {
         });
       }
     ], function (err, res) {
-      if (err) return done(err);
+      if (err) return done(null, {error: err.message});
       done(null, res);
     });
   }
@@ -804,7 +805,6 @@ module.exports = function (options) {
       if(_.isEmpty(response)) {
         return cb('User is not a member of this Dojo');
       } else {
-        // TODO - need to check user_permissions field for the dojo-admin permission
         return cb();
       }
     });
@@ -847,7 +847,6 @@ module.exports = function (options) {
   }
 
   function cmd_delete(args, done){
-    // TODO - there must be other data to remove if we delete a dojo??
     var user = args.user;
     var dojo = args.dojo;
     var query = {userId:user.id, dojoId:dojo.id};
@@ -998,7 +997,7 @@ module.exports = function (options) {
     if(level === "error") {
       seneca.log.error(message);
     } else if(level === "success") {
-      seneca.log.info(message); 
+      seneca.log.info(message);
     }
   }
 
@@ -1008,7 +1007,7 @@ module.exports = function (options) {
     var converted = dojoObj.dojoLead.converted || false;
 
     if(dojoObj.currStep === 2) {
-      getSalesForceAccount(dojoObj.userId, function(err, res) { 
+      getSalesForceAccount(dojoObj.userId, function(err, res) {
         if(res.error) return salesForceLogger("error", res.error);
         var accId = res.accId;
         if(accId) {
@@ -1025,7 +1024,7 @@ module.exports = function (options) {
         }
       })
     } else if(dojoObj.currStep === 3) {
-      getSalesForceAccount(dojoObj.userId, function(err, res) { 
+      getSalesForceAccount(dojoObj.userId, function(err, res) {
         if(res.error) return salesForceLogger("error", res.error);
         var accId = res.accId;
         if(accId) {
@@ -1038,7 +1037,7 @@ module.exports = function (options) {
         }
       });
     } else if(dojoObj.currStep === 4) {
-      getSalesForceAccount(dojoObj.userId, function(err, res) { 
+      getSalesForceAccount(dojoObj.userId, function(err, res) {
         if(res.error) return salesForceLogger("error", res.error);
         var accId = res.accId;
         if(accId) {
@@ -1058,7 +1057,7 @@ module.exports = function (options) {
         }
       })
     } else if(dojoObj.currStep === 5) {
-      getSalesForceAccount(dojoObj.userId, function(err, res) { 
+      getSalesForceAccount(dojoObj.userId, function(err, res) {
         if(res.error) return salesForceLogger("error", res.error);
         var accId = res.accId;
         if(accId) {
@@ -1092,7 +1091,7 @@ module.exports = function (options) {
       }
       return cb(null, res)
     });
-  }  
+  }
 
   function updateSalesForceLead(accId, dojoObj, cb) {
     if(arguments.length !== 3 || typeof cb !== "function") return salesForceLogger("error", "[error][salesforce] - missing parameters");
@@ -1154,7 +1153,7 @@ module.exports = function (options) {
       } else if(dojoObj.currStep === 4) {
         if(dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.dojoListing) {
           var dojoListing = dojoObj.dojoLead.application.dojoListing
-          _.extend(saveLead, { 
+          _.extend(saveLead, {
             Name: dojoListing.name || null,
             Email__c: dojoListing.email || 'info@codedojo.org',
             PlatformURL__c: 'https://zen.coderdojo.com/dojo/' + dojoObj.userId,
@@ -1187,13 +1186,13 @@ module.exports = function (options) {
       if(converted !== true) {
         seneca.act('role:cd-salesforce,cmd:save_lead', {userId: dojoObj.userId, lead: saveLead}, function (err, res){
           if(err || !res) return cb(null, {error: "[error][salesforce] id: "+dojoObj.userId+" - lead NOT saved"});
-          
+
           if (convertAccount === true) {
             seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: res.id$}, function (err, res){
               if(err) return cb(null, {error: "[error][salesforce] id: "+dojoObj.userId+" - lead NOT converted"});
 
               salesForceLogger("success", "[salesforce] id: "+dojoObj.userId+" - lead converted to account");
-              
+
               seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojoObj.dojoLead.id}, function (err, res) {
                 if(err || !res) return cb(null, {error: "[error] id: "+dojoObj.userId+" - dojo lead NOT loaded"});
 
@@ -1256,7 +1255,7 @@ module.exports = function (options) {
       } else if(action === "update" && dojoObj.currStep === 5) {
         if(dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.dojoListing) {
           var dojoListing = dojoObj.dojoLead.application.dojoListing
-          _.extend(saveAccount, { 
+          _.extend(saveAccount, {
             Name: dojoListing.name || null,
             Email__c: dojoListing.email || 'info@codedojo.org',
             PlatformURL__c: 'https://zen.coderdojo.com/dojo/' + dojoObj.userId,
@@ -1393,20 +1392,14 @@ module.exports = function (options) {
       completed: false
     };
 
-    dojoLeadEntity.load$(query, function(err, response) {
-      if(err) return done(err);
-      done(null, response);
-    });
+    dojoLeadEntity.load$(query, done);
   }
 
   function cmd_load_dojo_lead(args, done) {
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
 
     //TO-DO: use seneca-perm to restrict this action to cdf-admin users.
-    dojoLeadEntity.load$(args.id, function(err, response) {
-      if(err) return done(err);
-      done(null, response);
-    });
+    dojoLeadEntity.load$(args.id, done);
   }
 
 
@@ -1511,7 +1504,7 @@ module.exports = function (options) {
 
       var locality = args.locality || 'en_US';
       var code = 'invite-user-';
-      
+
       var payload = {to:inviteEmail, code:code, locality: locality, content:content, subject: emailSubject};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
     }
@@ -1792,7 +1785,6 @@ module.exports = function (options) {
   }
 
   function cmd_save_usersdojos(args, done) {
-    //TODO: Add permissions check.
     var userDojo = args.userDojo;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
 
@@ -1867,7 +1859,7 @@ module.exports = function (options) {
               owner: 0,
               userTypes: [youthProfile.userType]
             };
-            seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);  
+            seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
           });
         }, done);
       });
@@ -1876,7 +1868,6 @@ module.exports = function (options) {
   }
 
   function cmd_remove_usersdojos(args, done) {
-    //TODO: Add permissions check.
     var data = args.data;
     var userId = data.userId;
     var dojoId = data.dojoId;
@@ -1972,7 +1963,7 @@ module.exports = function (options) {
 
       var locality = args.locality || 'en_US';
       var code = 'user-left-dojo-';
-      
+
       var payload = {to:champion.email, code: code, locality: locality, content:content, subject: emailSubject};
       seneca.act({role:plugin, cmd:'send_email', payload:payload}, cb);
     }
@@ -1980,7 +1971,9 @@ module.exports = function (options) {
 
   function cmd_get_user_types(args, done) {
     var userTypes = ['attendee-o13', 'parent-guardian' , 'mentor', 'champion'];
-    done(null, userTypes);
+    setImmediate(function() {
+      done(null, userTypes);
+    });
   }
 
   function cmd_get_user_permissions(args, done) {
@@ -1988,11 +1981,15 @@ module.exports = function (options) {
       {title:'Dojo Admin', name:'dojo-admin'},
       {title:'Ticketing Admin',name:'ticketing-admin'}
     ];
-    done(null, userPermissions);
+    setImmediate(function() {
+      done(null, userPermissions);
+    });
   }
 
   function cmd_get_dojo_config(args, done) {
-    done(null, dojoConfig);
+    setImmediate(function() {
+      done(null, dojoConfig);
+    });
   }
 
   function cmd_load_dojo_admins(args, done) {
@@ -2068,9 +2065,9 @@ module.exports = function (options) {
     });
   }
 
-  
+
   // from countries service
-  
+
   function cmd_reverse_geocode(args, done){
     var coords = args.coords;
 
@@ -2081,10 +2078,13 @@ module.exports = function (options) {
   }
 
   function cmd_countries_continents(args, done) {
-    done(null, countriesList);
+    setImmediate(function() {
+      done(null, countriesList);
+    });
   }
 
   function cmd_list_countries(args, done){
+
     function calculateContinent (alpha2) {
       return countriesList.countries[alpha2].continent;
     }
@@ -2102,7 +2102,9 @@ module.exports = function (options) {
       })
       .value();
 
-    return done(null, transformed);
+    setImmediate(function() {
+      return done(null, transformed);
+    });
   }
 
   function cmd_list_places(args, done) {
@@ -2117,6 +2119,7 @@ module.exports = function (options) {
       }
     };
 
+    debug('cmd_list_places options:', options);
     request(options, function (error, response, data) {
       if (error) { return done(error); }
       if (data && data.error_message) {
@@ -2140,20 +2143,27 @@ module.exports = function (options) {
            })
         .value();
 
+      debug('cmd_list_places returning:', places);
       done(null, places);
     });
   }
 
   function cmd_continents_lat_long(args, done) {
-    done(null, continents.coordinatesByAlpha2);
+    setImmediate(function() {
+      done(null, continents.coordinatesByAlpha2);
+    });
   }
 
   function cmd_countries_lat_long(args, done) {
-    done(null, countries.coordinatesByAlpha2);
+    setImmediate(function() {
+      done(null, countries.coordinatesByAlpha2);
+    });
   }
 
   function cmd_get_continent_codes(args, done){
-    done(null, continents.alpha2ByName);
+    setImmediate(function() {
+      done(null, continents.alpha2ByName);
+    });
   }
 
   return {
