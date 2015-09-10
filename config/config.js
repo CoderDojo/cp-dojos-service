@@ -134,5 +134,6 @@ module.exports = function() {
     timeout: 120000,
     strict: {add:false,  result:false},
     // purposely commented: log: log()
+    actcache: {active:false}
   };
 }
