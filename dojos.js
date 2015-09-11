@@ -434,10 +434,10 @@ module.exports = function (options) {
                 return cb();
               });
             });
-          }, function (err) {
-            if(err) return done(err);
-            return done(null, searchResults);
-          });
+        }, function (err) {
+          if(err) return done(err);
+          return done(null, searchResults);
+        });
       },
       function (searchResult, done) {
         var userIds = _.chain(searchResult).pluck('creators').flatten().pluck('id').uniq().value();
@@ -662,6 +662,10 @@ module.exports = function (options) {
 
   function cmd_update(args, done){
     var dojo = args.dojo;
+
+    var editDojoFlag = dojo.editDojoFlag || null;
+    delete dojo.editDojoFlag;
+
     var emailSubject = dojo.emailSubject || null;
     delete dojo.emailSubject;
 
@@ -696,8 +700,7 @@ module.exports = function (options) {
         updateLogic();
 
         function updateLogic(){
-          if (dojo.hasOwnProperty("editDojoFlag") && dojo.editDojoFlag === true) {
-            delete dojo.editDojoFlag;
+          if (editDojoFlag === true) {
             dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
               if (err) { return done(err) }
               dojoLead = dojoLead.data$();
