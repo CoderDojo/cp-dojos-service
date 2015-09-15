@@ -1419,9 +1419,8 @@ module.exports = function (options) {
     usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
 
     usersdojos_ent.list$(query, function(err, usersDojos){
-      if(err){
-        return done(err);
-      }
+      if(err) { return done(err); }
+
       done(null, usersDojos);
     });
   }
@@ -1436,6 +1435,7 @@ module.exports = function (options) {
 
     seneca.act({role:plugin, cmd:'load_usersdojos', query: query}, function (err, response) {
       if(err) return done(err);
+
       var userIds = _.uniq(_.pluck(response, 'userId'));
       userListQuery.ids = userIds;
       seneca.act({role:'cd-users', cmd:'list', query: userListQuery}, done);
