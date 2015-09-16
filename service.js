@@ -20,7 +20,7 @@ if(process.env.MAILTRAP_ENABLED === 'true') {
   seneca.use('mail', config.gmail);
 }
 seneca.use(require('./email-notifications.js'));
-seneca.use(require('./dojos.js'), {limits: config.limits, 'google-api': config['google-api'], postgresql: config['postgresql-store']});
+seneca.use(require('./dojos.js'), {limits: config.limits, 'google-api': config['google-api'], postgresql: config['postgresql-store'], logger: config.logger});
 
 process.on('SIGUSR2', function() {
   var snapshot = '/tmp/cp-dojos-service-' + Date.now() + '.heapsnapshot'
