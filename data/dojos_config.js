@@ -9,23 +9,23 @@ module.exports = {
   }],
   "dojoStages": [{
     "value": 0,
-    "label": "in planning" 
+    "label": "In planning" 
   },
   {
     "value": 1,
-    "label": "open, come along" 
+    "label": "Open, come along" 
   },
   {
     "value": 2,
-    "label": "register ahead" 
+    "label": "Register ahead" 
   },
   {
     "value": 3,
-    "label": "full up" 
+    "label": "Full up" 
   },
   {
     "value": 4,
-    "label": "inactive" 
+    "label": "Inactive" 
   }]
 }
   	
