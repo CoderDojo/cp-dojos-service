@@ -1,7 +1,7 @@
 var util = require('util');
 var path = require('path');
 var assert = require('assert');
-if (process.env.LOGENTRIES_ENABLED === 'true') var LogEntries = require('le_node');
+
 var generator = require('xoauth2').createXOAuth2Generator({
   user: process.env.GMAIL_USER,
   clientId: process.env.GMAIL_CLIENT_ID,
@@ -11,68 +11,14 @@ var generator = require('xoauth2').createXOAuth2Generator({
 
 module.exports = function() {
 
-  function log () {
-    // seneca custom log handlers
-
-    if (process.env.LOGENTRIES_ENABLED === 'true') {
-      assert.ok(process.env.LOGENTRIES_DEBUG_TOKEN, 'No LOGENTRIES_DEBUG_TOKEN set');
-      var led = new LogEntries({
-        token: process.env.LOGENTRIES_DEBUG_TOKEN,
-        flatten: true,
-        flattenArrays: true
-      });
-
-      assert.ok(process.env.LOGENTRIES_ERRORS_TOKEN, 'No LOGENTRIES_ERROR_TOKEN set');
-      var lee = new LogEntries({
-        token: process.env.LOGENTRIES_ERRORS_TOKEN,
-        flatten: true,
-        flattenArrays: true
-      });
-    }
-
-    function debugHandler() {
-      if (process.env.LOGENTRIES_ENABLED === 'true') {
-        assert.ok(process.env.LOGENTRIES_DEBUG_TOKEN, 'No LOGENTRIES_DEBUG_TOKEN set');
-        var led = new LogEntries({
-          token: process.env.LOGENTRIES_DEBUG_TOKEN,
-          flatten: true,
-          flattenArrays: true
-        });
-
-        led.log('debug', arguments);
-      }
-
-      if (process.env.SENECA_DEBUG === 'true') {
-        console.log(util.inspect(arguments));
-      }
-    }
-
-    function errorHandler() {
-      console.error(JSON.stringify(arguments));
-
-      if (process.env.LOGENTRIES_ENABLED === 'true') {
-        assert.ok(process.env.LOGENTRIES_ERRORS_TOKEN, 'No LOGENTRIES_ERROR_TOKEN set');
-        lee.log('err', arguments);
-      }
-    }
-
-    return {
-      map:[{
-        level:'debug', handler: debugHandler
-      }, {
-        level:'error', handler: errorHandler
-      }]
-    };
-  };
-
-
   function pgConfig() {
     return {
       name: process.env.POSTGRES_NAME,
       host: process.env.POSTGRES_HOST || '127.0.0.1',
       port: process.env.POSTGRES_PORT || 5432,
       username: process.env.POSTGRES_USERNAME,
-      password: process.env.POSTGRES_PASSWORD
+      password: process.env.POSTGRES_PASSWORD,
+      nolimit: true
     }
   };
 
@@ -91,7 +37,6 @@ module.exports = function() {
   return {
     'postgresql-store': pgConfig(),
     'google-api': googleApiConfig(),
-
     'email-notifications': {
       sendemail:true,
       sendFrom: 'The CoderDojo Team <info@coderdojo.org>',
@@ -133,7 +78,6 @@ module.exports = function() {
     },
     timeout: 120000,
     strict: {add:false,  result:false},
-    // purposely commented: log: log()
     actcache: {active:false}
   };
 }

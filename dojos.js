@@ -17,12 +17,21 @@ var continents = require('./data/continents');
 var countriesList = require('countries-list');
 var geocoder = require('node-geocoder')('google', 'https', {'apiKey': process.env.GOOGLE_MAPS_KEY});
 var debug = require('debug')('dojos');
-
+var bunyan = require('bunyan');
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
 var path = require('path');
 var fs = require('fs');
 var DEFAULT_LANG = 'en_US';
+
+var logger;
+if (process.env.LOGENTRIES_ENABLED === 'true') {
+  var Logger = require('le_node');
+  var loggerDefinition = Logger.bunyanStream({ token: process.env.LOGENTRIES_TOKEN});
+  logger = bunyan.createLogger(loggerDefinition);
+} else {
+  logger = bunyan.createLogger({name: 'cp-dojos-service', level: 'warn'});
+}
 
 module.exports = function (options) {
   var seneca = this;
@@ -90,6 +99,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'reverse_geocode'}, cmd_reverse_geocode);
 
   function cmd_update_dojo_founder(args, done){
+    logger.info({args: args}, 'cmd_update_dojo_founder');
     var founder = args.founder;
     var seneca = this;
 
@@ -206,6 +216,7 @@ module.exports = function (options) {
   }
 
   function cmd_create_dojo_email(args, done) {
+    logger.info({args: args}, 'cmd_create_dojo_email');
     if (!args.dojo) {
       return done(new Error('Dojo data is missing.'));
     }
@@ -332,6 +343,7 @@ module.exports = function (options) {
   }
 
   function cmd_search_dojo_leads(args, done){
+    logger.info({args: args}, 'cmd_search_dojo_leads');
     var dojoLeadsEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
     dojoLeadsEntity.list$(args.query, done);
   }
@@ -404,6 +416,7 @@ module.exports = function (options) {
   }
 
   function cmd_search(args, done) {
+    logger.info({args: args}, 'cmd_search');
     async.waterfall([
       function (done) {
         var query = args.query;
@@ -462,6 +475,7 @@ module.exports = function (options) {
   }
 
   function cmd_dojos_state_count(args, done) {
+    logger.info({args: args}, 'cmd_dojos_state_count');
     var country = args.country;
     var countData = {};
 
@@ -482,6 +496,7 @@ module.exports = function (options) {
   }
 
   function cmd_dojos_count(args, done) {
+    logger.info({args: args}, 'cmd_dojos_count');
     async.waterfall([
       getDojos,
       getCountries,
@@ -530,6 +545,7 @@ module.exports = function (options) {
   }
 
   function cmd_list(args, done) {
+    logger.info({args: args}, 'cmd_list');
     var query = args.query || {};
     if(!query.limit$) query.limit$ = 'NULL';
     if(query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []);
@@ -557,6 +573,7 @@ module.exports = function (options) {
   }
 
   function cmd_load(args, done) {
+    logger.info({args: args}, 'cmd_load');
     seneca.make$(ENTITY_NS).load$(args.id, function(err, response) {
       if(err) return done(err);
       done(null, response);
@@ -564,6 +581,7 @@ module.exports = function (options) {
   }
 
   function cmd_find(args, done) {
+    logger.info({args: args}, 'cmd_find');
     if(args.query){ args.query.deleted = 0 }
     seneca.make$(ENTITY_NS).load$(args.query, function(err, response) {
       if(err) return done(err);
@@ -586,6 +604,7 @@ module.exports = function (options) {
   };
 
   function cmd_create(args, done){
+    logger.info({args: args}, 'cmd_create');
     var dojo = args.dojo, baseSlug;
     delete dojo.emailSubject;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
@@ -661,6 +680,7 @@ module.exports = function (options) {
   }
 
   function cmd_update(args, done){
+    logger.info({args: args}, 'cmd_update');
     var dojo = args.dojo;
 
     var editDojoFlag = dojo.editDojoFlag || null;
@@ -850,6 +870,7 @@ module.exports = function (options) {
   }
 
   function cmd_delete(args, done){
+    logger.info({args: args}, 'cmd_delete');
     var user = args.user;
     var dojo = args.dojo;
     var query = {userId:user.id, dojoId:dojo.id};
@@ -931,12 +952,14 @@ module.exports = function (options) {
   }
 
   function cmd_bulk_update(args, done){
+    logger.info({args: args}, 'cmd_bulk_update');
     async.each(args.dojos, function(dojo, cb) {
       seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, cb);
     }, done);
   }
 
   function cmd_bulk_delete(args, done){
+    logger.info({args: args}, 'cmd_bulk_delete');
     async.map(args.dojos, function deleteDojo(dojo, cb) {
       seneca.act({role: plugin, cmd: 'delete', dojo: dojo, user: args.user}, cb);
     }, done);
@@ -1308,6 +1331,7 @@ module.exports = function (options) {
   }
 
   function cmd_save_dojo_lead(args, done) {
+    logger.info({args: args}, 'cmd_save_dojo_lead');
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
     var dojoLead = args.dojoLead;
 
@@ -1426,6 +1450,7 @@ module.exports = function (options) {
   }
 
   function cmd_load_dojo_users(args, done) {
+    logger.info({args: args}, 'cmd_load_dojo_users');
     var query  = args.query || {};
     var userListQuery = {};
     if(query.sort$) {
@@ -1443,6 +1468,7 @@ module.exports = function (options) {
   }
 
   function cmd_send_email(args, done) {
+    logger.info({args: args}, 'cmd_send_email');
     var payload = args.payload;
     var to = payload.to;
     var content = payload.content;
@@ -1514,6 +1540,7 @@ module.exports = function (options) {
   }
 
   function cmd_accept_user_invite(args, done) {
+    logger.info({args: args}, 'cmd_accept_user_invite');
     var data = args.data;
     var dojoId = data.dojoId;
     var inviteToken = data.inviteToken;
@@ -1601,10 +1628,10 @@ module.exports = function (options) {
         });
       });
     }
-
   }
 
   function cmd_request_user_invite(args, done) {
+    logger.info({args: args}, 'cmd_request_user_invite');
     var inviteToken = shortid.generate();
     var zenHostname = args.zenHostname;
     var data = args.data;
@@ -1664,6 +1691,7 @@ module.exports = function (options) {
   }
 
   function cmd_load_dojo_champion(args, done) {
+    logger.info({args: args}, 'cmd_load_dojo_champion');
     var dojoId = args.id;
     var query  = {dojoId:dojoId};
     var champions;
@@ -1767,6 +1795,7 @@ module.exports = function (options) {
   }
 
   function cmd_dojos_for_user(args, done) {
+    logger.info({args: args}, 'cmd_dojos_for_user');
     var query = {
       userId:args.id,
       deleted: 0
@@ -1788,6 +1817,7 @@ module.exports = function (options) {
   }
 
   function cmd_save_usersdojos(args, done) {
+    logger.info({args: args}, 'cmd_save_usersdojos');
     var userDojo = args.userDojo;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
 
@@ -2022,6 +2052,7 @@ module.exports = function (options) {
   }
 
   function cmd_list_query(args, done) {
+    logger.info({args: args}, 'cmd_list_query');
     var seneca = this;
     var query  = args.query || {};
     var filterInactiveDojos = query.filterInactiveDojos || false;
@@ -2032,6 +2063,7 @@ module.exports = function (options) {
   }
 
   function cmd_search_nearest_dojos(args, done) {
+    logger.info({args: args}, 'cmd_search_nearest_dojos');
     var localPgOptions = _.defaults({}, options.postgresql);
     localPgOptions.database = _.get(options, 'postgresql.name');
     localPgOptions.user = _.get(options, 'postgresql.username');
@@ -2050,6 +2082,7 @@ module.exports = function (options) {
   }
 
   function cmd_search_bounding_box(args, done) {
+    logger.info({args: args}, 'cmd_search_bounding_box');
     var localPgOptions = _.defaults({}, options.postgresql);
     localPgOptions.database = _.get(options, 'postgresql.name');
     localPgOptions.user = _.get(options, 'postgresql.username');
@@ -2067,7 +2100,6 @@ module.exports = function (options) {
       });
     });
   }
-
 
   // from countries service
 
