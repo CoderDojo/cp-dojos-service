@@ -1142,7 +1142,7 @@ module.exports = function (options) {
             Company: championDetails.name || "<n/a>",
             LastName: championDetails.name || "coderdojo user",
             Email: championDetails.email || "info@coderdojo.com",
-            RecordTypeId: process.env.SALESFORCE_LEAD_RECORDTYPEID,
+            RecordTypeId: process.env.SALESFORCE_LEAD_RECORDTYPEID || null,
             Language__c: 'en_US',
             ChampionAccount__c: accId,
             Status: '2. Champion Registration Completed'
@@ -1156,7 +1156,7 @@ module.exports = function (options) {
             Company: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : "<n/a>",
             LastName: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : "coderdojo user",
             Email: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.email) ? dojoObj.dojoLead.application.championDetails.email : "info@coderdojo.com",
-            RecordTypeId: process.env.SALESFORCE_LEAD_RECORDTYPEID,
+            RecordTypeId: process.env.SALESFORCE_LEAD_RECORDTYPEID || null,
             Language__c: 'en_US',
             ChampionAccount__c: accId,
             FindTechnicalMentors__c: setupDojoObj.findTechnicalMentors || false,
