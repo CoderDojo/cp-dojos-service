@@ -1502,6 +1502,7 @@ module.exports = function (options) {
 
     function generateInviteToken(dojo, done) {
       var timestamp = new Date();
+      if (!dojo) return done(new Error('Dojo is null!'));
       var userInvite = {id:inviteToken, email:inviteEmail, userType:userType, timestamp:timestamp};
       if(!dojo.userInvites) dojo.userInvites = [];
       dojo.userInvites.push(userInvite);
