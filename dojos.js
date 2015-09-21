@@ -601,7 +601,7 @@ module.exports = function (options) {
         return f(args, done);
       });
     }
-  };
+  }
 
   function cmd_create(args, done){
     logger.info({args: args}, 'cmd_create');
@@ -1803,8 +1803,13 @@ module.exports = function (options) {
     var dojos = [];
     seneca.act({role:plugin, cmd:'load_usersdojos', query:query}, function (err, response) {
       if(err) return done(err);
+      var dojoEntity = seneca.make$(ENTITY_NS);
       async.each(response, function (userDojoLink, cb) {
-        seneca.act({role:plugin, cmd:'load', id:userDojoLink.dojoId}, function (err, response) {
+        query = {
+          id:userDojoLink.dojoId,
+          deleted: 0
+        };
+        dojoEntity.load$(query, function(err, response) {
           if(err) return cb(err);
           if(response) dojos.push(response);
           cb();
