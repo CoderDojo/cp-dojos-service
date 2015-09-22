@@ -1127,7 +1127,6 @@ module.exports = function (options) {
       var action = dojoObj.dojoAction || 'blank';
       var saveLead = { 
         PlatformId__c: dojoObj.dojoLead.id,
-        PlatformUrl__c: 'https://zen.coderdojo.com/dojo/' + dojoObj.dojoLead.id,
       };
       var convertAccount = dojoObj.toBeConverted || false;
       var converted = dojoObj.dojoLead.converted || false;
@@ -1138,7 +1137,7 @@ module.exports = function (options) {
           var championDetails = dojoObj.dojoLead.application.championDetails;
           _.extend(saveLead, {
             PlatformId__c: dojoObj.userId,
-            PlatformUrl__c: 'https://zen.coderdojo.com/profile/' + dojoObj.userId,
+            PlatformURL__c: 'https://zen.coderdojo.com/profile/' + dojoObj.userId,
             Company: championDetails.name || "<n/a>",
             LastName: championDetails.name || "coderdojo user",
             Email: championDetails.email || "info@coderdojo.com",
@@ -1153,6 +1152,7 @@ module.exports = function (options) {
           leadId = dojoObj.userId;
           var setupDojoObj = dojoObj.dojoLead.application.setupYourDojo;
           _.extend(saveLead, {
+            PlatformURL__c: 'https://zen.coderdojo.com/profile/' + dojoObj.userId,
             Company: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : "<n/a>",
             LastName: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : "coderdojo user",
             Email: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.email) ? dojoObj.dojoLead.application.championDetails.email : "info@coderdojo.com",
@@ -1188,8 +1188,9 @@ module.exports = function (options) {
         }
       } else if(action !== "delete" && (dojoObj.currStep === 4 || dojoObj.currStep === 5)) {
         if(dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.dojoListing) {
-          var dojoListing = dojoObj.dojoLead.application.dojoListing
+          var dojoListing = dojoObj.dojoLead.application.dojoListing;
           _.extend(saveLead, {
+            PlatformURL__c: 'https://zen.coderdojo.com/dojo/' + createUrlSlug(dojoListing.alpha2, dojoListing.admin1Name, dojoListing.placeName, dojoListing.name),
             Company: dojoListing.name || "<n/a>",
             LastName: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : "coderdojo user",
             Email__c: dojoListing.email || 'info@codedojo.org',            
@@ -1303,7 +1304,6 @@ module.exports = function (options) {
           _.extend(saveAccount, {
             Name: dojoListing.name || null,
             Email__c: dojoListing.email || 'info@codedojo.org',
-            PlatformURL__c: 'https://zen.coderdojo.com/dojo/' + dojoObj.userId,
             Time__c: dojoListing.time || null,
             BillingCountry: dojoListing.country.countryName || null,
             BillingCity: dojoListing.place.nameWithHierarchy || null,
@@ -1347,6 +1347,11 @@ module.exports = function (options) {
       case 4: return "Inactive";
       default: return "unknown";
     }
+  }
+
+  function createUrlSlug(dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName) {
+    var slugify = function(name) { return slug(name) };
+    return _.chain([dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName]).compact().map(slugify).value().join('/').toLowerCase();
   }
 
   function cmd_save_dojo_lead(args, done) {
