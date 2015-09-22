@@ -1162,6 +1162,7 @@ module.exports = function (options) {
 
       if(dojoObj.currStep === 2) {
         if(dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.championDetails) {
+          leadId = dojoObj.userId;
           var championDetails = dojoObj.dojoLead.application.championDetails;
           _.extend(saveLead, {
             PlatformId__c: dojoObj.userId,
@@ -1252,8 +1253,8 @@ module.exports = function (options) {
       if(converted !== true) {
         seneca.act('role:cd-salesforce,cmd:save_lead', {leadId: leadId, lead: saveLead}, function (err, res){
           if(err || !res) return cb(null, {error: "[error][salesforce] id: " + leadId + " - lead NOT saved"});
-          if (convertAccount === true) {
 
+          if (convertAccount === true) {
             var dojoLeadId = res.id$;
             seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: dojoLeadId}, function (err, res){
               if(err) return cb(null, {error: "[error][salesforce] id: " + dojoLeadId + " - lead NOT converted"});
@@ -1291,10 +1292,11 @@ module.exports = function (options) {
       if(dojoObj.currStep === 2) {
         if(dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.championDetails) {
           var championDetails = dojoObj.dojoLead.application.championDetails;
+          var dobOffset = (championDetails.dateOfBirth) ? moment(championDetails.dateOfBirth).utcOffset() : 0;
           _.extend(saveAccount, {
             Email__c: championDetails.email || 'info@codedojo.org',
             Name: championDetails.name || null,
-            DateofBirth__c: championDetails.dateOfBirth || null,
+            DateofBirth__c: (championDetails.dateOfBirth) ? moment.utc(championDetails.dateOfBirth).add(dobOffset, 'minutes') : null,
             Phone: championDetails.phone || '00000000',
             BillingCountry: championDetails.country.countryName || null,
             BillingCity: championDetails.place.nameWithHierarchy || null,
@@ -1328,7 +1330,7 @@ module.exports = function (options) {
         });
       } else if(action === "update" && dojoObj.currStep === 5) {
         if(dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.dojoListing) {
-          var dojoListing = dojoObj.dojoLead.application.dojoListing
+          var dojoListing = dojoObj.dojoLead.application.dojoListing;
           _.extend(saveAccount, {
             Name: dojoListing.name || null,
             Email__c: dojoListing.email || 'info@codedojo.org',
