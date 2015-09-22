@@ -603,6 +603,10 @@ module.exports = function (options) {
     }
   }
 
+  function slugify (name) {
+    return slug(name);
+  }
+
   function cmd_create(args, done){
     logger.info({args: args}, 'cmd_create');
     var dojo = args.dojo, baseSlug;
@@ -615,10 +619,6 @@ module.exports = function (options) {
     dojo.creatorEmail = user.email;
     dojo.created = new Date();
     dojo.verified = 0;
-
-    var slugify = function(name) {
-      return slug(name);
-    };
 
     if (!dojo.geoPoint && dojo.coordinates) {
       var pair = dojo.coordinates.split(',').map(parseFloat);
@@ -720,7 +720,7 @@ module.exports = function (options) {
         updateLogic();
 
         function updateLogic(){
-          if (editDojoFlag === true) {
+          if (editDojoFlag) {
             dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
               if (err) { return done(err) }
               dojoLead = dojoLead.data$();
@@ -803,8 +803,36 @@ module.exports = function (options) {
           }
         }
       },
+      function(dojo, done){
+        if(editDojoFlag && (dojo.alpha2 || dojo.admin1Name || dojo.placeName || dojo.name)){
+          var baseSlug = _.chain([
+            dojo.alpha2, dojo.admin1Name, dojo.placeName, dojo.name
+          ]).compact().map(slugify).value().join('/').toLowerCase();
+
+          var urlSlug = {urlSlug: new RegExp('^' + baseSlug,  'i')};
+          seneca.make$(ENTITY_NS).list$(urlSlug,function(err, dojos) {
+            if (err) {
+              return done(err);
+            }
+            if (_.isEmpty(dojos)) {
+              dojo.urlSlug = baseSlug;
+              return done(null, dojo);
+            }
+
+            var urlSlugs = _.pluck(dojos, 'urlSlug');
+            var urlSlug = baseSlug;
+            for (var idx = 1; urlSlugs.indexOf(urlSlug) !== -1; urlSlug = baseSlug + '-' + idx, idx++);
+
+            dojo.urlSlug = urlSlug;
+            done(null, dojo);
+          });
+        } else {
+          done(null, dojo);
+        }
+      },
       function (dojo, done) {
         //update dojo geoPoint as well if coordinates are updated
+
         seneca.make$(ENTITY_NS).save$(dojo, function (err, response) {
           if (err) return done(err);
           done(null, response);
