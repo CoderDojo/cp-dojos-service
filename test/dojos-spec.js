@@ -123,7 +123,7 @@ lab.experiment('Dojo Microservice test', function(){
   lab.before(function(done){
     async.eachSeries(usersDojos, function(item, callback){
 
-      dojosEnt.list$( function(err, dojos) {
+      dojosEnt.list$(function(err, dojos) {
         if (err) return done(err);
         item.dojoId = dojos[0].id;
         create_users_dojos(item, callback);
