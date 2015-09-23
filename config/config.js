@@ -1,6 +1,4 @@
-var util = require('util');
 var path = require('path');
-var assert = require('assert');
 
 var generator = require('xoauth2').createXOAuth2Generator({
   user: process.env.GMAIL_USER,
@@ -9,9 +7,8 @@ var generator = require('xoauth2').createXOAuth2Generator({
   refreshToken: process.env.GMAIL_REFRESH_TOKEN
 });
 
-module.exports = function() {
-
-  function pgConfig() {
+module.exports = function () {
+  function pgConfig () {
     return {
       name: process.env.POSTGRES_NAME,
       host: process.env.POSTGRES_HOST || '127.0.0.1',
@@ -19,26 +16,26 @@ module.exports = function() {
       username: process.env.POSTGRES_USERNAME,
       password: process.env.POSTGRES_PASSWORD,
       nolimit: true
-    }
+    };
   };
 
-  function googleApiConfig() {
+  function googleApiConfig () {
     return {
       enabled: process.env.GOOGLE_API_ENABLED === 'true',
-      email: "1075875288894-8vec5965koo2580s16hvo3ah4bc5h32f@developer.gserviceaccount.com",
+      email: '1075875288894-8vec5965koo2580s16hvo3ah4bc5h32f@developer.gserviceaccount.com',
       keyFile: path.resolve(__dirname + '/community-platform-testing-key.pem'),
       scopes: [
-        "https://www.googleapis.com/auth/admin.directory.user"
+        'https://www.googleapis.com/auth/admin.directory.user'
       ],
-      subject:  "ursula@coderdojo.org"
-    }
+      subject: 'ursula@coderdojo.org'
+    };
   }
 
   return {
     'postgresql-store': pgConfig(),
     'google-api': googleApiConfig(),
     'email-notifications': {
-      sendemail:true,
+      sendemail: true,
       sendFrom: 'The CoderDojo Team <info@coderdojo.org>',
       email: {
       }
@@ -46,7 +43,7 @@ module.exports = function() {
     mailtrap: {
       folder: path.resolve(__dirname + '/../email-templates'),
       mail: {
-        from:'no-reply@coderdojo.com'
+        from: 'no-reply@coderdojo.com'
       },
       config: {
         host: process.env.MAIL_HOST,
@@ -68,7 +65,7 @@ module.exports = function() {
     },
     transport: {
       type: 'web',
-      web:{
+      web: {
         timeout: 120000,
         port: 10301
       }
@@ -77,7 +74,7 @@ module.exports = function() {
       maxUserDojos: process.env.LIMITS_MAX_USER_DOJOS || 30
     },
     timeout: 120000,
-    strict: {add:false,  result:false},
-    actcache: {active:false}
+    strict: {add: false, result: false},
+    actcache: {active: false}
   };
-}
+};
