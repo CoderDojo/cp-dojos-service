@@ -2164,10 +2164,7 @@ module.exports = function (options) {
 
     pg.connect(localPgOptions, function (err, client) {
       if(err) return done(err);
-      console.log('psqlQUERY ' + psqlQuery);
-      console.log('psqlQueryVars ' + psqlQueryVariables);
       client.query(psqlQuery, psqlQueryVariables, function (err, results) {
-        console.log('results: '+ JSON.stringify(results));
         if(err) return done(err);
         client.end();
         return done(null, results.rows);
