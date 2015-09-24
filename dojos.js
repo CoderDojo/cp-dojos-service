@@ -2149,10 +2149,25 @@ module.exports = function (options) {
     var searchLat = args.query.lat;
     var searchLon = args.query.lon;
     var boundsRadius = args.query.radius;
+    var search = args.query.search || null;
+
+    var psqlQuery;
+    var psqlQueryVariables;
+    if(search){
+      search =  '%' + search + '%';
+      psqlQuery = "SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 AND verified != 0 AND (earth_box(ll_to_earth($1, $2), $3) @> ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8) OR name ILIKE $4) ORDER BY distance_from_search_location ASC";
+      psqlQueryVariables = [searchLat, searchLon, boundsRadius, search];
+    } else {
+      psqlQuery = "SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 AND verified != 0 AND earth_box(ll_to_earth($1, $2), $3) @> ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8) ORDER BY distance_from_search_location ASC";
+      psqlQueryVariables = [searchLat, searchLon, boundsRadius];
+    }
 
     pg.connect(localPgOptions, function (err, client) {
       if(err) return done(err);
-      client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 AND verified != 0 AND earth_box(ll_to_earth($1, $2), $3) @> ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8) ORDER BY distance_from_search_location ASC", [searchLat, searchLon, boundsRadius], function (err, results) {
+      console.log('psqlQUERY ' + psqlQuery);
+      console.log('psqlQueryVars ' + psqlQueryVariables);
+      client.query(psqlQuery, psqlQueryVariables, function (err, results) {
+        console.log('results: '+ JSON.stringify(results));
         if(err) return done(err);
         client.end();
         return done(null, results.rows);
