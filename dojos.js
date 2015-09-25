@@ -1154,7 +1154,7 @@ module.exports = function (options) {
     if(dojoObj.userId && dojoObj.dojoLead) {
       var action = dojoObj.dojoAction || 'blank';
       var saveLead = { 
-        PlatformId__c: dojoObj.dojoLead.id,
+        PlatformId__c: dojoObj.dojoLead.id
       };
       var convertAccount = dojoObj.toBeConverted || false;
       var converted = dojoObj.dojoLead.converted || false;
