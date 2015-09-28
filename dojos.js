@@ -1222,7 +1222,7 @@ module.exports = function (options) {
             PlatformURL__c: 'https://zen.coderdojo.com/dojo/' + createUrlSlug(dojoListing.alpha2, dojoListing.admin1Name, dojoListing.placeName, dojoListing.name),
             Company: dojoListing.name || "<n/a>",
             LastName: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : "coderdojo user",
-            Email__c: dojoListing.email || 'info@codedojo.org',            
+            Email__c: dojoListing.email || getCoderDojoEmail(dojoListing.alpha2, dojoListing.admin1Name, dojoListing.placeName, dojoListing.name),
             Time__c: dojoListing.time || null,
             Country: dojoListing.country.countryName || null,
             City: dojoListing.place.nameWithHierarchy || null,
@@ -1276,7 +1276,6 @@ module.exports = function (options) {
           }
         });
       }
-
     } else {
       return cb(null, {error: "[error][salesforce] no userId"});
     }
@@ -1377,6 +1376,14 @@ module.exports = function (options) {
       case 4: return "Inactive";
       default: return "unknown";
     }
+  }
+
+  function getCoderDojoEmail(dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName) {
+    var urlSlug = createUrlSlug(dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName);
+    var email = _.last(urlSlug.split('/')).concat('.', dojoAlpha2.toLowerCase(), '@coderdojo.com');
+    if (process.env.ENVIRONMENT === 'development') { email = 'dev-' + email };
+
+    return email;
   }
 
   function createUrlSlug(dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName) {
