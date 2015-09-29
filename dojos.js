@@ -1940,30 +1940,43 @@ module.exports = function (options) {
         userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
       }
       if(userDojo.userTypes) userDojo.userTypes = _.uniq(userDojo.userTypes);
+
       usersDojosEntity.save$(userDojo, done);
     }
 
     function saveNinjasUserDojo(done) {
       seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: userDojo.userId}}, function (err, userProfiles) {
         if(err) return done(err);
+
         var userProfile = userProfiles[0];
+
         if(!userProfile.children) return done();
         async.each(userProfile.children, function (youthUserId, cb) {
           seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: youthUserId}}, function (err, youthProfiles) {
             if(err) return cb(err);
+
             var youthProfile = youthProfiles[0];
-            var youthUserDojo = {
-              userId: youthUserId,
-              dojoId: userDojo.dojoId,
-              owner: 0,
-              userTypes: [youthProfile.userType]
-            };
-            seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
+
+            seneca.act({role: plugin, cmd: 'load_usersdojos', query:{userId: youthUserId, dojoId: userDojo.dojoId}}, function(err, res) {
+              if(err) return done(err);
+
+              if(!res.length) {
+                var youthUserDojo = {
+                  userId: youthUserId,
+                  dojoId: userDojo.dojoId,
+                  owner: 0,
+                  userTypes: [youthProfile.userType]
+                };
+
+                seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
+              } else {
+                return done();
+              }
+            });
           });
         }, done);
       });
     }
-
   }
 
   function cmd_remove_usersdojos(args, done) {
