@@ -1154,7 +1154,7 @@ module.exports = function (options) {
     if(dojoObj.userId && dojoObj.dojoLead) {
       var action = dojoObj.dojoAction || 'blank';
       var saveLead = { 
-        PlatformId__c: dojoObj.dojoLead.id,
+        PlatformId__c: dojoObj.dojoLead.id
       };
       var convertAccount = dojoObj.toBeConverted || false;
       var converted = dojoObj.dojoLead.converted || false;
@@ -1222,7 +1222,7 @@ module.exports = function (options) {
             PlatformURL__c: 'https://zen.coderdojo.com/dojo/' + createUrlSlug(dojoListing.alpha2, dojoListing.admin1Name, dojoListing.placeName, dojoListing.name),
             Company: dojoListing.name || "<n/a>",
             LastName: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : "coderdojo user",
-            Email__c: dojoListing.email || 'info@codedojo.org',            
+            Email__c: dojoListing.email || getCoderDojoEmail(dojoListing.alpha2, dojoListing.admin1Name, dojoListing.placeName, dojoListing.name),
             Time__c: dojoListing.time || null,
             Country: dojoListing.country.countryName || null,
             City: dojoListing.place.nameWithHierarchy || null,
@@ -1276,7 +1276,6 @@ module.exports = function (options) {
           }
         });
       }
-
     } else {
       return cb(null, {error: "[error][salesforce] no userId"});
     }
@@ -1377,6 +1376,14 @@ module.exports = function (options) {
       case 4: return "Inactive";
       default: return "unknown";
     }
+  }
+
+  function getCoderDojoEmail(dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName) {
+    var urlSlug = createUrlSlug(dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName);
+    var email = _.last(urlSlug.split('/')).concat('.', dojoAlpha2.toLowerCase(), '@coderdojo.com');
+    if (process.env.ENVIRONMENT === 'development') { email = 'dev-' + email };
+
+    return email;
   }
 
   function createUrlSlug(dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName) {
@@ -1933,30 +1940,43 @@ module.exports = function (options) {
         userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
       }
       if(userDojo.userTypes) userDojo.userTypes = _.uniq(userDojo.userTypes);
+
       usersDojosEntity.save$(userDojo, done);
     }
 
     function saveNinjasUserDojo(done) {
       seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: userDojo.userId}}, function (err, userProfiles) {
         if(err) return done(err);
+
         var userProfile = userProfiles[0];
+
         if(!userProfile.children) return done();
         async.each(userProfile.children, function (youthUserId, cb) {
           seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: youthUserId}}, function (err, youthProfiles) {
             if(err) return cb(err);
+
             var youthProfile = youthProfiles[0];
-            var youthUserDojo = {
-              userId: youthUserId,
-              dojoId: userDojo.dojoId,
-              owner: 0,
-              userTypes: [youthProfile.userType]
-            };
-            seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
+
+            seneca.act({role: plugin, cmd: 'load_usersdojos', query:{userId: youthUserId, dojoId: userDojo.dojoId}}, function(err, res) {
+              if(err) return done(err);
+
+              if(!res.length) {
+                var youthUserDojo = {
+                  userId: youthUserId,
+                  dojoId: userDojo.dojoId,
+                  owner: 0,
+                  userTypes: [youthProfile.userType]
+                };
+
+                seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
+              } else {
+                return done();
+              }
+            });
           });
         }, done);
       });
     }
-
   }
 
   function cmd_remove_usersdojos(args, done) {
@@ -2149,10 +2169,22 @@ module.exports = function (options) {
     var searchLat = args.query.lat;
     var searchLon = args.query.lon;
     var boundsRadius = args.query.radius;
+    var search = args.query.search || null;
+
+    var psqlQuery;
+    var psqlQueryVariables;
+    if(search){
+      search =  '%' + search + '%';
+      psqlQuery = "SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 AND verified != 0 AND (earth_box(ll_to_earth($1, $2), $3) @> ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8) OR name ILIKE $4) ORDER BY distance_from_search_location ASC";
+      psqlQueryVariables = [searchLat, searchLon, boundsRadius, search];
+    } else {
+      psqlQuery = "SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 AND verified != 0 AND earth_box(ll_to_earth($1, $2), $3) @> ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8) ORDER BY distance_from_search_location ASC";
+      psqlQueryVariables = [searchLat, searchLon, boundsRadius];
+    }
 
     pg.connect(localPgOptions, function (err, client) {
       if(err) return done(err);
-      client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 AND verified != 0 AND earth_box(ll_to_earth($1, $2), $3) @> ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8) ORDER BY distance_from_search_location ASC", [searchLat, searchLon, boundsRadius], function (err, results) {
+      client.query(psqlQuery, psqlQueryVariables, function (err, results) {
         if(err) return done(err);
         client.end();
         return done(null, results.rows);
