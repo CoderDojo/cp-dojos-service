@@ -1,0 +1,39 @@
+<% include ../common-en_US/header.ejs %>
+<!-- MAIN CONTENT GOES HERE -->
+
+  <h1>Hi <%= applicantName %>,</h1>
+
+  <p>This is a notification to let you know that your request for a ticket for the below event has been received.</p>
+
+  <p>Once your request has been approved you will receive your ticket confirmation by email.</p>
+
+  <h3>Order Summary</h3>
+  <p> - Date: <%= applicationDate %></p>
+  <p> - Session: <%= sessionName %></p>
+  <table>
+    <thead>
+      <th>Name</th>
+      <th>Type</th>
+      <th>Quantity</th>
+    </thead>
+    <tbody>
+      <% for(var i=0; i<tickets.length; i++) { %>
+        <tr>
+          <td><%= tickets[i].ticketName %></td>
+          <td><%= tickets[i].ticketType %></td>
+          <td><%= tickets[i].quantity %></td>
+        </tr>
+      <% } %>
+    </tbody>
+  </table>    
+
+  <p>Status: <%= status %></p>
+  
+  <h3>About this event</h3>
+  <p> - Event date: <%= eventDate %></p>
+  <p> - Event address: <%= event.address %></p>
+
+  <p>Best wishes,</p>
+  <p>The CoderDojo Foundation Team</p>
+
+<% include ../common-en_US/footer.ejs %>

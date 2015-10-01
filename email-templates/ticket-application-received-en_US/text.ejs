@@ -1,0 +1,23 @@
+
+  Hi <%= applicantName %>,
+
+  This is a notification to let you know that your request for a ticket for the below event has been received.
+
+  Once your request has been approved you will receive your ticket confirmation by email.
+
+  Order Summary
+  - Date: <%= applicationDate %>
+  - Session: <%= sessionName %>
+    Name     Type     Quantity
+    <% for(var i=0; i<tickets.length; i++) { %>
+      <%= tickets[i].ticketName %> <%= tickets[i].ticketType %> <%= tickets[i].quantity %>
+    <% } %>   
+
+  Status: <%= status %>
+  
+  About this event
+  - Event date: <%= eventDate %>
+  - Event address: <%= event.address %>
+
+  Best wishes,
+  The CoderDojo Foundation Team
