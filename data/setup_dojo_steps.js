@@ -24,7 +24,7 @@ module.exports = [
         textField:true,
         placeholder:'Please describe the situation in your Dojo and if your team has been background checked.',
         infoIcon:true,
-        infoText:'The requirements for background checking are specific to the legislation in your jurisdiction. You can see some guidelines on Child Protection and Background Checking on Kata <a href="http://kata.coderdojo.com/wiki/Child_Protection_and_Background_Checking">http://kata.coderdojo.com/wiki/Child_Protection_and_Background_Checking</a>. Please also ensure you check your local legislation. Please comment below describing the situation in your local Dojo.',
+        infoText:'The requirements for background checking are specific to the legislation in your jurisdiction. You can see some guidelines on Child Protection and Background Checking on <a href="http://kata.coderdojo.com/wiki/Child_Protection_and_Background_Checking">Kata</a>. Please also ensure you check your local legislation. Please comment below describing the situation in your local Dojo.',
         taoIcon:true
       }
     ]
