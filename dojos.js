@@ -89,6 +89,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'search_bounding_box'}, cmd_search_bounding_box);
   seneca.add({role: plugin, cmd: 'list_query'}, cmd_list_query);
   seneca.add({role: plugin, cmd: 'find_dojolead'}, cmd_find_dojolead);
+  seneca.add({role: plugin, cmd: 'load_dojo_email'}, cmd_load_dojo_email);
   // from countries service
   seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
   seneca.add({role: plugin, cmd: 'list_countries'}, cmd_list_countries);
@@ -1537,7 +1538,8 @@ module.exports = function (options) {
     var emailCode = payload.code;
     var emailSubject = payload.subject;
     var emailLocality = payload.locality;
-    seneca.act({role:'email-notifications', cmd: 'send', to:to, content:content, code:emailCode, locality: emailLocality, subject: emailSubject}, done);
+    var replyTo = payload.replyTo;
+    seneca.act({role:'email-notifications', cmd: 'send', to:to, replyTo: replyTo, content:content, code:emailCode, locality: emailLocality, subject: emailSubject}, done);
   }
 
   function cmd_generate_user_invite_token(args, done) {
@@ -2189,6 +2191,35 @@ module.exports = function (options) {
         client.end();
         return done(null, results.rows);
       });
+    });
+  }
+
+  function cmd_load_dojo_email (args, done) {
+    var seneca = this;
+    var dojoId = args.dojoId;
+    if (!dojoId) return done(null, {ok: false, why: 'args.dojoId is empty'});
+
+    seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
+      if (err) return done(null, {ok: false, why: err.message});
+      var dojoEmail = dojo.email;
+      if (!dojoEmail) {
+        //If the dojo email is not set, retrieve the dojo owner's email.
+        seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojoId, owner: 1}}, function (err, usersDojos) {
+          if (err) return done(null, {ok: false, why: err.message});
+          var userDojo = usersDojos[0];
+          if (userDojo) {
+            seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId}, function (err, user) {
+              if (err) return done(null, {ok: false, why: err.message});
+              dojoEmail = user.email;
+              return done(null, {email: dojoEmail});
+            });
+          } else {
+            return done(null, {ok: false, why: 'No email found for this Dojo'});
+          }
+        });
+      } else {
+        return done(null, {email: dojoEmail});
+      }
     });
   }
 

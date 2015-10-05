@@ -1,0 +1,21 @@
+<% include ../common-en_US/header.ejs %>
+<!-- MAIN CONTENT GOES HERE -->
+
+  <h1>Hi <%= applicantName %>,</h1>
+
+  <p>This is a notification to let you know that you have been invited to the following session taking place at <%= dojo.name %>.</p>
+
+  <h3>Details</h3>
+  <p> - Session: <%= sessionName %></p>
+  <p> - Ticket: <%= ticket.name %></p>
+  <p> - Date: <%= eventDate %></p>
+  <p> - Address: <%= event.address %></p>
+
+  <p>To accept this invitation, please click the following link: <a href="<%= inviteLink %>"><%= inviteLink %></a></p>
+
+  <p>If you have any questions about the event in advance please contact the Dojo directly at <%= dojo.email %></p>
+
+  <p>Best wishes,</p>
+  <p>The CoderDojo Foundation Team</p>
+
+<% include ../common-en_US/footer.ejs %>
