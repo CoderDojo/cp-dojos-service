@@ -27,6 +27,7 @@ module.exports = function( options ) {
         from: options.sendFrom,
         code: emailCode,
         to: args.to,
+        replyTo: args.replyTo || options.sendFrom,
         subject: args.subject,
         content: args.content
       }, done)
