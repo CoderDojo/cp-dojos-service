@@ -120,7 +120,7 @@ module.exports = function (options) {
     function isCDFAdmin(done){
       var userId = args.user.id;
 
-      seneca.act({role: 'cd-users', cmd: 'load', id: userId}, function(err, user){
+      seneca.act({role: 'cd-users', cmd: 'load', id: userId, user: args.user}, function(err, user){
         if(err){
           return done(err);
         }
@@ -203,7 +203,7 @@ module.exports = function (options) {
       ], done);
 
       function loadUser(done) {
-        seneca.act({role: 'cd-users', cmd: 'load', id: userId}, done);
+        seneca.act({role: 'cd-users', cmd: 'load', id: userId, user: args.user}, done);
       }
 
       function updateDojo(user, done) {
@@ -260,7 +260,7 @@ module.exports = function (options) {
             return done(err)
           }
 
-          seneca.act({role: 'cd-users', cmd: 'load', id: dojo.creator}, function (err, dojoCreator) {
+          seneca.act({role: 'cd-users', cmd: 'load', id: dojo.creator, user: args.user}, function (err, dojoCreator) {
             if (err) {
               return done(err)
             }
@@ -1727,7 +1727,7 @@ module.exports = function (options) {
       .reverse()
       .uniq(true, function(joinRequest) { return joinRequest.dojoId; });
 
-      seneca.act({role:'cd-users', cmd:'update', user:user}, function (err, response) {
+      seneca.act({role:'cd-users', cmd:'update', user:user, id: user.id}, function (err, response) {
         if(err) return done(err);
         return done(null, dojo);
       });
@@ -1796,7 +1796,7 @@ module.exports = function (options) {
     });
 
     function loadUser(done) {
-      seneca.act({role:'cd-users', cmd:'load', id: requestedByUser}, function (err, response) {
+      seneca.act({role:'cd-users', cmd:'load', id: requestedByUser, user: args.user}, function (err, response) {
         if(err) return done(err);
         var user = response;
         var joinRequests = user.joinRequests;
@@ -1849,10 +1849,10 @@ module.exports = function (options) {
     }
 
     function tidyUpJoinRequests(userDojo, done) {
-      seneca.act({role:'cd-users', cmd:'load', id:requestedByUser}, function (err, user) {
+      seneca.act({role:'cd-users', cmd:'load', id:requestedByUser, user: args.user}, function (err, user) {
         if(err) return done(err);
         user.joinRequests = _.without(user.joinRequests, _.findWhere(user.joinRequests, {id: inviteTokenId}));
-        seneca.act({role: 'cd-users', cmd: 'update', user: user}, done);
+        seneca.act({role: 'cd-users', cmd: 'update', user: user, id: user.id}, done);
       });
     }
   }
@@ -2047,7 +2047,7 @@ module.exports = function (options) {
       });
 
       function loadUser(callback) {
-        seneca.act({role:'cd-users', cmd:'load', id:userId}, callback);
+        seneca.act({role:'cd-users', cmd:'load', id:userId, user: args.user}, callback);
       }
 
       function loadDojo(user, callback) {
@@ -2117,7 +2117,7 @@ module.exports = function (options) {
           return userPermission.name === 'dojo-admin';
         });
         if(dojoAdminPermissionFound) {
-          seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId}, cb);
+          seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId, user: args.user}, cb);
         } else {
           return cb();
         }
@@ -2208,7 +2208,7 @@ module.exports = function (options) {
           if (err) return done(null, {ok: false, why: err.message});
           var userDojo = usersDojos[0];
           if (userDojo) {
-            seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId}, function (err, user) {
+            seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId, user: args.user}, function (err, user) {
               if (err) return done(null, {ok: false, why: err.message});
               dojoEmail = user.email;
               return done(null, {email: dojoEmail});
