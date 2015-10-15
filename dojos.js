@@ -760,7 +760,9 @@ module.exports = function (options) {
             });
           } else {
             if (dojo.hasOwnProperty("verified") && dojo.verified === 1) {
-              dojo.verifiedAt = new Date();
+              if (dojo.verifiedAt === null) {
+                dojo.verifiedAt = new Date();
+              }
               dojo.verifiedBy = args.user.id;
               dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
                 if (err) { return done(err) }
@@ -1154,7 +1156,7 @@ module.exports = function (options) {
 
     if(dojoObj.userId && dojoObj.dojoLead) {
       var action = dojoObj.dojoAction || 'blank';
-      var saveLead = { 
+      var saveLead = {
         PlatformId__c: dojoObj.dojoLead.id
       };
       var convertAccount = dojoObj.toBeConverted || false;
