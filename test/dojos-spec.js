@@ -345,7 +345,6 @@ lab.experiment('Dojo Microservice test', function () {
         expect(dojos[0]).to.be.ok;
 
         var dojo = dojos[0];
-        console.log(dojo);
         dojo.verified = 0;
         dojo.notes = "updated";
         dojo.editDojoFlag = true;
