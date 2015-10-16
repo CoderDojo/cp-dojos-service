@@ -311,6 +311,7 @@ lab.experiment('Dojo Microservice test', function () {
         seneca.act({role: role, cmd: 'update', dojo: dojo, user: {roles: ['cdf-admin']}}, function (err, updatedDojo) {
           if (err) return done(err);
 
+          expect(updatedDojo.verified).to.be.equal(0);
           expect(updatedDojo.notes).to.be.equal("updated");
           done();
         });
@@ -331,6 +332,7 @@ lab.experiment('Dojo Microservice test', function () {
         seneca.act({role: role, cmd: 'update', dojo: dojo, user: {roles: ['cdf-admin']}}, function (err, updatedDojo) {
           if (err) return done(err);
 
+          expect(updatedDojo.verified).to.be.equal(1);
           expect(updatedDojo.notes).to.be.equal("updated");
           done();
         });
@@ -345,7 +347,6 @@ lab.experiment('Dojo Microservice test', function () {
         expect(dojos[0]).to.be.ok;
 
         var dojo = dojos[0];
-        console.log(dojo);
         dojo.verified = 0;
         dojo.notes = "updated";
         dojo.editDojoFlag = true;
@@ -355,6 +356,34 @@ lab.experiment('Dojo Microservice test', function () {
 
           expect(updatedDojo.notes).to.be.equal("updated");
           done();
+        });
+      });
+    });
+    lab.test('only set verifiedAt once', function (done) {
+      dojosEnt.list$({creator: users[3].id}, function (err, dojos) {
+        if (err) return done(err);
+
+        expect(dojos).to.exist;
+        expect(dojos.length).to.be.equal(1);
+        expect(dojos[0]).to.be.ok;
+
+        var dojo = dojos[0];
+        dojo.verified = 1;
+
+        // first verify
+        seneca.act({role: role, cmd: 'update', dojo: dojo, user: {roles: ['cdf-admin']}}, function (err, updatedDojo) {
+          if (err) return done(err);
+          updatedDojo.verified = 1;
+
+          // wait a second
+          setTimeout(function() {
+            // second update, already verified
+            seneca.act({role: role, cmd: 'update', dojo: dojo, user: {roles: ['cdf-admin']}}, function (err, updatedTwiceDojo) {
+
+              expect(updatedDojo.verifiedAt).to.be.equal(updatedTwiceDojo.verifiedAt);
+              done();
+            });
+          }, 1000);
         });
       });
     });
