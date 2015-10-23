@@ -2119,7 +2119,11 @@ module.exports = function (options) {
           return userPermission.name === 'dojo-admin';
         });
         if(dojoAdminPermissionFound) {
-          seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId, user: args.user}, cb);
+          var debug = JSON.stringify(userDojo) + JSON.stringify(args.user);
+          seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId, user: args.user}, function(err,results) {
+            fs.appendFile('/Users/ursulaclarke/crap-out.txt', debug, function(){});
+            cb(err,results);
+          });
         } else {
           return cb();
         }
