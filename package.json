@@ -48,7 +48,7 @@
     "postgrator": "2.2.0",
     "randomstring": "1.0.6",
     "request": "2.55.0",
-    "seneca": "git://github.com/thekemkid/seneca.git",
+    "seneca": "0.7.2",
     "seneca-mail": "0.2.1",
     "seneca-postgresql-store": "git://github.com/dberesford/seneca-postgresql-store.git",
     "shortid": "2.2.2",
