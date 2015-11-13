@@ -25,8 +25,8 @@
   },
   "devDependencies": {
     "chai": "2.2.0",
-    "pre-commit": "1.0.7",
     "lab": "5.15.1",
+    "pre-commit": "1.0.7",
     "sinon": "1.16.1"
   },
   "dependencies": {
