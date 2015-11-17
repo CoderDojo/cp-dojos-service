@@ -8,7 +8,8 @@
   },
   "scripts": {
     "start": "node service.js",
-    "test": "bash -c 'source ./config/development.env; ./node_modules/.bin/lab --ignore __core-js_shared__ --flat --threshold 68 -r html -o ./coverage/coverage.html -r lcov -o ./coverage/lcov.info -r json -o ./coverage/coverage.json -r console -o stdout'",
+    "lint": "./node_modules/.bin/semistandard *.js config/config.js",
+    "test": "bash -c 'source ./config/development.env; npm run lint && ./node_modules/.bin/lab --ignore __core-js_shared__ --flat --threshold 68 -r html -o ./coverage/coverage.html -r lcov -o ./coverage/lcov.info -r json -o ./coverage/coverage.json -r console -o stdout'",
     "covrep": "bash test/covrep.sh"
   },
   "pre-commit": [
@@ -27,6 +28,7 @@
     "chai": "2.2.0",
     "lab": "5.15.1",
     "pre-commit": "1.0.7",
+    "semistandard": "7.0.2",
     "sinon": "1.16.1"
   },
   "dependencies": {
