@@ -46,6 +46,7 @@
     "moment": "2.10.3",
     "newrelic": "1.19.2",
     "node-geocoder": "2.23.0",
+    "pm2": "0.15.10",
     "pg": "4.4.0",
     "postgrator": "2.2.0",
     "randomstring": "1.0.6",
