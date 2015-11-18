@@ -1,16 +1,14 @@
 'use strict';
 
-var util = require('util');
 var _ = require('lodash');
 var async = require('async');
 var slug = require('slug');
 var shortid = require('shortid');
 var crypto = require('crypto');
 var randomstring = require('randomstring');
-var fs = require('fs');
 var moment = require('moment');
 var pg = require('pg');
-var request = require('request').defaults({ json: true });
+var request = require('request').defaults({json: true});
 var isoc = require('isoc');
 var countries = require('./data/countries');
 var continents = require('./data/continents');
@@ -20,14 +18,12 @@ var debug = require('debug')('dojos');
 var bunyan = require('bunyan');
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
-var path = require('path');
 var fs = require('fs');
-var DEFAULT_LANG = 'en_US';
 
 var logger;
 if (process.env.LOGENTRIES_ENABLED === 'true') {
   var Logger = require('le_node');
-  var loggerDefinition = Logger.bunyanStream({ token: process.env.LOGENTRIES_TOKEN});
+  var loggerDefinition = Logger.bunyanStream({token: process.env.LOGENTRIES_TOKEN});
   logger = bunyan.createLogger(loggerDefinition);
 } else {
   logger = bunyan.createLogger({name: 'cp-dojos-service', level: 'warn'});
@@ -37,14 +33,13 @@ module.exports = function (options) {
   var seneca = this;
   var plugin = 'cd-dojos';
   var ENTITY_NS = 'cd/dojos';
-  var USER_DOJO_ENTITY_NS = "cd/usersdojos";
-  var STATS_ENTITY_NS = "cd/stats";
-  var DOJO_LEADS_ENTITY_NS = "cd/dojoleads";
+  var USER_DOJO_ENTITY_NS = 'cd/usersdojos';
+  var STATS_ENTITY_NS = 'cd/stats';
+  var DOJO_LEADS_ENTITY_NS = 'cd/dojoleads';
   var CDF_ADMIN = 'cdf-admin';
   var DEFAULT_INVITE_USER_TYPE = 'mentor';
   var setupDojoSteps = require('./data/setup_dojo_steps');
   var dojoConfig = require('./data/dojos_config');
-  var so = seneca.options();
   var protocol = process.env.PROTOCOL || 'http';
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
@@ -99,12 +94,12 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'continent_codes'}, cmd_get_continent_codes);
   seneca.add({role: plugin, cmd: 'reverse_geocode'}, cmd_reverse_geocode);
 
-  function cmd_update_dojo_founder(args, done){
+  function cmd_update_dojo_founder (args, done) {
     logger.info({args: args}, 'cmd_update_dojo_founder');
     var founder = args.founder;
     var seneca = this;
 
-    if(_.isEmpty(founder)){
+    if (_.isEmpty(founder)) {
       return done(new Error('Founder is empty'));
     }
 
@@ -115,17 +110,17 @@ module.exports = function (options) {
       getCurrentFounderUserDojo,
       updateOrCreateUserDojo,
       updateDojoCreatorEmail
-      ],done);
+    ], done);
 
-    function isCDFAdmin(done){
+    function isCDFAdmin (done) {
       var userId = args.user.id;
 
-      seneca.act({role: 'cd-users', cmd: 'load', id: userId, user: args.user}, function(err, user){
-        if(err){
+      seneca.act({role: 'cd-users', cmd: 'load', id: userId, user: args.user}, function (err, user) {
+        if (err) {
           return done(err);
         }
 
-        if(!_.contains(user.roles, 'cdf-admin')){
+        if (!_.contains(user.roles, 'cdf-admin')) {
           return done(new Error('Unauthorized'));
         }
 
@@ -133,15 +128,15 @@ module.exports = function (options) {
       });
     }
 
-    function getPreviousFounderUserDojo(done){
+    function getPreviousFounderUserDojo (done) {
       var query = {};
 
       query.userId = founder.previousFounderId;
       query.owner = 1;
       query.dojoId = founder.dojoId;
 
-      seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: query}, function(err, usersDojos){
-        if(err){
+      seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: query}, function (err, usersDojos) {
+        if (err) {
           return done(err);
         }
 
@@ -150,8 +145,8 @@ module.exports = function (options) {
       });
     }
 
-    function updatePreviousFounderUserDojo(userDojo, done){
-      if(_.isEmpty(userDojo)){
+    function updatePreviousFounderUserDojo (userDojo, done) {
+      if (_.isEmpty(userDojo)) {
         return done(new Error('Cannot find previous founder'));
       }
 
@@ -160,55 +155,65 @@ module.exports = function (options) {
       seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
     }
 
-    function getCurrentFounderUserDojo(prevFounderUserDojo, done){
+    function getCurrentFounderUserDojo (prevFounderUserDojo, done) {
       var query = {};
       query.userId = founder.id;
       query.dojoId = founder.dojoId;
 
-      seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: query}, function(err, currentFounder){
-        if(err) return done(err);
+      seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: query}, function (err, currentFounder) {
+        if (err) return done(err);
         return done(null, currentFounder[0]);
       });
     }
 
-    function updateOrCreateUserDojo(userDojo, done){
-      if(_.isEmpty(userDojo)){
+    function updateOrCreateUserDojo (userDojo, done) {
+      if (_.isEmpty(userDojo)) {
         userDojo = {};
         userDojo.dojoId = founder.dojoId;
         userDojo.userId = founder.id;
       }
 
-      if(!userDojo.userTypes) userDojo.userTypes = [];
+      if (!userDojo.userTypes) userDojo.userTypes = [];
 
-      if(!_.contains(userDojo.userTypes, 'champion')) userDojo.userTypes.push('champion');
+      if (!_.contains(userDojo.userTypes, 'champion')) userDojo.userTypes.push('champion');
 
-      if(!userDojo.userPermissions) userDojo.userPermissions = [];
+      if (!userDojo.userPermissions) userDojo.userPermissions = [];
 
-      if(!_.contains(userDojo.userPermissions, 'dojo-admin')) userDojo.userPermissions.push({title: 'Dojo Admin', name: 'dojo-admin'});
+      if (!_.contains(userDojo.userPermissions, 'dojo-admin')) {
+        userDojo.userPermissions.push({
+          title: 'Dojo Admin',
+          name: 'dojo-admin'
+        });
+      }
 
-      if(!_.contains(userDojo.userPermissions, 'ticketing-admin')) userDojo.userPermissions.push({title: 'Ticketing Admin', name: 'ticketing-admin'});
+      if (!_.contains(userDojo.userPermissions, 'ticketing-admin')) {
+        userDojo.userPermissions.push({
+          title: 'Ticketing Admin',
+          name: 'ticketing-admin'
+        });
+      }
       userDojo.owner = 1;
       seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
     }
 
-    function updateDojoCreatorEmail(userDojo, done) {
+    function updateDojoCreatorEmail (userDojo, done) {
       var userId = userDojo.userId;
       var dojoId = userDojo.dojoId;
 
-      if(!userId || !dojoId) return done(null, {ok: false, why: 'No userId or dojoId for new Dojo creator.'});
+      if (!userId || !dojoId) return done(null, {ok: false, why: 'No userId or dojoId for new Dojo creator.'});
 
       async.waterfall([
         loadUser,
         updateDojo
       ], done);
 
-      function loadUser(done) {
+      function loadUser (done) {
         seneca.act({role: 'cd-users', cmd: 'load', id: userId, user: args.user}, done);
       }
 
-      function updateDojo(user, done) {
+      function updateDojo (user, done) {
         seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
-          if(err) return done(err);
+          if (err) return done(err);
           dojo.creatorEmail = user.email;
           seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, done);
         });
@@ -216,35 +221,38 @@ module.exports = function (options) {
     }
   }
 
-  function cmd_create_dojo_email(args, done) {
+  function cmd_create_dojo_email (args, done) {
     logger.info({args: args}, 'cmd_create_dojo_email');
     if (!args.dojo) {
       return done(new Error('Dojo data is missing.'));
     }
 
-    if(!_.get(options, 'google-api.enabled')) {
+    if (!_.get(options, 'google-api.enabled')) {
       return done();
     }
 
-    //check if Google API private key file exists
+    // check if Google API private key file exists
     if (!fs.existsSync(options['google-api'].keyFile)) {
-      return done("Google API private key not found", null);
+      return done('Google API private key not found', null);
     }
 
     var jwt = new google.auth.JWT(
       options['google-api'].email,
       options['google-api'].keyFile,
-      "",
+      '',
       options['google-api'].scopes,
       options['google-api'].subject
     );
 
     jwt.authorize(function (err, data) {
       if (err) {
-        return done(err)
+        return done(err);
       }
 
       getGoogleUserData(args.dojo, function (err, res) {
+        if (err) {
+          return done(err);
+        }
 
         var googleNewAccountData = res.userData;
         var tempPass = googleNewAccountData.tempPass;
@@ -257,18 +265,18 @@ module.exports = function (options) {
           auth: jwt
         }, function (err, data) {
           if (err) {
-            return done(err)
+            return done(err);
           }
 
           seneca.act({role: 'cd-users', cmd: 'load', id: dojo.creator, user: args.user}, function (err, dojoCreator) {
             if (err) {
-              return done(err)
+              return done(err);
             }
 
             var locality = args.locality || 'en_US';
             var code = 'google-email-pass-';
 
-            //send dojo creator an email with dojo's newly created email address and it's temp password
+            // send dojo creator an email with dojo's newly created email address and it's temp password
             var payload = {
               to: dojoCreator.email,
               code: code,
@@ -277,7 +285,7 @@ module.exports = function (options) {
             };
             seneca.act({role: plugin, cmd: 'send_email', payload: payload}, function (err, res) {
               if (err) {
-                return done(err)
+                return done(err);
               }
 
               done(null, data);
@@ -288,49 +296,49 @@ module.exports = function (options) {
     });
   }
 
-  function getGoogleUserData(dojo, done) {
+  function getGoogleUserData (dojo, done) {
     var userData = {};
 
     seneca.act('role:cd-dojos,cmd:load', {id: dojo.id}, function (err, res) {
       if (err) {
-        return done(err)
+        return done(err);
       }
 
       dojo = res.data$();
 
-      //this can look something like this: nsc-mahon-cork.ie@coderdojo.com
+      // this can look something like this: nsc-mahon-cork.ie@coderdojo.com
       var primaryEmail = _.last(dojo.urlSlug.split('/')).concat('.', dojo.alpha2.toLowerCase(), '@coderdojo.com');
 
       if (process.env.ENVIRONMENT === 'development') {
         primaryEmail = 'dev-' + primaryEmail;
       }
 
-      //required user data
+      // required user data
       userData.name = {
-        familyName: dojo.name, //this can be changed with the champion name & family name
+        familyName: dojo.name, // this can be changed with the champion name & family name
         givenName: dojo.placeName || dojo.address1
       };
       var pass = randomstring.generate(8);
       userData.tempPass = pass;
-      userData.password = sha1sum(pass);//use default pass for now; replace this with random pass when finished
-      userData.hashFunction = "SHA-1";
+      userData.password = sha1sum(pass);// use default pass for now; replace this with random pass when finished
+      userData.hashFunction = 'SHA-1';
       userData.primaryEmail = primaryEmail;
       userData.changePasswordAtNextLogin = true;
       userData.emails = [
         {
-          "address": "cristian.kiss@nearform.com",
-          "type": "other",
-          "customType": "",
-          "primary": false
+          address: 'cristian.kiss@nearform.com',
+          type: 'other',
+          customType: '',
+          primary: false
         }
       ];
       userData.organizations = [
         {
-          "name": "nearform_test",
-          "title": "champion",
-          "primary": true,
-          "type": "school",
-          "description": "new test dojo",
+          name: 'nearform_test',
+          title: 'champion',
+          primary: true,
+          type: 'school',
+          description: 'new test dojo',
           domain: 'coderdojo.org'
         }
       ];
@@ -339,26 +347,28 @@ module.exports = function (options) {
     });
   }
 
-  function sha1sum(input){
-    return crypto.createHash('sha1').update(JSON.stringify(input)).digest('hex')
+  function sha1sum (input) {
+    return crypto.createHash('sha1').update(JSON.stringify(input)).digest('hex');
   }
 
-  function cmd_search_dojo_leads(args, done){
+  function cmd_search_dojo_leads (args, done) {
     logger.info({args: args}, 'cmd_search_dojo_leads');
     var dojoLeadsEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
     dojoLeadsEntity.list$(args.query, done);
   }
 
-  function cmd_uncompleted_dojos(args, done) {
+  function cmd_uncompleted_dojos (args, done) {
     var query = {creator: args.user.id, deleted: 0};
-    seneca.act({role: plugin, cmd: 'list', query: query}, function(err, dojos){
-      if(err){ return done(err) }
-      if(dojos.length > 0) {
+    seneca.act({role: plugin, cmd: 'list', query: query}, function (err, dojos) {
+      if (err) {
+        return done(err);
+      }
+      if (dojos.length > 0) {
         var uncompletedDojos = [];
         async.each(dojos, function (dojo, cb) {
-          //check if dojo "setup dojo step is completed"
+          // check if dojo "setup dojo step is completed"
           seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojo.dojoLeadId}, function (err, dojoLead) {
-            if(err) return cb(err);
+            if (err) return cb(err);
             if (dojoLead) {
               var isCompleted = checkSetupYourDojoIsCompleted(dojoLead);
               if (!isCompleted) {
@@ -375,20 +385,20 @@ module.exports = function (options) {
     });
   }
 
-  function checkSetupYourDojoIsCompleted(dojoLead){
+  function checkSetupYourDojoIsCompleted (dojoLead) {
     var isDojoCompleted = true;
 
-    if(dojoLead.application.setupYourDojo) {
+    if (dojoLead.application.setupYourDojo) {
       var setupYourDojo = dojoLead.application.setupYourDojo;
       var checkboxes = _.flatten(_.pluck(setupDojoSteps, 'checkboxes'));
 
-      _.each(checkboxes, function(checkbox){
+      _.each(checkboxes, function (checkbox) {
         if (!setupYourDojo[checkbox.name]) {
           isDojoCompleted = false;
         }
 
-        if(checkbox.textField){
-          if(!setupYourDojo[checkbox.name + "Text"]) {
+        if (checkbox.textField) {
+          if (!setupYourDojo[checkbox.name + 'Text']) {
             isDojoCompleted = false;
           }
         }
@@ -398,32 +408,31 @@ module.exports = function (options) {
     return isDojoCompleted;
   }
 
-  function isUserChampionAndDojoAdmin(query, requestingUser, done) {
-
-    if(_.contains(requestingUser.roles, 'cdf-admin')) {
+  function isUserChampionAndDojoAdmin (query, requestingUser, done) {
+    if (_.contains(requestingUser.roles, 'cdf-admin')) {
       return done(null, true);
     }
 
-    seneca.act({role:plugin, cmd:'load_usersdojos', query:query}, function (err, response) {
-      if(err) return done(err);
+    seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
+      if (err) return done(err);
       var userDojo = response[0];
-      var isDojoChampion  = _.contains(userDojo.userTypes, 'champion');
-      var isDojoAdmin = _.find(userDojo.userPermissions, function(userPermission) {
-                      return userPermission.name === 'dojo-admin';
-                    });
-      if(isDojoChampion && isDojoAdmin) return done(null, true);
+      var isDojoChampion = _.contains(userDojo.userTypes, 'champion');
+      var isDojoAdmin = _.find(userDojo.userPermissions, function (userPermission) {
+        return userPermission.name === 'dojo-admin';
+      });
+      if (isDojoChampion && isDojoAdmin) return done(null, true);
       return done(null, false);
     });
   }
 
-  function cmd_search(args, done) {
+  function cmd_search (args, done) {
     logger.info({args: args}, 'cmd_search');
     async.waterfall([
       function (done) {
         var query = args.query;
-        if(query.name) query.name = new RegExp(query.name, 'i');
-        if(query.email) query.email = new RegExp(query.email, 'i');
-        if(query.creatorEmail) query.creatorEmail = new RegExp(query.creatorEmail, 'i');
+        if (query.name) query.name = new RegExp(query.name, 'i');
+        if (query.email) query.email = new RegExp(query.email, 'i');
+        if (query.creatorEmail) query.creatorEmail = new RegExp(query.creatorEmail, 'i');
 
         // taken from https://developer.mozilla.org/en/docs/Web/JavaScript/Guide/Regular_Expressions
         // needed because if a userCreator email is abc+xyz@example.com, it breaks the input string for
@@ -434,58 +443,59 @@ module.exports = function (options) {
         seneca.act({role: plugin, cmd: 'list', query: query}, done);
       },
       function (searchResults, done) {
-        async.each(searchResults, function (dojo, cb){
+        async.each(searchResults, function (dojo, cb) {
           seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojo.id, owner: 1}},
-            function(err, userDojos){
-              if(err) return cb(err);
-              if(userDojos.length < 1) return cb();
+            function (err, userDojos) {
+              if (err) return cb(err);
+              if (userDojos.length < 1) return cb();
               var userIds = _.pluck(userDojos, 'userId');
-              seneca.act({role: 'cd-users', cmd: 'list', ids: userIds}, function(err, users){
-                if(err) return cb(err);
-                dojo.creators = _.map(users, function(user){
+              seneca.act({role: 'cd-users', cmd: 'list', ids: userIds}, function (err, users) {
+                if (err) return cb(err);
+                dojo.creators = _.map(users, function (user) {
                   return {email: user.email, id: user.id};
                 });
                 return cb();
               });
             });
         }, function (err) {
-          if(err) return done(err);
+          if (err) return done(err);
           return done(null, searchResults);
         });
       },
       function (searchResult, done) {
         var userIds = _.chain(searchResult).pluck('creators').flatten().pluck('id').uniq().value();
-        seneca.act({role:'cd-agreements', cmd:'list', userIds: userIds}, function (err, agreements) {
+        seneca.act({role: 'cd-agreements', cmd: 'list', userIds: userIds}, function (err, agreements) {
+          if (err) return done(err);
           agreements = _.indexBy(agreements, 'userId');
-            _.each(searchResult, function(dojo) {
-              dojo.agreements = [];
-              _.each(dojo.creators, function(creator){
-                creator.agreements = [];
-                if (agreements[creator.id]) {
-                  creator.agreements = agreements[creator.id].agreements;
-                }
-              });
+          _.each(searchResult, function (dojo) {
+            dojo.agreements = [];
+            _.each(dojo.creators, function (creator) {
+              creator.agreements = [];
+              if (agreements[creator.id]) {
+                creator.agreements = agreements[creator.id].agreements;
+              }
             });
-            return done(null, searchResult);
+          });
+          return done(null, searchResult);
         });
       }
-    ], function(err, res) {
+    ], function (err, res) {
       if (err) return done(null, {error: err});
       return done(null, res);
     });
   }
 
-  function cmd_dojos_state_count(args, done) {
+  function cmd_dojos_state_count (args, done) {
     logger.info({args: args}, 'cmd_dojos_state_count');
     var country = args.country;
     var countData = {};
 
-    seneca.make$(ENTITY_NS).list$({limit$:'NULL', alpha2:country, deleted: 0, verified: 1}, function(err, response) {
-      if(err) return done(err);
+    seneca.make$(ENTITY_NS).list$({limit$: 'NULL', alpha2: country, deleted: 0, verified: 1}, function (err, response) {
+      if (err) return done(err);
       countData[country] = {};
-      _.each(response, function(dojo) {
-        if(dojo.coordinates && dojo.stage !== 4) {
-          if(!countData[dojo.alpha2][dojo.admin1Name]) countData[dojo.alpha2][dojo.admin1Name] = {total:0};
+      _.each(response, function (dojo) {
+        if (dojo.coordinates && dojo.stage !== 4) {
+          if (!countData[dojo.alpha2][dojo.admin1Name]) countData[dojo.alpha2][dojo.admin1Name] = {total: 0};
           countData[dojo.alpha2][dojo.admin1Name].total += 1;
           countData[dojo.alpha2][dojo.admin1Name].latitude = dojo.coordinates.split(',')[0];
           countData[dojo.alpha2][dojo.admin1Name].longitude = dojo.coordinates.split(',')[1];
@@ -493,10 +503,9 @@ module.exports = function (options) {
       });
       done(null, countData);
     });
-
   }
 
-  function cmd_dojos_count(args, done) {
+  function cmd_dojos_count (args, done) {
     logger.info({args: args}, 'cmd_dojos_count');
     async.waterfall([
       getDojos,
@@ -504,40 +513,40 @@ module.exports = function (options) {
       getDojoCount
     ], done);
 
-    function getDojos(done) {
+    function getDojos (done) {
       var dojos = [];
-      var query = {limit$:'NULL'};
+      var query = {limit$: 'NULL'};
       query.deleted = 0;
       query.verified = 1;
-      seneca.make$(ENTITY_NS).list$(query, function(err, response) {
-        if(err) return response;
-        async.each(response, function(dojo, cb) {
-          if(dojo.stage !== 4) {
+      seneca.make$(ENTITY_NS).list$(query, function (err, response) {
+        if (err) return response;
+        async.each(response, function (dojo, cb) {
+          if (dojo.stage !== 4) {
             dojos.push(dojo);
           }
 
           cb();
-        }, function() {
+        }, function () {
           done(null, dojos);
         });
       });
     }
 
-    function getCountries(dojos, done) {
-      seneca.act({role:'cd-countries', cmd:'countries_continents'}, function(err, response) {
-        if(err) return done(err);
+    function getCountries (dojos, done) {
+      seneca.act({role: 'cd-countries', cmd: 'countries_continents'}, function (err, response) {
+        if (err) return done(err);
         done(null, dojos, response);
       });
     }
 
-    function getDojoCount(dojos, countries, done) {
-      var countData = {dojos:{continents:{}}};
-      _.each(dojos, function(dojo) {
-        if(countries.countries[dojo.alpha2]) {
+    function getDojoCount (dojos, countries, done) {
+      var countData = {dojos: {continents: {}}};
+      _.each(dojos, function (dojo) {
+        if (countries.countries[dojo.alpha2]) {
           var continent = countries.countries[dojo.alpha2].continent;
-          if(!countData.dojos.continents[continent]) countData.dojos.continents[continent] = {total:0, countries:{}};
+          if (!countData.dojos.continents[continent]) countData.dojos.continents[continent] = {total: 0, countries: {}};
           countData.dojos.continents[continent].total += 1;
-          if(!countData.dojos.continents[continent].countries[dojo.alpha2]) countData.dojos.continents[continent].countries[dojo.alpha2] = {total:0};
+          if (!countData.dojos.continents[continent].countries[dojo.alpha2]) countData.dojos.continents[continent].countries[dojo.alpha2] = {total: 0};
           countData.dojos.continents[continent].countries[dojo.alpha2].total += 1;
         }
       });
@@ -545,22 +554,22 @@ module.exports = function (options) {
     }
   }
 
-  function cmd_list(args, done) {
+  function cmd_list (args, done) {
     logger.info({args: args}, 'cmd_list');
     var query = args.query || {};
-    if(!query.limit$) query.limit$ = 'NULL';
-    if(query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []);
+    if (!query.limit$) query.limit$ = 'NULL';
+    if (query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []);
     seneca.make$(ENTITY_NS).list$(query, done);
   }
 
-  function cmd_dojos_by_country(args, done) {
+  function cmd_dojos_by_country (args, done) {
     var query = args.query || {};
     var dojosByCountry = {};
 
     seneca.act({role: plugin, cmd: 'list', query: query}, function (err, dojos) {
-      if(err) return done(err);
+      if (err) return done(err);
       _.each(dojos, function (dojo) {
-        if(!dojosByCountry[dojo.countryName]) dojosByCountry[dojo.countryName] = [];
+        if (!dojosByCountry[dojo.countryName]) dojosByCountry[dojo.countryName] = [];
         dojosByCountry[dojo.countryName].push(dojo);
       });
 
@@ -573,44 +582,50 @@ module.exports = function (options) {
     });
   }
 
-  function cmd_load(args, done) {
+  function cmd_load (args, done) {
     logger.info({args: args}, 'cmd_load');
-    seneca.make$(ENTITY_NS).load$(args.id, function(err, response) {
-      if(err) return done(err);
+    seneca.make$(ENTITY_NS).load$(args.id, function (err, response) {
+      if (err) return done(err);
       done(null, response);
     });
   }
 
-  function cmd_find(args, done) {
+  function cmd_find (args, done) {
     logger.info({args: args}, 'cmd_find');
-    if(args.query){ args.query.deleted = 0 }
-    seneca.make$(ENTITY_NS).load$(args.query, function(err, response) {
-      if(err) return done(err);
+    if (args.query) {
+      args.query.deleted = 0;
+    }
+    seneca.make$(ENTITY_NS).load$(args.query, function (err, response) {
+      if (err) return done(err);
       done(null, response);
     });
   }
 
   // user can only create X number of dojos
-  function wrapCheckRateLimitCreateDojo(f) {
-    return function(args, done) {
-      seneca.make$(USER_DOJO_ENTITY_NS).list$({userId: args.user.id}, function(err, data) {
+  function wrapCheckRateLimitCreateDojo (f) {
+    return function (args, done) {
+      seneca.make$(USER_DOJO_ENTITY_NS).list$({userId: args.user.id}, function (err, data) {
         if (err) return done(err);
         if (data.length >= options.limits.maxUserDojos) {
-          return done(null, {ok: false, why: 'Rate limit exceeded, you have already created ' + data.length + ' dojos, the maximum allowed is ' + options.limits.maxUserDojos});
+          return done(null, {
+            ok: false,
+            why: 'Rate limit exceeded, you have already created ' + data.length + ' dojos, the maximum allowed is ' + options.limits.maxUserDojos
+          });
         }
 
         return f(args, done);
       });
-    }
+    };
   }
 
   function slugify (name) {
     return slug(name);
   }
 
-  function cmd_create(args, done){
+  function cmd_create (args, done) {
     logger.info({args: args}, 'cmd_create');
-    var dojo = args.dojo, baseSlug;
+    var dojo, baseSlug;
+    dojo = args.dojo;
     delete dojo.emailSubject;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
     var user = args.user;
@@ -627,7 +642,7 @@ module.exports = function (options) {
         dojo.geoPoint = {
           lat: pair[0],
           lon: pair[1]
-        }
+        };
       }
     }
 
@@ -636,51 +651,51 @@ module.exports = function (options) {
     ]).compact().map(slugify).value().join('/').toLowerCase();
 
     async.waterfall([
-      function (cb){
-        var urlSlug = {urlSlug: new RegExp('^' + baseSlug,  'i')};
-        seneca.make$(ENTITY_NS).list$(urlSlug,function(err, dojos){
-          if(err){
+      function (cb) {
+        var urlSlug = {urlSlug: new RegExp('^' + baseSlug, 'i')};
+        seneca.make$(ENTITY_NS).list$(urlSlug, function (err, dojos) {
+          if (err) {
             return cb(err);
           }
           var urlSlugs = {};
-          if(_.isEmpty(dojos)){
+          if (_.isEmpty(dojos)) {
             return cb(null, baseSlug);
           }
 
           urlSlugs = _.pluck(dojos, 'urlSlug');
           var urlSlug = baseSlug;
-          for (var idx = 1; urlSlugs.indexOf(urlSlug) !=  -1; urlSlug = baseSlug + '-' + idx, idx++);
+          for (var idx = 1; urlSlugs.indexOf(urlSlug) !== -1; urlSlug = baseSlug + '-' + idx, idx++);
 
           cb(null, urlSlug);
         });
-      }, function (urlSlug, cb){
+      }, function (urlSlug, cb) {
         dojo.urlSlug = urlSlug;
         seneca.make$(ENTITY_NS).save$(dojo, cb);
-      }, function (dojo, cb){
+      }, function (dojo, cb) {
         userDojo.owner = 1;
         userDojo.userTypes = ['champion'];
-        //add user type from users profile.
-        seneca.act({role: 'cd-profiles', cmd: 'list', query:{userId: user.id}}, function (err, response) {
-          if(err) return cb(err);
+        // add user type from users profile.
+        seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: user.id}}, function (err, response) {
+          if (err) return cb(err);
           var profile = response[0];
           userDojo.userTypes.push(profile.userType);
           userDojo.userTypes = _.uniq(userDojo.userTypes);
           userDojo.userPermissions = [
-            {title:'Dojo Admin', name:'dojo-admin'},
-            {title:'Ticketing Admin', name:'ticketing-admin'}
+            {title: 'Dojo Admin', name: 'dojo-admin'},
+            {title: 'Ticketing Admin', name: 'ticketing-admin'}
           ];
           userDojo.deleted = 0;
           userDojo.userId = user.id;
           userDojo.dojoId = dojo.id;
           usersDojosEntity.save$(userDojo, function (err, userDojo) {
-            if(err) return cb(err);
+            if (err) return cb(err);
             cb(null, dojo);
           });
         });
       }], done);
   }
 
-  function cmd_update(args, done){
+  function cmd_update (args, done) {
     logger.info({args: args}, 'cmd_update');
     var dojo = args.dojo;
 
@@ -690,7 +705,7 @@ module.exports = function (options) {
     var emailSubject = dojo.emailSubject || null;
     delete dojo.emailSubject;
 
-    //load dojo before saving to get it's current state
+    // load dojo before saving to get it's current state
     var dojoEnt = seneca.make$(ENTITY_NS);
     var dojoLeadsEnt = seneca.make$(DOJO_LEADS_ENTITY_NS);
 
@@ -704,28 +719,30 @@ module.exports = function (options) {
        *      * when verified === 1 and if the dojo has no email set, create a new
        *        CD Organization(@coderdojo.com) email address for it
        * - if verified changed to false, clear verifiedAt and verifiedBy
-      */
+       */
       function (currentDojoState, done) {
-        if(!dojo.dojoLeadId) return done(null, dojo);
+        if (!dojo.dojoLeadId) return done(null, dojo);
 
-        if(dojo.coordinates && dojo.coordinates != currentDojoState.coordinates){
+        if (dojo.coordinates && dojo.coordinates !== currentDojoState.coordinates) {
           var pair = dojo.coordinates.split(',').map(parseFloat);
           if (pair.length === 2 && _.isFinite(pair[0]) && _.isFinite(pair[1])) {
             dojo.geoPoint = {
               lat: pair[0],
               lon: pair[1]
-            }
+            };
           }
         }
 
         updateLogic();
 
-        function updateLogic(){
+        function updateLogic () {
           if (editDojoFlag) {
-            dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
-              if (err) { return done(err) }
+            dojoLeadsEnt.load$(dojo.dojoLeadId, function (err, dojoLead) {
+              if (err) {
+                return done(err);
+              }
               dojoLead = dojoLead.data$();
-              if(dojoLead && dojoLead.application && dojoLead.application.dojoListing) {
+              if (dojoLead && dojoLead.application && dojoLead.application.dojoListing) {
                 dojoLead.application.dojoListing.stage = dojo.stage;
                 dojoLead.application.dojoListing.notes = dojo.notes;
                 dojoLead.application.dojoListing.name = dojo.name;
@@ -750,8 +767,15 @@ module.exports = function (options) {
                 dojoLead.application.dojoListing.private = dojo.private;
                 dojoLead.application.dojoListing.creatorEmail = dojo.creatorEmail;
 
-                seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead, dojoAction: "update"}, function (err, dojoLead) {
-                  if (err) { return done(err) }
+                seneca.act({
+                  role: plugin,
+                  cmd: 'save_dojo_lead',
+                  dojoLead: dojoLead,
+                  dojoAction: 'update'
+                }, function (err, dojoLead) {
+                  if (err) {
+                    return done(err);
+                  }
                   done(null, dojo);
                 });
               } else {
@@ -759,44 +783,69 @@ module.exports = function (options) {
               }
             });
           } else {
-            if (dojo.hasOwnProperty("verified") && dojo.verified === 1) {
+            if (dojo.hasOwnProperty('verified') && dojo.verified === 1) {
               if (dojo.verifiedAt === null) {
                 dojo.verifiedAt = new Date();
               }
               dojo.verifiedBy = args.user.id;
-              dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
-                if (err) { return done(err) }
+              dojoLeadsEnt.load$(dojo.dojoLeadId, function (err, dojoLead) {
+                if (err) {
+                  return done(err);
+                }
                 dojoLead = dojoLead.data$();
                 dojoLead.completed = true;
                 dojoLead.currentStep = 5;  // salesforce trigger to set the Dojo Listing Verified...
-                //update dojoLead
-                seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead, dojoAction: "verify"}, function (err, dojoLead) {
-                  if (err) { return done(err) }
-                  //create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
-                  if (!currentDojoState.email){
-                    seneca.act({role: plugin, cmd: 'create_dojo_email', dojo: dojo, subject: emailSubject}, function (err, organizationEmail) {
-                      if (err) { return done(err) }
+                // update dojoLead
+                seneca.act({
+                  role: plugin,
+                  cmd: 'save_dojo_lead',
+                  dojoLead: dojoLead,
+                  dojoAction: 'verify'
+                }, function (err, dojoLead) {
+                  if (err) {
+                    return done(err);
+                  }
+                  // create CD Organization(@coderdojo.com) email address for the dojo if the dojo has no email already set
+                  if (!currentDojoState.email) {
+                    seneca.act({
+                      role: plugin,
+                      cmd: 'create_dojo_email',
+                      dojo: dojo,
+                      subject: emailSubject
+                    }, function (err, organizationEmail) {
+                      if (err) {
+                        return done(err);
+                      }
                       if (organizationEmail) {
                         dojo.email = organizationEmail.primaryEmail;
                       }
                       done(null, dojo);
-                    })
+                    });
                   } else {
                     done(null, dojo);
                   }
                 });
               });
-            } else if (dojo.hasOwnProperty("verified") && dojo.verified === 0){
+            } else if (dojo.hasOwnProperty('verified') && dojo.verified === 0) {
               dojo.verifiedAt = null;
               dojo.verifiedBy = null;
-              dojoLeadsEnt.load$(dojo.dojoLeadId, function(err, dojoLead) {
-                if (err) { return done(err) }
+              dojoLeadsEnt.load$(dojo.dojoLeadId, function (err, dojoLead) {
+                if (err) {
+                  return done(err);
+                }
                 dojoLead = dojoLead.data$();
                 dojoLead.completed = false;
                 dojoLead.currentStep = 4;  // reset state in salesforce
-                //update dojoLead
-                seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: dojoLead, dojoAction: "verify"}, function (err, dojoLead) {
-                  if (err) { return done(err) }
+                // update dojoLead
+                seneca.act({
+                  role: plugin,
+                  cmd: 'save_dojo_lead',
+                  dojoLead: dojoLead,
+                  dojoAction: 'verify'
+                }, function (err, dojoLead) {
+                  if (err) {
+                    return done(err);
+                  }
                   done(null, dojo);
                 });
               });
@@ -806,14 +855,14 @@ module.exports = function (options) {
           }
         }
       },
-      function(dojo, done){
-        if(editDojoFlag && (dojo.alpha2 || dojo.admin1Name || dojo.placeName || dojo.name)){
+      function (dojo, done) {
+        if (editDojoFlag && (dojo.alpha2 || dojo.admin1Name || dojo.placeName || dojo.name)) {
           var baseSlug = _.chain([
             dojo.alpha2, dojo.admin1Name, dojo.placeName, dojo.name
           ]).compact().map(slugify).value().join('/').toLowerCase();
 
-          var urlSlug = {urlSlug: new RegExp('^' + baseSlug,  'i')};
-          seneca.make$(ENTITY_NS).list$(urlSlug,function(err, dojos) {
+          var urlSlug = {urlSlug: new RegExp('^' + baseSlug, 'i')};
+          seneca.make$(ENTITY_NS).list$(urlSlug, function (err, dojos) {
             if (err) {
               return done(err);
             }
@@ -834,7 +883,7 @@ module.exports = function (options) {
         }
       },
       function (dojo, done) {
-        //update dojo geoPoint as well if coordinates are updated
+        // update dojo geoPoint as well if coordinates are updated
 
         seneca.make$(ENTITY_NS).save$(dojo, function (err, response) {
           if (err) return done(err);
@@ -847,16 +896,20 @@ module.exports = function (options) {
     });
   }
 
-  function checkUserDojoPermissions(dojoId, user, cb) {
+  function checkUserDojoPermissions (dojoId, user, cb) {
     // first check user is an admin
     if (_.contains(user.roles, CDF_ADMIN)) {
       return cb();
     }
 
     // check user is a member of this dojo
-    seneca.act({role:plugin, cmd:'load_usersdojos', query:{userId: user.id, dojoId: dojoId}}, function (err, response) {
-      if(err) return done(err);
-      if(_.isEmpty(response)) {
+    seneca.act({
+      role: plugin,
+      cmd: 'load_usersdojos',
+      query: {userId: user.id, dojoId: dojoId}
+    }, function (err, response) {
+      if (err) return cb(err);
+      if (_.isEmpty(response)) {
         return cb('User is not a member of this Dojo');
       } else {
         return cb();
@@ -864,47 +917,47 @@ module.exports = function (options) {
     });
   }
 
-  function checkDojoExists(dojoId, cb) {
-    seneca.make$(ENTITY_NS).load$(dojoId, function(err, ent) {
-      if(err) return cb(err);
+  function checkDojoExists (dojoId, cb) {
+    seneca.make$(ENTITY_NS).load$(dojoId, function (err, ent) {
+      if (err) return cb(err);
       return cb(null, ent !== null);
     });
   }
 
-  function wrapCheckCDFAdmin(f) {
-    return function(args, done) {
+  function wrapCheckCDFAdmin (f) {
+    return function (args, done) {
       var user = args.user;
       if (!_.contains(user.roles, CDF_ADMIN)) {
-        return done(null, {ok:false, why: 'You must be a CDF Admin user'});
+        return done(null, {ok: false, why: 'You must be a CDF Admin user'});
       }
       return f(args, done);
     };
-  };
+  }
 
-  function wrapDojoExists(f) {
-    return function(args, done) {
-      checkDojoExists(args.id, function(err, exists) {
+  function wrapDojoExists (f) {
+    return function (args, done) {
+      checkDojoExists(args.id, function (err, exists) {
         if (err) return done(err);
         if (!exists) return done(null, {ok: false, why: 'Dojo does not exist: ' + args.id, code: 404});
         return f(args, done);
       });
-    }
+    };
   }
 
-  function wrapDojoPermissions(f) {
-    return function(args, done) {
-      checkUserDojoPermissions(args.id, args.user, function(err) {
+  function wrapDojoPermissions (f) {
+    return function (args, done) {
+      checkUserDojoPermissions(args.id, args.user, function (err) {
         if (err) return done(null, {ok: false, why: err, code: 403});
         return f(args, done);
       });
-    }
+    };
   }
 
-  function cmd_delete(args, done){
+  function cmd_delete (args, done) {
     logger.info({args: args}, 'cmd_delete');
     var user = args.user;
     var dojo = args.dojo;
-    var query = {userId:user.id, dojoId:dojo.id};
+    var query = {userId: user.id, dojoId: dojo.id};
 
     async.waterfall([
       async.apply(isUserChampionAndDojoAdmin, query, user),
@@ -912,13 +965,13 @@ module.exports = function (options) {
       deleteUsersDojos,
       deleteDojoLead,
       deleteSalesForce
-    ], function(err, res) {
-      if(err) return done(null, {error: err});
+    ], function (err, res) {
+      if (err) return done(null, {error: err});
       return done(null, res);
     });
 
-    function deleteDojo(hasPermission, done) {
-      if(hasPermission) {
+    function deleteDojo (hasPermission, done) {
+      if (hasPermission) {
         var saveDojo = {
           id: dojo.id,
           deleted: 1,
@@ -926,7 +979,6 @@ module.exports = function (options) {
           deletedAt: new Date()
         };
         seneca.make$(ENTITY_NS).save$(saveDojo, done);
-
       } else {
         var err = new Error('cmd_delete/permission-error');
         err.critical = false;
@@ -934,12 +986,13 @@ module.exports = function (options) {
         done(err);
       }
     }
-    function deleteUsersDojos(dojo, done){
-      seneca.make$(USER_DOJO_ENTITY_NS).list$({dojoId: dojo.id}, function(err, list) {
+
+    function deleteUsersDojos (dojo, done) {
+      seneca.make$(USER_DOJO_ENTITY_NS).list$({dojoId: dojo.id}, function (err, list) {
         if (err) return done(err);
 
-        if(list && list.length > 0) {
-          async.each(list, function(ent, cb) {
+        if (list && list.length > 0) {
+          async.each(list, function (ent, cb) {
             ent.deleted = 1;
             ent.deletedBy = user.id;
             ent.deletedAt = new Date();
@@ -951,10 +1004,11 @@ module.exports = function (options) {
         }
       });
     }
-    function deleteDojoLead(done){
-      if(!dojo.dojoLeadId) return done(new Error("no dojo lead_id"));
 
-      seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojo.dojoLeadId}, function(err, ent) {
+    function deleteDojoLead (done) {
+      if (!dojo.dojoLeadId) return done(new Error('no dojo lead_id'));
+
+      seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojo.dojoLeadId}, function (err, ent) {
         if (err) return done(err);
 
         ent.completed = true;
@@ -965,13 +1019,14 @@ module.exports = function (options) {
         seneca.make$(DOJO_LEADS_ENTITY_NS).save$(ent, done);
       });
     }
-    function deleteSalesForce(dojoLead, done) {
-      seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojo.dojoLeadId}, function(err, res) {
-        if(err) return done(err);
+
+    function deleteSalesForce (dojoLead, done) {
+      seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojo.dojoLeadId}, function (err, res) {
+        if (err) return done(err);
 
         var lead = res.data$();
-        if(lead) {
-          seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: "delete"}, function (err, res) {
+        if (lead) {
+          seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: 'delete'}, function (err, res) {
             if (err) return done(err);
             return done(null, res);
           });
@@ -982,46 +1037,46 @@ module.exports = function (options) {
     }
   }
 
-  function cmd_bulk_update(args, done){
+  function cmd_bulk_update (args, done) {
     logger.info({args: args}, 'cmd_bulk_update');
-    async.each(args.dojos, function(dojo, cb) {
+    async.each(args.dojos, function (dojo, cb) {
       seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, cb);
     }, done);
   }
 
-  function cmd_bulk_delete(args, done){
+  function cmd_bulk_delete (args, done) {
     logger.info({args: args}, 'cmd_bulk_delete');
-    async.map(args.dojos, function deleteDojo(dojo, cb) {
+    async.map(args.dojos, function deleteDojo (dojo, cb) {
       seneca.act({role: plugin, cmd: 'delete', dojo: dojo, user: args.user}, cb);
     }, done);
   }
 
-  function cmd_my_dojos(args, done) {
+  function cmd_my_dojos (args, done) {
     async.waterfall([
-      function(done) {
+      function (done) {
         seneca.make$(USER_DOJO_ENTITY_NS).list$({userId: args.user.id, limit$: 'NULL', deleted: 0}, done);
       },
-      function(userDojos, done) {
+      function (userDojos, done) {
         if (!userDojos || !userDojos.length) {
-          return done(null ,[], []);
+          return done(null, [], []);
         }
 
         var dojoIds = _.pluck(userDojos, 'dojoId');
-        var query = {ids:dojoIds};
+        var query = {ids: dojoIds};
 
         var search = args.search;
-        if (search && search.from){
+        if (search && search.from) {
           query.skip$ = search.from;
         }
-        if (search && search.size){
+        if (search && search.size) {
           query.limit$ = search.size;
         }
-        if (search && search.sort){
+        if (search && search.sort) {
           query.sort$ = search.sort;
         }
         seneca.make$(ENTITY_NS).list$(query, _.partialRight(done, userDojos));
       },
-      function(dojos, userDojos, done) {
+      function (dojos, userDojos, done) {
         return done(null, {
           total: userDojos.length,
           records: dojos
@@ -1030,16 +1085,16 @@ module.exports = function (options) {
     ], done);
   }
 
-  function cmd_get_stats(args, done){
-    seneca.make$(STATS_ENTITY_NS).list$({limit$: 'NULL'}, function(err, dojos){
-      if(err){
+  function cmd_get_stats (args, done) {
+    seneca.make$(STATS_ENTITY_NS).list$({limit$: 'NULL'}, function (err, dojos) {
+      if (err) {
         return done(err);
       }
 
       var dojoMappedByContinent = {};
 
-      _.forEach(dojos, function(dojo){
-        if(!dojoMappedByContinent[dojo.continent]){
+      _.forEach(dojos, function (dojo) {
+        if (!dojoMappedByContinent[dojo.continent]) {
           dojoMappedByContinent[dojo.continent] = [];
         }
 
@@ -1050,111 +1105,110 @@ module.exports = function (options) {
     });
   }
 
-  function salesForceLogger(level, message) {
-    if(level === "error") {
+  function salesForceLogger (level, message) {
+    if (level === 'error') {
       seneca.log.error(message);
-    } else if(level === "success") {
+    } else if (level === 'success') {
       seneca.log.info(message);
     }
   }
 
   // Note at this stage we expect to have an existing Account and Lead types in salesforce, this is
   // done at inital champion registration in cp-users.
-  function updateSalesForce(dojoObj) {
+  function updateSalesForce (dojoObj) {
     var converted = dojoObj.dojoLead.converted || false;
 
-    if(dojoObj.currStep === 2) {
-      getSalesForceAccount(dojoObj.userId, function(err, res) {
-        if(res.error) return salesForceLogger("error", res.error);
+    if (dojoObj.currStep === 2) {
+      getSalesForceAccount(dojoObj.userId, function (err, res) {
+        if (err || res.error) return salesForceLogger('error', err || res.error);
         var accId = res.accId;
-        if(accId) {
-          updateSalesForceAccount(accId, dojoObj, function(err, res) {
-            if(res.error) return salesForceLogger("error", res.error);
-            if(res.success) salesForceLogger("success", res.success);
-            updateSalesForceLead(accId, dojoObj, function(err, res) {
-              if(res.error) return salesForceLogger("error", res.error);
-              if(res.success) return salesForceLogger("success", res.success);
+        if (accId) {
+          updateSalesForceAccount(accId, dojoObj, function (err, res) {
+            if (err || res.error) return salesForceLogger('error', err || res.error);
+            if (res.success) salesForceLogger('success', res.success);
+            updateSalesForceLead(accId, dojoObj, function (err, res) {
+              if (err || res.error) return salesForceLogger('error', err || res.error);
+              if (res.success) return salesForceLogger('success', res.success);
             });
-          })
-        } else {
-          return salesForceLogger("error", "[error][salesforce] no salesforce id recieved");
-        }
-      })
-    } else if(dojoObj.currStep === 3) {
-      getSalesForceAccount(dojoObj.userId, function(err, res) {
-        if(res.error) return salesForceLogger("error", res.error);
-        var accId = res.accId;
-        if(accId) {
-          updateSalesForceLead(accId, dojoObj, function(err, res) {
-            if(res.error) return salesForceLogger("error", res.error);
-            if(res.success) return salesForceLogger("success", res.success);
           });
         } else {
-          return salesForceLogger("error", "[error][salesforce] no salesforce id recieved");
+          return salesForceLogger('error', '[error][salesforce] no salesforce id recieved');
         }
       });
-    } else if(dojoObj.currStep === 4) {
-      getSalesForceAccount(dojoObj.userId, function(err, res) {
-        if(res.error) return salesForceLogger("error", res.error);
+    } else if (dojoObj.currStep === 3) {
+      getSalesForceAccount(dojoObj.userId, function (err, res) {
+        if (err || res.error) return salesForceLogger('error', err || res.error);
         var accId = res.accId;
-        if(accId) {
-          if(converted) {
-            updateSalesForceAccount(accId, dojoObj, function(err, res) {
-              if(res.error) return salesForceLogger("error", res.error);
-              if(res.success) return salesForceLogger("success", res.success);
+        if (accId) {
+          updateSalesForceLead(accId, dojoObj, function (err, res) {
+            if (err || res.error) return salesForceLogger('error', err || res.error);
+            if (res.success) return salesForceLogger('success', res.success);
+          });
+        } else {
+          return salesForceLogger('error', '[error][salesforce] no salesforce id recieved');
+        }
+      });
+    } else if (dojoObj.currStep === 4) {
+      getSalesForceAccount(dojoObj.userId, function (err, res) {
+        if (err || res.error) return salesForceLogger('error', err || res.error);
+        var accId = res.accId;
+        if (accId) {
+          if (converted) {
+            updateSalesForceAccount(accId, dojoObj, function (err, res) {
+              if (err || res.error) return salesForceLogger('error', err || res.error);
+              if (res.success) return salesForceLogger('success', res.success);
             });
           } else {
-            updateSalesForceLead(accId, dojoObj, function(err, res) {
-              if(res.error) return salesForceLogger("error", res.error);
-              if(res.success) return salesForceLogger("success", res.success);
+            updateSalesForceLead(accId, dojoObj, function (err, res) {
+              if (err || res.error) return salesForceLogger('error', err || res.error);
+              if (res.success) return salesForceLogger('success', res.success);
             });
           }
         } else {
-          return salesForceLogger("error", "[error][salesforce] no salesforce id recieved");
+          return salesForceLogger('error', '[error][salesforce] no salesforce id recieved');
         }
-      })
-    } else if(dojoObj.currStep === 5) {
-      getSalesForceAccount(dojoObj.userId, function(err, res) {
-        if(res.error) return salesForceLogger("error", res.error);
+      });
+    } else if (dojoObj.currStep === 5) {
+      getSalesForceAccount(dojoObj.userId, function (err, res) {
+        if (err || res.error) return salesForceLogger('error', err || res.error);
         var accId = res.accId;
-        if(accId) {
-          if(converted) {
-            updateSalesForceAccount(accId, dojoObj, function(err, res) {
-              if(res.error) return salesForceLogger("error", res.error);
-              if(res.success) return salesForceLogger("success", res.success);
+        if (accId) {
+          if (converted) {
+            updateSalesForceAccount(accId, dojoObj, function (err, res) {
+              if (err || res.error) return salesForceLogger('error', err || res.error);
+              if (res.success) return salesForceLogger('success', res.success);
             });
           } else {
             dojoObj.toBeConverted = true;
-            updateSalesForceLead(accId, dojoObj, function(err, res) {
-              if(res.error) return salesForceLogger("error", res.error);
-              if(res.success) return salesForceLogger("success", res.success);
+            updateSalesForceLead(accId, dojoObj, function (err, res) {
+              if (err || res.error) return salesForceLogger('error', err || res.error);
+              if (res.success) return salesForceLogger('success', res.success);
             });
           }
         } else {
-          return salesForceLogger("error", "[error][salesforce] no salesforce id recieved");
+          return salesForceLogger('error', '[error][salesforce] no salesforce id recieved');
         }
-      })
+      });
     } else {
-      return salesForceLogger("error", "[error][salesforce] problem with current step");
+      return salesForceLogger('error', '[error][salesforce] problem with current step');
     }
   }
 
-  function getSalesForceAccount(userId, cb) {
-    if(arguments.length !== 2 || typeof cb !== "function") return salesForceLogger("error", "[error][salesforce] - missing parameters");
+  function getSalesForceAccount (userId, cb) {
+    if (arguments.length !== 2 || typeof cb !== 'function') return salesForceLogger('error', '[error][salesforce] - missing parameters');
 
-    seneca.act('role:cd-salesforce,cmd:get_account', {platformId: userId}, function (err, res){
-      if(!res.accId || res.error) {
-        return cb(null, {error: "[error][salesforce] id: "+userId+" - "+res.error});
+    seneca.act('role:cd-salesforce,cmd:get_account', {platformId: userId}, function (err, res) {
+      if (err || !res.accId || res.error) {
+        return cb(null, {error: '[error][salesforce] id: ' + userId + ' - ' + err || res.error});
       }
-      return cb(null, res)
+      return cb(null, res);
     });
   }
 
-  function updateSalesForceLead(accId, dojoObj, cb) {
+  function updateSalesForceLead (accId, dojoObj, cb) {
+    if (arguments.length !== 3 || typeof cb !== 'function') return salesForceLogger('error', '[error][salesforce] - missing parameters');
 
-    if(arguments.length !== 3 || typeof cb !== "function") return salesForceLogger("error", "[error][salesforce] - missing parameters");
-
-    if(dojoObj.userId && dojoObj.dojoLead) {
+    if (dojoObj.userId && dojoObj.dojoLead) {
       var action = dojoObj.dojoAction || 'blank';
       var saveLead = {
         PlatformId__c: dojoObj.dojoLead.id
@@ -1163,31 +1217,31 @@ module.exports = function (options) {
       var converted = dojoObj.dojoLead.converted || false;
       var leadId = dojoObj.dojoLead.id || null;
 
-      if(dojoObj.currStep === 2) {
-        if(dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.championDetails) {
+      if (dojoObj.currStep === 2) {
+        if (dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.championDetails) {
           leadId = dojoObj.userId;
           var championDetails = dojoObj.dojoLead.application.championDetails;
           _.extend(saveLead, {
             PlatformId__c: dojoObj.userId,
             PlatformURL__c: 'https://zen.coderdojo.com/profile/' + dojoObj.userId,
-            Company: championDetails.name || "<n/a>",
-            LastName: championDetails.name || "coderdojo user",
-            Email: championDetails.email || "info@coderdojo.com",
+            Company: championDetails.name || '<n/a>',
+            LastName: championDetails.name || 'coderdojo user',
+            Email: championDetails.email || 'info@coderdojo.com',
             RecordTypeId: process.env.SALESFORCE_LEAD_RECORDTYPEID || null,
             Language__c: 'en_US',
             ChampionAccount__c: accId,
             Status: '2. Champion Registration Completed'
           });
         }
-      } else if(dojoObj.currStep === 3) {
-        if(dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.setupYourDojo) {
+      } else if (dojoObj.currStep === 3) {
+        if (dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.setupYourDojo) {
           leadId = dojoObj.userId;
           var setupDojoObj = dojoObj.dojoLead.application.setupYourDojo;
           _.extend(saveLead, {
             PlatformURL__c: 'https://zen.coderdojo.com/profile/' + dojoObj.userId,
-            Company: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : "<n/a>",
-            LastName: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : "coderdojo user",
-            Email: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.email) ? dojoObj.dojoLead.application.championDetails.email : "info@coderdojo.com",
+            Company: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : '<n/a>',
+            LastName: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : 'coderdojo user',
+            Email: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.email) ? dojoObj.dojoLead.application.championDetails.email : 'info@coderdojo.com',
             RecordTypeId: process.env.SALESFORCE_LEAD_RECORDTYPEID || null,
             Language__c: 'en_US',
             ChampionAccount__c: accId,
@@ -1218,13 +1272,13 @@ module.exports = function (options) {
             Status: '4. Dojo Set Up Completed'
           });
         }
-      } else if(action !== "delete" && (dojoObj.currStep === 4 || dojoObj.currStep === 5)) {
-        if(dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.dojoListing) {
+      } else if (action !== 'delete' && (dojoObj.currStep === 4 || dojoObj.currStep === 5)) {
+        if (dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.dojoListing) {
           var dojoListing = dojoObj.dojoLead.application.dojoListing;
           _.extend(saveLead, {
             PlatformURL__c: 'https://zen.coderdojo.com/dojo/' + createUrlSlug(dojoListing.alpha2, dojoListing.admin1Name, dojoListing.placeName, dojoListing.name),
-            Company: dojoListing.name || "<n/a>",
-            LastName: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : "coderdojo user",
+            Company: dojoListing.name || '<n/a>',
+            LastName: (dojoObj.dojoLead.application.championDetails && dojoObj.dojoLead.application.championDetails.name) ? dojoObj.dojoLead.application.championDetails.name : 'coderdojo user',
             Email__c: dojoListing.email || getCoderDojoEmail(dojoListing.alpha2, dojoListing.admin1Name, dojoListing.placeName, dojoListing.name),
             Time__c: dojoListing.time || null,
             Country: dojoListing.country.countryName || null,
@@ -1234,65 +1288,65 @@ module.exports = function (options) {
             Coordinates__Latitude__s: (dojoListing.coordinates) ? dojoListing.coordinates.split(',')[0] : null,
             Coordinates__Longitude__s: (dojoListing.coordinates) ? dojoListing.coordinates.split(',')[1] : null,
             Notes__c: dojoListing.notes || null,
-            NeedMentors__c: (dojoListing.hasOwnProperty("needMentors")) ? parseInt(dojoListing.needMentors) : false,
+            NeedMentors__c: (dojoListing.hasOwnProperty('needMentors')) ? parseInt(dojoListing.needMentors, 10) : false,
             Stage__c: getSalesforceStageText(dojoListing.stage),
-            Private__c: (dojoListing.hasOwnProperty("private")) ? parseInt(dojoListing.private) : false,
+            Private__c: (dojoListing.hasOwnProperty('private')) ? parseInt(dojoListing.private, 10) : false,
             GoogleGroupURL__c: dojoListing.googleGroup || null,
             Website: dojoListing.website || null,
-            Twitter__c: (dojoListing.twitter) ? "https://twitter.com/" + dojoListing.twitter : null,
+            Twitter__c: (dojoListing.twitter) ? 'https://twitter.com/' + dojoListing.twitter : null,
             SupportersImageURL__c: dojoListing.supporterImage || null,
-            MailingList__c: (dojoListing.hasOwnProperty("mailingList")) ? parseInt(dojoListing.mailingList) : false,
+            MailingList__c: (dojoListing.hasOwnProperty('mailingList')) ? parseInt(dojoListing.mailingList, 10) : false,
             Status: '5. Dojo Listing Created'
           });
         }
-      } else if(dojoObj.currStep === 5 && action == "verify") {
-        _.extend(saveLead, { Status: '7. Dojo Listing Verified' });
-      } else if(action === "delete" && (dojoObj.currStep === 4 || dojoObj.currStep === 5)) {
-        _.extend(saveLead, { Deleted__c: true });
+      } else if (dojoObj.currStep === 5 && action === 'verify') {
+        _.extend(saveLead, {Status: '7. Dojo Listing Verified'});
+      } else if (action === 'delete' && (dojoObj.currStep === 4 || dojoObj.currStep === 5)) {
+        _.extend(saveLead, {Deleted__c: true});
       } else {
-        return cb(null, {error: "[error][salesforce] lead problem with dojo current step"});
+        return cb(null, {error: '[error][salesforce] lead problem with dojo current step'});
       }
 
-      if(converted !== true) {
-        seneca.act('role:cd-salesforce,cmd:save_lead', {leadId: leadId, lead: saveLead}, function (err, res){
-          if(err || !res) return cb(null, {error: "[error][salesforce] id: " + leadId + " - lead NOT saved"});
+      if (converted !== true) {
+        seneca.act('role:cd-salesforce,cmd:save_lead', {leadId: leadId, lead: saveLead}, function (err, res) {
+          if (err || !res) return cb(null, {error: '[error][salesforce] id: ' + leadId + ' - lead NOT saved'});
 
           if (convertAccount === true) {
             var dojoLeadId = res.id$;
-            seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: dojoLeadId}, function (err, res){
-              if(err) return cb(null, {error: "[error][salesforce] id: " + dojoLeadId + " - lead NOT converted"});
-              salesForceLogger("success", "[salesforce] id: " + dojoLeadId+ " - lead converted to account");
+            seneca.act('role:cd-salesforce,cmd:convert_lead_to_account', {leadId: dojoLeadId}, function (err, res) {
+              if (err) return cb(null, {error: '[error][salesforce] id: ' + dojoLeadId + ' - lead NOT converted'});
+              salesForceLogger('success', '[salesforce] id: ' + dojoLeadId + ' - lead converted to account');
 
               seneca.act({role: plugin, cmd: 'load_dojo_lead', id: leadId}, function (err, res) {
-                if(err || !res) return cb(null, {error: "[error] id: " + leadId + " - dojo lead NOT loaded"});
+                if (err || !res) return cb(null, {error: '[error] id: ' + leadId + ' - dojo lead NOT loaded'});
                 var dojoLead = res;
                 dojoLead.converted = true;
                 var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
-                dojoLeadEntity.save$(dojoLead, function(err, res){
-                  if(err || !res) return cb(null, {error: "[error] id: " + dojoLeadId + " - dojo lead 'converted' field NOT saved"});
-                  return cb(null, {success: "id: " + dojoLeadId + " - dojo lead 'converted' field saved"});
+                dojoLeadEntity.save$(dojoLead, function (err, res) {
+                  if (err || !res) return cb(null, {error: '[error] id: ' + dojoLeadId + ' - dojo lead \'converted\' field NOT saved'});
+                  return cb(null, {success: 'id: ' + dojoLeadId + ' - dojo lead \'converted\' field saved'});
                 });
               });
             });
           } else {
-            return cb(null, {success: "[salesforce] id: " + leadId + " - lead saved"});
+            return cb(null, {success: '[salesforce] id: ' + leadId + ' - lead saved'});
           }
         });
       }
     } else {
-      return cb(null, {error: "[error][salesforce] no userId"});
+      return cb(null, {error: '[error][salesforce] no userId'});
     }
   }
 
-  function updateSalesForceAccount(accId, dojoObj, cb) {
-    if(arguments.length !== 3 || typeof cb !== "function") return salesForceLogger("error", "[error][salesforce] - missing parameters");
+  function updateSalesForceAccount (accId, dojoObj, cb) {
+    if (arguments.length !== 3 || typeof cb !== 'function') return salesForceLogger('error', '[error][salesforce] - missing parameters');
 
-    if(dojoObj.userId) {
+    if (dojoObj.userId) {
       var action = dojoObj.dojoAction || 'blank';
 
-      var saveAccount = { PlatformId__c: dojoObj.userId };
-      if(dojoObj.currStep === 2) {
-        if(dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.championDetails) {
+      var saveAccount = {PlatformId__c: dojoObj.userId};
+      if (dojoObj.currStep === 2) {
+        if (dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.championDetails) {
           var championDetails = dojoObj.dojoLead.application.championDetails;
           var dobOffset = (championDetails.dateOfBirth) ? moment(championDetails.dateOfBirth).utcOffset() : 0;
           _.extend(saveAccount, {
@@ -1308,30 +1362,30 @@ module.exports = function (options) {
             Coordinates__Longitude__s: (championDetails.coordinates) ? championDetails.coordinates.split(',')[1] : null,
             Projects__c: championDetails.projects || null,
             ExperienceWorkingWithYouth__c: championDetails.youthExperience || null,
-            Twitter__c: (championDetails.twitter) ? "https://twitter.com/" + championDetails.twitter : null,
+            Twitter__c: (championDetails.twitter) ? 'https://twitter.com/' + championDetails.twitter : null,
             Linkedin__c: championDetails.linkedIn || null,
             Notes__c: championDetails.notes || null,
             CoderDojoReferral__c: championDetails.coderDojoReference || null,
-            CoderDojoReferralComment__c: (championDetails.CoderDojoReferralComment__c === "Other") ? championDetails.coderDojoReferenceOther : ""
+            CoderDojoReferralComment__c: (championDetails.CoderDojoReferralComment__c === 'Other') ? championDetails.coderDojoReferenceOther : ''
           });
         }
-      } else if(dojoObj.currStep === 4 && action === "verify") {
+      } else if (dojoObj.currStep === 4 && action === 'verify') {
         _.extend(saveAccount, {
           PlatformId__c: dojoObj.dojoLead.id,
           Verified__c: false
         });
-      } else if(dojoObj.currStep === 5 && action === "verify") {
+      } else if (dojoObj.currStep === 5 && action === 'verify') {
         _.extend(saveAccount, {
           PlatformId__c: dojoObj.dojoLead.id,
           Verified__c: true
         });
-      } else if(action === "delete" && (dojoObj.currStep === 4 || dojoObj.currStep === 5)) {
+      } else if (action === 'delete' && (dojoObj.currStep === 4 || dojoObj.currStep === 5)) {
         _.extend(saveAccount, {
           PlatformId__c: dojoObj.dojoLead.id,
           Deleted__c: 1
         });
-      } else if(action === "update" && dojoObj.currStep === 5) {
-        if(dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.dojoListing) {
+      } else if (action === 'update' && dojoObj.currStep === 5) {
+        if (dojoObj.dojoLead && dojoObj.dojoLead.application && dojoObj.dojoLead.application.dojoListing) {
           var dojoListing = dojoObj.dojoLead.application.dojoListing;
           _.extend(saveAccount, {
             Name: dojoListing.name || null,
@@ -1344,83 +1398,100 @@ module.exports = function (options) {
             Coordinates__Latitude__s: (dojoListing.coordinates) ? dojoListing.coordinates.split(',')[0] : null,
             Coordinates__Longitude__s: (dojoListing.coordinates) ? dojoListing.coordinates.split(',')[1] : null,
             Notes__c: dojoListing.notes || null,
-            NeedMentors__c: (dojoListing.hasOwnProperty("needMentors")) ? parseInt(dojoListing.needMentors) : false,
+            NeedMentors__c: (dojoListing.hasOwnProperty('needMentors')) ? parseInt(dojoListing.needMentors, 10) : false,
             Stage__c: getSalesforceStageText(dojoListing.stage),
-            Private__c: (dojoListing.hasOwnProperty("private")) ? parseInt(dojoListing.private) : false,
+            Private__c: (dojoListing.hasOwnProperty('private')) ? parseInt(dojoListing.private, 10) : false,
             GoogleGroupURL__c: dojoListing.googleGroup || null,
             Website: dojoListing.website || null,
-            Twitter__c: (dojoListing.twitter) ? "https://twitter.com/" + dojoListing.twitter : null,
+            Twitter__c: (dojoListing.twitter) ? 'https://twitter.com/' + dojoListing.twitter : null,
             SupportersImageURL__c: dojoListing.supporterImage || null,
-            MailingList__c: (dojoListing.hasOwnProperty("mailingList")) ? parseInt(dojoListing.mailingList) : false,
+            MailingList__c: (dojoListing.hasOwnProperty('mailingList')) ? parseInt(dojoListing.mailingList, 10) : false
           });
         }
       } else {
-        return cb(null, {error: "[error][salesforce] account problem with dojo current step"});
+        return cb(null, {error: '[error][salesforce] account problem with dojo current step'});
       }
 
-      seneca.act('role:cd-salesforce,cmd:save_account', {userId: saveAccount.PlatformId__c, account: saveAccount}, function (err, res){
-        if(err || !res) {
-          return cb(null, {error: "[error][salesforce] id: " + saveAccount.PlatformId__c + " - account NOT saved"});
+      seneca.act('role:cd-salesforce,cmd:save_account', {
+        userId: saveAccount.PlatformId__c,
+        account: saveAccount
+      }, function (err, res) {
+        if (err || !res) {
+          return cb(null, {error: '[error][salesforce] id: ' + saveAccount.PlatformId__c + ' - account NOT saved'});
         }
-        return cb(null, {success: "[salesforce] id: " + saveAccount.PlatformId__c + " - account saved"});
+        return cb(null, {success: '[salesforce] id: ' + saveAccount.PlatformId__c + ' - account saved'});
       });
-
     } else {
-      return cb(null, {error: "[error][salesforce] no id present"});
+      return cb(null, {error: '[error][salesforce] no id present'});
     }
   }
 
-  function getSalesforceStageText(stage) {
-    switch(parseInt(stage)) {
-      case 0: return "In Planning";
-      case 1: return "Active - Just show up";
-      case 2: return "Register Ahead";
-      case 3: return "Dojo full sorry";
-      case 4: return "Inactive";
-      default: return "unknown";
+  function getSalesforceStageText (stage) {
+    switch (parseInt(stage, 10)) {
+      case 0:
+        return 'In Planning';
+      case 1:
+        return 'Active - Just show up';
+      case 2:
+        return 'Register Ahead';
+      case 3:
+        return 'Dojo full sorry';
+      case 4:
+        return 'Inactive';
+      default:
+        return 'unknown';
     }
   }
 
-  function getCoderDojoEmail(dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName) {
+  function getCoderDojoEmail (dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName) {
     var urlSlug = createUrlSlug(dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName);
     var email = _.last(urlSlug.split('/')).concat('.', dojoAlpha2.toLowerCase(), '@coderdojo.com');
-    if (process.env.ENVIRONMENT === 'development') { email = 'dev-' + email };
+    if (process.env.ENVIRONMENT === 'development') {
+      email = 'dev-' + email;
+    }
 
     return email;
   }
 
-  function createUrlSlug(dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName) {
-    var slugify = function(name) { return slug(name) };
+  function createUrlSlug (dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName) {
+    var slugify = function (name) {
+      return slug(name);
+    };
     return _.chain([dojoAlpha2, dojoAdmin1Name, dojoPlaceName, dojoName]).compact().map(slugify).value().join('/').toLowerCase();
   }
 
-  function cmd_save_dojo_lead(args, done) {
+  function cmd_save_dojo_lead (args, done) {
     logger.info({args: args}, 'cmd_save_dojo_lead');
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
     var dojoLead = args.dojoLead;
 
-    function saveLead(cb){
-      dojoLeadEntity.save$(dojoLead, function(err, res){
-        if(err){ return cb(err); }
+    function saveLead (cb) {
+      dojoLeadEntity.save$(dojoLead, function (err, res) {
+        if (err) {
+          return cb(err);
+        }
 
         var dojoObj = {
-          dojoAction: args.dojoAction || "blank",
+          dojoAction: args.dojoAction || 'blank',
           dojoLead: args.dojoLead || null,
           currStep: args.dojoLead.currentStep || null,
           userId: args.dojoLead.userId || null
-        }
+        };
 
-        if(process.env.SALESFORCE_ENABLED === 'true') {
+        if (process.env.SALESFORCE_ENABLED === 'true') {
           // Note: updating SalesForce is slow, ideally this would go on a work queue
-          process.nextTick(function() { updateSalesForce(dojoObj) });
+          process.nextTick(function () {
+            updateSalesForce(dojoObj);
+          });
         }
         return cb(null, res);
       });
     }
 
-    function updateDojoLeadProfile(cb){
-      if(dojoLead.currentStep === 2){
-        seneca.act('role:cd-profiles,cmd:search', {query: {userId: dojoLead.userId}}, function(err, results){
+    function updateDojoLeadProfile (cb) {
+      if (dojoLead.currentStep === 2) {
+        seneca.act('role:cd-profiles,cmd:search', {query: {userId: dojoLead.userId}}, function (err, results) {
+          if (err) return cb(err);
           var profile = results[0];
           var championDetails = dojoLead.application && dojoLead.application.championDetails;
 
@@ -1428,7 +1499,7 @@ module.exports = function (options) {
           profile.admin1Code = championDetails.admin1Code;
           profile.admin1Name = championDetails.admin1Name;
           profile.admin2Code = championDetails.admin2Code;
-          profile.admin2Name  = championDetails.admin2Name;
+          profile.admin2Name = championDetails.admin2Name;
           profile.admin3Code = championDetails.admin3Code;
           profile.admin3Name = championDetails.admin3Name;
           profile.admin4Code = championDetails.admin4Code;
@@ -1449,7 +1520,7 @@ module.exports = function (options) {
           profile.state = championDetails.state;
           profile.dob = championDetails.dateOfBirth;
 
-          seneca.act('role:cd-profiles,cmd:save', {profile: profile},cb);
+          seneca.act('role:cd-profiles,cmd:save', {profile: profile}, cb);
         });
       } else {
         cb();
@@ -1459,15 +1530,14 @@ module.exports = function (options) {
     async.series([
       saveLead,
       updateDojoLeadProfile
-      ],
-      function(err, results){
-        if(err) return done(err);
-        return done(null, results[0]);
-      });
+    ], function (err, results) {
+      if (err) return done(err);
+      return done(null, results[0]);
+    });
   }
 
-  function cmd_find_dojolead(args, done) {
-    if(!args.query) return done;
+  function cmd_find_dojolead (args, done) {
+    if (!args.query) return done;
     seneca.make$(DOJO_LEADS_ENTITY_NS).load$(args.query, done);
   }
 
@@ -1475,7 +1545,7 @@ module.exports = function (options) {
    * Returns the uncompleted dojo lead for a certain user.
    * There should be only one uncompleted dojo lead at a moment.
    */
-  function cmd_load_user_dojo_lead(args, done) {
+  function cmd_load_user_dojo_lead (args, done) {
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
 
     var query = {
@@ -1486,19 +1556,18 @@ module.exports = function (options) {
     dojoLeadEntity.load$(query, done);
   }
 
-  function cmd_load_dojo_lead(args, done) {
+  function cmd_load_dojo_lead (args, done) {
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
 
-    //TO-DO: use seneca-perm to restrict this action to cdf-admin users.
+    // TO-DO: use seneca-perm to restrict this action to cdf-admin users.
     dojoLeadEntity.load$(args.id, done);
   }
 
-
-  function cmd_load_setup_dojo_steps(args, done) {
+  function cmd_load_setup_dojo_steps (args, done) {
     done(null, setupDojoSteps);
   }
 
-  function cmd_load_users_dojos(args, done){
+  function cmd_load_users_dojos (args, done) {
     var usersdojos_ent;
     var query = args.query ? args.query : {};
 
@@ -1506,32 +1575,34 @@ module.exports = function (options) {
 
     usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
 
-    usersdojos_ent.list$(query, function(err, usersDojos){
-      if(err) { return done(err); }
+    usersdojos_ent.list$(query, function (err, usersDojos) {
+      if (err) {
+        return done(err);
+      }
 
       done(null, usersDojos);
     });
   }
 
-  function cmd_load_dojo_users(args, done) {
+  function cmd_load_dojo_users (args, done) {
     logger.info({args: args}, 'cmd_load_dojo_users');
-    var query  = args.query || {};
+    var query = args.query || {};
     var userListQuery = {};
-    if(query.sort$) {
+    if (query.sort$) {
       userListQuery.sort$ = query.sort$;
       delete query.sort$;
     }
 
-    seneca.act({role:plugin, cmd:'load_usersdojos', query: query}, function (err, response) {
-      if(err) return done(err);
+    seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
+      if (err) return done(err);
 
       var userIds = _.uniq(_.pluck(response, 'userId'));
       userListQuery.ids = userIds;
-      seneca.act({role:'cd-users', cmd:'list', query: userListQuery}, done);
+      seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
     });
   }
 
-  function cmd_send_email(args, done) {
+  function cmd_send_email (args, done) {
     logger.info({args: args}, 'cmd_send_email');
     var payload = args.payload;
     var to = payload.to;
@@ -1541,10 +1612,19 @@ module.exports = function (options) {
     var emailSubject = payload.subject;
     var emailLocality = payload.locality;
     var replyTo = payload.replyTo;
-    seneca.act({role:'email-notifications', cmd: 'send', to:to, replyTo: replyTo, content:content, code:emailCode, locality: emailLocality, subject: emailSubject}, done);
+    seneca.act({
+      role: 'email-notifications',
+      cmd: 'send',
+      to: to,
+      replyTo: replyTo,
+      content: content,
+      code: emailCode,
+      locality: emailLocality,
+      subject: emailSubject
+    }, done);
   }
 
-  function cmd_generate_user_invite_token(args, done) {
+  function cmd_generate_user_invite_token (args, done) {
     var zenHostname = args.zenHostname;
     var inviteEmail = args.email;
     var emailSubject = args.emailSubject;
@@ -1552,7 +1632,7 @@ module.exports = function (options) {
     var userType = args.userType;
     var inviteToken = shortid.generate();
     var currentUser = args.user;
-    if(!userType) userType = DEFAULT_INVITE_USER_TYPE;
+    if (!userType) userType = DEFAULT_INVITE_USER_TYPE;
 
     async.waterfall([
       getDojo,
@@ -1561,25 +1641,29 @@ module.exports = function (options) {
       sendEmail
     ], done);
 
-    function getDojo(done) {
-      seneca.act({role:plugin, cmd:'load', id:dojoId}, done);
+    function getDojo (done) {
+      seneca.act({role: plugin, cmd: 'load', id: dojoId}, done);
     }
 
-    function generateInviteToken(dojo, done) {
+    function generateInviteToken (dojo, done) {
       var timestamp = new Date();
-      var userInvite = {id:inviteToken, email:inviteEmail, userType:userType, timestamp:timestamp};
-      if(!dojo.userInvites) dojo.userInvites = [];
+      var userInvite = {id: inviteToken, email: inviteEmail, userType: userType, timestamp: timestamp};
+      if (!dojo.userInvites) dojo.userInvites = [];
       dojo.userInvites.push(userInvite);
-      dojo.userInvites = _.sortBy(dojo.userInvites, function(userInvite) { return userInvite.timestamp; });
+      dojo.userInvites = _.sortBy(dojo.userInvites, function (userInvite) {
+        return userInvite.timestamp;
+      });
       dojo.userInvites.reverse();
-      dojo.userInvites = _.uniq(dojo.userInvites, function(userInvite) { return userInvite.email; });
+      dojo.userInvites = _.uniq(dojo.userInvites, function (userInvite) {
+        return userInvite.email;
+      });
 
-      seneca.act({role:plugin, cmd:'update', user:currentUser, dojo:dojo}, done);
+      seneca.act({role: plugin, cmd: 'update', user: currentUser, dojo: dojo}, done);
     }
 
-    function getUserTypeTitle(dojo, done) {
+    function getUserTypeTitle (dojo, done) {
       seneca.act({role: 'cd-users', cmd: 'get_init_user_types'}, function (err, userTypes) {
-        if(err) return done(err);
+        if (err) return done(err);
         var userTypeFound = _.find(userTypes, function (userTypeObj) {
           return userTypeObj.name === userType;
         });
@@ -1588,9 +1672,9 @@ module.exports = function (options) {
       });
     }
 
-    function sendEmail(userTypeTitle, dojo, done) {
+    function sendEmail (userTypeTitle, dojo, done) {
       var content = {
-        link: protocol + '://'+zenHostname+'/dashboard/accept_dojo_user_invitation/'+dojo.id+'/'+inviteToken,
+        link: protocol + '://' + zenHostname + '/dashboard/accept_dojo_user_invitation/' + dojo.id + '/' + inviteToken,
         userType: userTypeTitle,
         dojoName: dojo.name,
         year: moment(new Date()).format('YYYY')
@@ -1599,12 +1683,12 @@ module.exports = function (options) {
       var locality = args.locality || 'en_US';
       var code = 'invite-user-';
 
-      var payload = {to:inviteEmail, code:code, locality: locality, content:content, subject: emailSubject};
-      seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
+      var payload = {to: inviteEmail, code: code, locality: locality, content: content, subject: emailSubject};
+      seneca.act({role: plugin, cmd: 'send_email', payload: payload}, done);
     }
   }
 
-  function cmd_accept_user_invite(args, done) {
+  function cmd_accept_user_invite (args, done) {
     logger.info({args: args}, 'cmd_accept_user_invite');
     var data = args.data;
     var dojoId = data.dojoId;
@@ -1617,85 +1701,85 @@ module.exports = function (options) {
       addUserToDojo,
       deleteInviteToken
     ], function (err, res) {
-      if(err) return done(null, {error: err.message});
+      if (err) return done(null, {error: err.message});
       return done(null, res);
     });
 
-    function loadInviteToken(done) {
-      seneca.act({role:plugin, cmd:'load'}, {id:dojoId}, function(err, response) {
-        if(err) return done(err);
-        var dojo = response;
-        var userInvites = dojo.userInvites;
-        var userInviteToken;
-        var inviteFound = _.find(userInvites, function(userInvite) {
-          if(userInvite.id === inviteToken && userInvite.email === currentUserEmail) {
-            return userInviteToken = userInvite;
+    function loadInviteToken (done) {
+      seneca.act({role: plugin, cmd: 'load'}, {id: dojoId}, function (err, response) {
+        if (err) return done(err);
+        var userInvites = response.userInvites;
+        var inviteFound = _.find(userInvites, function (userInvite) {
+          if (userInvite.id === inviteToken && userInvite.email === currentUserEmail) {
+            return userInvite;
           }
         });
-        if(!inviteFound) return done(new Error('Invalid Invite Request.'));
+        if (!inviteFound) return done(new Error('Invalid Invite Request.'));
         return done(null, inviteFound);
       });
     }
 
-    function addUserToDojo(inviteToken, done) {
-      var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-      //Add user to dojo users if not already added.
-      seneca.act({role:plugin, cmd:'load_usersdojos', query:{userId:currentUserId, dojoId:dojoId}}, function (err, response) {
-        if(err) return done(err);
-        if(_.isEmpty(response)) {
-          var userDojo = {};
+    function addUserToDojo (inviteToken, done) {
+      // Add user to dojo users if not already added.
+      seneca.act({
+        role: plugin,
+        cmd: 'load_usersdojos',
+        query: {userId: currentUserId, dojoId: dojoId}
+      }, function (err, response) {
+        if (err) return done(err);
+        var userDojo = {};
+        if (_.isEmpty(response)) {
           userDojo.owner = 0;
           userDojo.userId = currentUserId;
           userDojo.dojoId = dojoId;
           userDojo.userTypes = [];
           userDojo.userTypes.push(inviteToken.userType);
-          //If invite token user type is champion, update user permissions
-          if(inviteToken.userType === 'champion') {
+          // If invite token user type is champion, update user permissions
+          if (inviteToken.userType === 'champion') {
             userDojo.userPermissions = [
-              {title:'Dojo Admin', name:'dojo-admin'},
-              {title:'Ticketing Admin', name:'ticketing-admin'}
+              {title: 'Dojo Admin', name: 'dojo-admin'},
+              {title: 'Ticketing Admin', name: 'ticketing-admin'}
             ];
           }
 
           seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
-            if(err) return done(err);
+            if (err) return done(err);
             return done(null, inviteToken);
           });
         } else {
-          //userDojo entity already exists.
-          //Update the userTypes array.
-          var userDojo = response[0];
-          if(!userDojo.userTypes) userDojo.userTypes = [];
+          // userDojo entity already exists.
+          // Update the userTypes array.
+          userDojo = response[0];
+          if (!userDojo.userTypes) userDojo.userTypes = [];
           userDojo.userTypes.push(inviteToken.userType);
-          //If invite token user type is champion, update user permissions
-          if(inviteToken.userType === 'champion') {
+          // If invite token user type is champion, update user permissions
+          if (inviteToken.userType === 'champion') {
             userDojo.userPermissions = [
-              {title:'Dojo Admin', name:'dojo-admin'},
-              {title:'Ticketing Admin', name:'ticketing-admin'}
+              {title: 'Dojo Admin', name: 'dojo-admin'},
+              {title: 'Ticketing Admin', name: 'ticketing-admin'}
             ];
           }
           seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
-            if(err) return done(err);
+            if (err) return done(err);
             return done(null, inviteToken);
           });
         }
       });
     }
 
-    function deleteInviteToken(inviteToken, done) {
-      var inviteTokenId = inviteToken.id;
+    function deleteInviteToken (inviteToken, done) {
       seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
-        if(err) return done(err);
-        dojo.userInvites = _.without(dojo.userInvites, _.findWhere(dojo.userInvites, {id: inviteToken.id}))
+        if (err) return done(err);
+        dojo.userInvites = _.without(dojo.userInvites, _.findWhere(dojo.userInvites, {id: inviteToken.id}));
         seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, function (err, response) {
-          if(err) return done(err);
+          if (err) return done(err);
           return done();
         });
       });
     }
   }
 
-  function cmd_request_user_invite(args, done) {
+  function cmd_request_user_invite (args, done) {
     logger.info({args: args}, 'cmd_request_user_invite');
     var inviteToken = shortid.generate();
     var zenHostname = args.zenHostname;
@@ -1704,86 +1788,87 @@ module.exports = function (options) {
     var userType = data.userType;
     var emailSubject = data.emailSubject;
     var dojoId = data.dojoId;
-    if(!userType) userType = DEFAULT_INVITE_USER_TYPE;
+    if (!userType) userType = DEFAULT_INVITE_USER_TYPE;
 
     async.waterfall([
       getDojo,
       generateInviteToken,
       sendEmail
     ], function (err, res) {
-      if(err) return done(null, {error: err.message});
+      if (err) return done(null, {error: err.message});
       return done(null, res);
     });
 
     function getDojo (done) {
-      seneca.act({role:plugin, cmd:'load', id:dojoId}, done);
+      seneca.act({role: plugin, cmd: 'load', id: dojoId}, done);
     }
 
     function generateInviteToken (dojo, done) {
       var timestamp = new Date();
-      var joinRequest = {id:inviteToken, dojoId:dojoId, userType:userType, timestamp:timestamp};
-      if(!user.joinRequests) user.joinRequests = [];
+      var joinRequest = {id: inviteToken, dojoId: dojoId, userType: userType, timestamp: timestamp};
+      if (!user.joinRequests) user.joinRequests = [];
       user.joinRequests.push(joinRequest);
       user.joinRequests = _.chain(user.joinRequests)
-      .sortBy(function(joinRequest) { return joinRequest.timestamp; })
-      .reverse()
-      .uniq(true, function(joinRequest) { return joinRequest.dojoId; });
+        .sortBy(function (joinRequest) {
+          return joinRequest.timestamp;
+        })
+        .reverse()
+        .uniq(true, function (joinRequest) {
+          return joinRequest.dojoId;
+        });
 
-      seneca.act({role:'cd-users', cmd:'update', user:user, id: user.id}, function (err, response) {
-        if(err) return done(err);
+      seneca.act({role: 'cd-users', cmd: 'update', user: user, id: user.id}, function (err, response) {
+        if (err) return done(err);
         return done(null, dojo);
       });
     }
 
     function sendEmail (dojo, done) {
-      if(!dojo) return done();
+      if (!dojo) return done();
       var content = {
-        link: protocol + '://'+zenHostname+'/dashboard/accept_dojo_user_request/'+user.id+'/'+inviteToken,
-        name:user.name,
-        email:user.email,
-        dojoName:dojo.name,
-        userType:userType
+        link: protocol + '://' + zenHostname + '/dashboard/accept_dojo_user_request/' + user.id + '/' + inviteToken,
+        name: user.name,
+        email: user.email,
+        dojoName: dojo.name,
+        userType: userType
       };
 
       var locality = args.locality || 'en_US';
       var code = 'user-request-to-join-';
 
-      if(!dojo.email) return done(new Error('This Dojo has no email setup.'));
-      var payload = {to: dojo.email, code:code, locality: locality, content:content, subject: emailSubject};
-      seneca.act({role:plugin, cmd:'send_email', payload:payload}, done);
+      if (!dojo.email) return done(new Error('This Dojo has no email setup.'));
+      var payload = {to: dojo.email, code: code, locality: locality, content: content, subject: emailSubject};
+      seneca.act({role: plugin, cmd: 'send_email', payload: payload}, done);
     }
-
   }
 
-  function cmd_load_dojo_champion(args, done) {
+  function cmd_load_dojo_champion (args, done) {
     logger.info({args: args}, 'cmd_load_dojo_champion');
     var dojoId = args.id;
-    var query  = {dojoId:dojoId};
-    var champions;
-    seneca.act({role:plugin, cmd:'load_dojo_users', query: query}, function (err, response) {
-      if(err) return done(err);
-      //Check cd/usersdojos for the champion user type
+    var query = {dojoId: dojoId};
+    seneca.act({role: plugin, cmd: 'load_dojo_users', query: query}, function (err, response) {
+      if (err) return done(err);
+      // Check cd/usersdojos for the champion user type
       var champions = [];
       async.each(response, function (user, cb) {
-        var query = {userId:user.id, dojoId:dojoId};
-        seneca.act({role:plugin, cmd:'load_usersdojos', query: query}, function (err, response) {
-          if(err) return cb(err);
+        var query = {userId: user.id, dojoId: dojoId};
+        seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
+          if (err) return cb(err);
           var userDojo = response[0];
-          if(!userDojo) return cb();
-          if(_.contains(userDojo.userTypes, 'champion')) champions.push(user);
+          if (!userDojo) return cb();
+          if (_.contains(userDojo.userTypes, 'champion')) champions.push(user);
           cb();
         });
       }, function () {
         done(null, champions);
-      })
+      });
     });
   }
 
-  function cmd_accept_user_request(args, done) {
+  function cmd_accept_user_request (args, done) {
     var tokenData = args.data;
-    if(!args.user) return done();
+    if (!args.user) return done();
     var currentUserId = args.user.id;
-    var currentUserEmail = args.user.email;
     var inviteTokenId = tokenData.inviteToken;
     var requestedByUser = tokenData.requestedByUser;
 
@@ -1793,45 +1878,52 @@ module.exports = function (options) {
       updateUser,
       tidyUpJoinRequests
     ], function (err, res) {
-      if(err) return done(null, {error: err.message});
+      if (err) return done(null, {error: err.message});
       return done(null, res);
     });
 
-    function loadUser(done) {
-      seneca.act({role:'cd-users', cmd:'load', id: requestedByUser, user: args.user}, function (err, response) {
-        if(err) return done(err);
+    function loadUser (done) {
+      seneca.act({role: 'cd-users', cmd: 'load', id: requestedByUser, user: args.user}, function (err, response) {
+        if (err) return done(err);
         var user = response;
         var joinRequests = user.joinRequests;
-        var validRequestFound = _.findWhere(joinRequests, {id:inviteTokenId});
-        if(!validRequestFound) return done(new Error('Join request not found'));
+        var validRequestFound = _.findWhere(joinRequests, {id: inviteTokenId});
+        if (!validRequestFound) return done(new Error('Join request not found'));
         return done(null, validRequestFound);
       });
     }
 
-    function verifyRequest(validRequestFound, done) {
-      //Make sure current user is dojo admin.
+    function verifyRequest (validRequestFound, done) {
+      // Make sure current user is dojo admin.
       var dojoId = validRequestFound.dojoId;
-      seneca.act({role: plugin, cmd: 'load_usersdojos', query: {userId: currentUserId, dojoId: dojoId}}, function (err, usersDojos) {
-        if(err) return done(err);
+      seneca.act({
+        role: plugin,
+        cmd: 'load_usersdojos',
+        query: {userId: currentUserId, dojoId: dojoId}
+      }, function (err, usersDojos) {
+        if (err) return done(err);
         var dojoAdminError = new Error('You must have the Dojo Admin permission to accept user join requests.');
-        if(!usersDojos.length) return done(dojoAdminError)
+        if (!usersDojos.length) return done(dojoAdminError);
         var userDojo = usersDojos[0];
         var dojoAdminPermissionFound = _.find(userDojo.userPermissions, function (userPermission) {
           return userPermission.name === 'dojo-admin';
         });
-        if(!dojoAdminPermissionFound) return done(dojoAdminError);
+        if (!dojoAdminPermissionFound) return done(dojoAdminError);
         return done(null, validRequestFound);
       });
     }
 
-    function updateUser(joinRequest, done) {
-      //Add type to userTypes in cd/usersdojos.
-      var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-      //Add user to dojo users if not already added.
-      seneca.act({role:plugin, cmd:'load_usersdojos', query:{userId:requestedByUser, dojoId: joinRequest.dojoId}}, function (err, response) {
-        if(err) return done(err);
-        if(_.isEmpty(response)) {
-          var userDojo = {};
+    function updateUser (joinRequest, done) {
+      // Add type to userTypes in cd/usersdojos.
+      // Add user to dojo users if not already added.
+      var userDojo = {};
+      seneca.act({
+        role: plugin,
+        cmd: 'load_usersdojos',
+        query: {userId: requestedByUser, dojoId: joinRequest.dojoId}
+      }, function (err, response) {
+        if (err) return done(err);
+        if (_.isEmpty(response)) {
           userDojo.owner = 0;
           userDojo.userId = requestedByUser;
           userDojo.dojoId = joinRequest.dojoId;
@@ -1840,9 +1932,9 @@ module.exports = function (options) {
 
           seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, done);
         } else {
-          //Update cd/usersdojos
-          var userDojo = response[0];
-          if(!userDojo.userTypes) userDojo.userTypes = [];
+          // Update cd/usersdojos
+          userDojo = response[0];
+          if (!userDojo.userTypes) userDojo.userTypes = [];
           userDojo.userTypes.push(joinRequest.userType);
 
           seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, done);
@@ -1850,43 +1942,43 @@ module.exports = function (options) {
       });
     }
 
-    function tidyUpJoinRequests(userDojo, done) {
-      seneca.act({role:'cd-users', cmd:'load', id:requestedByUser, user: args.user}, function (err, user) {
-        if(err) return done(err);
+    function tidyUpJoinRequests (userDojo, done) {
+      seneca.act({role: 'cd-users', cmd: 'load', id: requestedByUser, user: args.user}, function (err, user) {
+        if (err) return done(err);
         user.joinRequests = _.without(user.joinRequests, _.findWhere(user.joinRequests, {id: inviteTokenId}));
         seneca.act({role: 'cd-users', cmd: 'update', user: user, id: user.id}, done);
       });
     }
   }
 
-  function cmd_dojos_for_user(args, done) {
+  function cmd_dojos_for_user (args, done) {
     logger.info({args: args}, 'cmd_dojos_for_user');
     var query = {
-      userId:args.id,
+      userId: args.id,
       deleted: 0
     };
     var dojos = [];
-    seneca.act({role:plugin, cmd:'load_usersdojos', query:query}, function (err, response) {
-      if(err) return done(err);
+    seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
+      if (err) return done(err);
       var dojoEntity = seneca.make$(ENTITY_NS);
       async.each(response, function (userDojoLink, cb) {
         query = {
-          id:userDojoLink.dojoId,
+          id: userDojoLink.dojoId,
           deleted: 0
         };
-        dojoEntity.load$(query, function(err, response) {
-          if(err) return cb(err);
-          if(response) dojos.push(response);
+        dojoEntity.load$(query, function (err, response) {
+          if (err) return cb(err);
+          if (response) dojos.push(response);
           cb();
         });
       }, function (err) {
-        if(err) return  done(err);
+        if (err) return done(err);
         done(null, dojos);
       });
     });
   }
 
-  function cmd_save_usersdojos(args, done) {
+  function cmd_save_usersdojos (args, done) {
     logger.info({args: args}, 'cmd_save_usersdojos');
     var userDojo = args.userDojo;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
@@ -1896,21 +1988,21 @@ module.exports = function (options) {
       saveUserDojo,
       saveNinjasUserDojo
     ], function (err, res) {
-      if(err) return done(null, {error: err.message});
+      if (err) return done(null, {error: err.message});
       return done(null, res[1]);
     });
 
-    function ownerPermissionsCheck(done) {
-      if(userDojo.id) {
+    function ownerPermissionsCheck (done) {
+      if (userDojo.id) {
         usersDojosEntity.load$(userDojo.id, function (err, response) {
-          if(err) return done(err);
+          if (err) return done(err);
           var originalUserDojo = response;
           var updatedUserDojo = userDojo;
           var isDojoOwner = originalUserDojo && originalUserDojo.owner === 1;
-          if(isDojoOwner) {
+          if (isDojoOwner) {
             var invalidUpdate = false;
-            //If this user is the dojo owner, make sure that this update is not removing their permissions or user types.
-            if(updatedUserDojo.userPermissions) {
+            // If this user is the dojo owner, make sure that this update is not removing their permissions or user types.
+            if (updatedUserDojo.userPermissions) {
               var updatedUserPermissions = _.map(updatedUserDojo.userPermissions, function (userPermission) {
                 return userPermission.name;
               });
@@ -1918,53 +2010,59 @@ module.exports = function (options) {
                 return userPermission.name;
               });
               var difference = _.difference(originalUserPermissions, updatedUserPermissions);
-              if(!_.isEmpty(difference)) {
+              if (!_.isEmpty(difference)) {
                 invalidUpdate = true;
               }
             }
-            if(updatedUserDojo.userTypes) {
+            if (updatedUserDojo.userTypes) {
               var championUserTypeFound = _.find(updatedUserDojo.userTypes, function (userType) {
                 return userType === 'champion';
               });
-              if(!championUserTypeFound) invalidUpdate = true;
+              if (!championUserTypeFound) invalidUpdate = true;
             }
-            if(invalidUpdate) return done(new Error('Admin permissions cannot be removed from a Dojo owner.'));
+            if (invalidUpdate) return done(new Error('Admin permissions cannot be removed from a Dojo owner.'));
             return done();
           }
           return done();
         });
       } else {
-        //Not updating an existing record therefore no owner permission check is required.
+        // Not updating an existing record therefore no owner permission check is required.
         return done();
       }
     }
 
-    function saveUserDojo(done) {
-      if(userDojo.userPermissions) {
-        userDojo.userPermissions = _.uniq(userDojo.userPermissions, function(userPermission) { return userPermission.name; });
+    function saveUserDojo (done) {
+      if (userDojo.userPermissions) {
+        userDojo.userPermissions = _.uniq(userDojo.userPermissions, function (userPermission) {
+          return userPermission.name;
+        });
       }
-      if(userDojo.userTypes) userDojo.userTypes = _.uniq(userDojo.userTypes);
+      if (userDojo.userTypes) userDojo.userTypes = _.uniq(userDojo.userTypes);
 
       usersDojosEntity.save$(userDojo, done);
     }
 
-    function saveNinjasUserDojo(done) {
+    function saveNinjasUserDojo (done) {
       seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: userDojo.userId}}, function (err, userProfiles) {
-        if(err) return done(err);
+        if (err) return done(err);
 
         var userProfile = userProfiles[0];
 
-        if(!userProfile.children) return done();
+        if (!userProfile.children) return done();
         async.each(userProfile.children, function (youthUserId, cb) {
           seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: youthUserId}}, function (err, youthProfiles) {
-            if(err) return cb(err);
+            if (err) return cb(err);
 
             var youthProfile = youthProfiles[0];
 
-            seneca.act({role: plugin, cmd: 'load_usersdojos', query:{userId: youthUserId, dojoId: userDojo.dojoId}}, function(err, res) {
-              if(err) return done(err);
+            seneca.act({
+              role: plugin,
+              cmd: 'load_usersdojos',
+              query: {userId: youthUserId, dojoId: userDojo.dojoId}
+            }, function (err, res) {
+              if (err) return done(err);
 
-              if(!res.length) {
+              if (!res.length) {
                 var youthUserDojo = {
                   userId: youthUserId,
                   dojoId: userDojo.dojoId,
@@ -1983,7 +2081,7 @@ module.exports = function (options) {
     }
   }
 
-  function cmd_remove_usersdojos(args, done) {
+  function cmd_remove_usersdojos (args, done) {
     var data = args.data;
     var userId = data.userId;
     var dojoId = data.dojoId;
@@ -1997,34 +2095,39 @@ module.exports = function (options) {
       loadDojoChampion,
       emailDojoChampion
     ], function (err, res) {
-      if(err) return done(null, {error: err.message});
+      if (err) return done(null, {error: err.message});
       return done(null, res);
     });
 
-    function ownerPermissionsCheck(cb) {
-      //Prevent the deletion of the dojo owner.
-      usersDojosEntity.load$({userId: userId, dojoId: dojoId, deleted:0}, function (err, response) {
-        if(err) return cb(err);
+    function ownerPermissionsCheck (cb) {
+      // Prevent the deletion of the dojo owner.
+      usersDojosEntity.load$({userId: userId, dojoId: dojoId, deleted: 0}, function (err, response) {
+        if (err) return cb(err);
         var userDojo = response;
-        if(userDojo.owner === 1) return cb(new Error('Dojo owners cannot be removed.'));
+        if (userDojo.owner === 1) return cb(new Error('Dojo owners cannot be removed.'));
         return cb(null, userDojo);
       });
     }
 
-    function removeUserDojoLink(usersDojo, cb) {
+    function removeUserDojoLink (usersDojo, cb) {
       usersDojo.deleted = 1;
       usersDojo.deletedBy = args.user.id;
       usersDojo.deletedAt = new Date();
 
-      //Remove ninjas.
+      // Remove ninjas.
       seneca.make$(USER_DOJO_ENTITY_NS).save$(usersDojo, function (err, response) {
+        if (err) return cb(err);
         seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: args.user.id}}, function (err, userProfiles) {
-          if(err) return cb(err);
+          if (err) return cb(err);
           var userProfile = userProfiles[0];
-          if(!userProfile.children) return cb(null, response);
+          if (!userProfile.children) return cb(null, response);
           async.each(userProfile.children, function (youthUserId, cb) {
-            seneca.act({role: plugin, cmd: 'load_usersdojos', query: {userId: youthUserId, dojoId: dojoId}}, function (err, youthUsersDojos) {
-              if(err) return cb(err);
+            seneca.act({
+              role: plugin,
+              cmd: 'load_usersdojos',
+              query: {userId: youthUserId, dojoId: dojoId}
+            }, function (err, youthUsersDojos) {
+              if (err) return cb(err);
               var youthUserDojo = youthUsersDojos[0];
               youthUserDojo.deleted = 1;
               youthUserDojo.deletedBy = args.user.id;
@@ -2032,99 +2135,98 @@ module.exports = function (options) {
               seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
             });
           }, function (err, res) {
-            if(err) return cb(err);
+            if (err) return cb(err);
             return cb(null, response);
           });
         });
       });
     }
 
-    function loadUserAndDojoDetails(usersDojo, cb) {
+    function loadUserAndDojoDetails (usersDojo, cb) {
       async.waterfall([
         loadUser,
         loadDojo
       ], function (err, user, dojo) {
-        if(err) return cb(err);
+        if (err) return cb(err);
         return cb(null, user, dojo);
       });
 
-      function loadUser(callback) {
-        seneca.act({role:'cd-users', cmd:'load', id:userId, user: args.user}, callback);
+      function loadUser (callback) {
+        seneca.act({role: 'cd-users', cmd: 'load', id: userId, user: args.user}, callback);
       }
 
-      function loadDojo(user, callback) {
-        seneca.act({role:plugin, cmd:'load', id:dojoId}, function (err, response) {
-          if(err) return callback(err);
+      function loadDojo (user, callback) {
+        seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, response) {
+          if (err) return callback(err);
           return callback(null, user, response);
         });
       }
-
     }
 
-    function loadDojoChampion(user, dojo, cb) {
-      seneca.act({role:plugin, cmd:'load_dojo_champion', id:dojo.id}, function (err, response) {
-        if(err) return cb(err);
+    function loadDojoChampion (user, dojo, cb) {
+      seneca.act({role: plugin, cmd: 'load_dojo_champion', id: dojo.id}, function (err, response) {
+        if (err) return cb(err);
         var champion = response[0];
         return cb(null, user, dojo, champion);
       });
     }
 
-    function emailDojoChampion(user, dojo, champion, cb) {
-      if(!champion) return cb();
+    function emailDojoChampion (user, dojo, champion, cb) {
+      if (!champion) return cb();
       var content = {
-        name:user.name,
-        email:user.email,
-        dojoName:dojo.name
+        name: user.name,
+        email: user.email,
+        dojoName: dojo.name
       };
 
       var locality = args.locality || 'en_US';
       var code = 'user-left-dojo-';
 
-      var payload = {to:champion.email, code: code, locality: locality, content:content, subject: emailSubject};
-      seneca.act({role:plugin, cmd:'send_email', payload:payload}, cb);
+      var payload = {to: champion.email, code: code, locality: locality, content: content, subject: emailSubject};
+      seneca.act({role: plugin, cmd: 'send_email', payload: payload}, cb);
     }
   }
 
-  function cmd_get_user_types(args, done) {
-    var userTypes = ['attendee-o13', 'parent-guardian' , 'mentor', 'champion'];
-    setImmediate(function() {
+  function cmd_get_user_types (args, done) {
+    var userTypes = ['attendee-o13', 'parent-guardian', 'mentor', 'champion'];
+    setImmediate(function () {
       done(null, userTypes);
     });
   }
 
-  function cmd_get_user_permissions(args, done) {
+  function cmd_get_user_permissions (args, done) {
     var userPermissions = [
-      {title:'Dojo Admin', name:'dojo-admin'},
-      {title:'Ticketing Admin',name:'ticketing-admin'}
+      {title: 'Dojo Admin', name: 'dojo-admin'},
+      {title: 'Ticketing Admin', name: 'ticketing-admin'}
     ];
-    setImmediate(function() {
+    setImmediate(function () {
       done(null, userPermissions);
     });
   }
 
-  function cmd_get_dojo_config(args, done) {
-    setImmediate(function() {
+  function cmd_get_dojo_config (args, done) {
+    setImmediate(function () {
       done(null, dojoConfig);
     });
   }
 
-  function cmd_load_dojo_admins(args, done) {
+  function cmd_load_dojo_admins (args, done) {
     var seneca = this;
     var dojoId = args.dojoId;
 
-    seneca.act({role: plugin, cmd: 'load_usersdojos', query:{dojoId:dojoId}}, function (err, usersDojos) {
-      if(err) return done(err);
+    seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojoId}}, function (err, usersDojos) {
+      if (err) return done(err);
       async.map(usersDojos, function (userDojo, cb) {
         var dojoAdminPermissionFound = _.find(userDojo.userPermissions, function (userPermission) {
           return userPermission.name === 'dojo-admin';
         });
-        if(dojoAdminPermissionFound) {
+        if (dojoAdminPermissionFound) {
           seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId, user: args.user}, cb);
         } else {
           return cb();
         }
       }, function (err, dojoAdmins) {
-        if(err) return done(err);
+        if (err) return done(err);
         dojoAdmins = _.chain(dojoAdmins)
           .flatten()
           .compact()
@@ -2134,18 +2236,17 @@ module.exports = function (options) {
     });
   }
 
-  function cmd_list_query(args, done) {
+  function cmd_list_query (args, done) {
     logger.info({args: args}, 'cmd_list_query');
     var seneca = this;
-    var query  = args.query || {};
-    var filterInactiveDojos = query.filterInactiveDojos || false;
+    var query = args.query || {};
     delete query.filterInactiveDojos;
     var dojosEntity = seneca.make$(ENTITY_NS);
-    if(!query.limit$) query.limit$ = 'NULL';
+    if (!query.limit$) query.limit$ = 'NULL';
     dojosEntity.list$(query, done);
   }
 
-  function cmd_search_nearest_dojos(args, done) {
+  function cmd_search_nearest_dojos (args, done) {
     logger.info({args: args}, 'cmd_search_nearest_dojos');
     var localPgOptions = _.defaults({}, options.postgresql);
     localPgOptions.database = _.get(options, 'postgresql.name');
@@ -2155,16 +2256,16 @@ module.exports = function (options) {
     var searchLon = args.query.lon;
 
     pg.connect(localPgOptions, function (err, client) {
-      if(err) return done(err);
+      if (err) return done(err);
       client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND verified != 0 AND deleted != 1 ORDER BY distance_from_search_location ASC LIMIT 10", [searchLat, searchLon], function (err, results) {
-        if(err) return done(err);
+        if (err) return done(err);
         client.end();
         return done(null, results.rows);
       });
     });
   }
 
-  function cmd_search_bounding_box(args, done) {
+  function cmd_search_bounding_box (args, done) {
     logger.info({args: args}, 'cmd_search_bounding_box');
     var localPgOptions = _.defaults({}, options.postgresql);
     localPgOptions.database = _.get(options, 'postgresql.name');
@@ -2177,8 +2278,8 @@ module.exports = function (options) {
 
     var psqlQuery;
     var psqlQueryVariables;
-    if(search){
-      search =  '%' + search + '%';
+    if (search) {
+      search = '%' + search + '%';
       psqlQuery = "SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND deleted != 1 AND verified != 0 AND (earth_box(ll_to_earth($1, $2), $3) @> ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8) OR name ILIKE $4) ORDER BY distance_from_search_location ASC";
       psqlQueryVariables = [searchLat, searchLon, boundsRadius, search];
     } else {
@@ -2187,9 +2288,9 @@ module.exports = function (options) {
     }
 
     pg.connect(localPgOptions, function (err, client) {
-      if(err) return done(err);
+      if (err) return done(err);
       client.query(psqlQuery, psqlQueryVariables, function (err, results) {
-        if(err) return done(err);
+        if (err) return done(err);
         client.end();
         return done(null, results.rows);
       });
@@ -2205,8 +2306,12 @@ module.exports = function (options) {
       if (err) return done(null, {ok: false, why: err.message});
       var dojoEmail = dojo.email;
       if (!dojoEmail) {
-        //If the dojo email is not set, retrieve the dojo owner's email.
-        seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojoId, owner: 1}}, function (err, usersDojos) {
+        // If the dojo email is not set, retrieve the dojo owner's email.
+        seneca.act({
+          role: plugin,
+          cmd: 'load_usersdojos',
+          query: {dojoId: dojoId, owner: 1}
+        }, function (err, usersDojos) {
           if (err) return done(null, {ok: false, why: err.message});
           var userDojo = usersDojos[0];
           if (userDojo) {
@@ -2227,23 +2332,22 @@ module.exports = function (options) {
 
   // from countries service
 
-  function cmd_reverse_geocode(args, done){
+  function cmd_reverse_geocode (args, done) {
     var coords = args.coords;
 
-    geocoder.reverse(coords, function(err, res){
-      if(err) res.error = err;
+    geocoder.reverse(coords, function (err, res) {
+      if (err) res.error = err;
       done(null, res);
     });
   }
 
-  function cmd_countries_continents(args, done) {
-    setImmediate(function() {
+  function cmd_countries_continents (args, done) {
+    setImmediate(function () {
       done(null, countriesList);
     });
   }
 
-  function cmd_list_countries(args, done){
-
+  function cmd_list_countries (args, done) {
     function calculateContinent (alpha2) {
       return countriesList.countries[alpha2].continent;
     }
@@ -2261,12 +2365,12 @@ module.exports = function (options) {
       })
       .value();
 
-    setImmediate(function() {
+    setImmediate(function () {
       return done(null, transformed);
     });
   }
 
-  function cmd_list_places(args, done) {
+  function cmd_list_places (args, done) {
     var options = {
       url: 'https://maps.googleapis.com/maps/api/place/autocomplete/json',
       method: 'GET',
@@ -2280,7 +2384,9 @@ module.exports = function (options) {
 
     debug('cmd_list_places options:', options);
     request(options, function (error, response, data) {
-      if (error) { return done(error); }
+      if (error) {
+        return done(error);
+      }
       if (data && data.error_message) {
         return done(new Error('Google Maps API error: ' + data.error_message));
       }
@@ -2295,11 +2401,13 @@ module.exports = function (options) {
       var places = _.chain(data.predictions)
         .map('description')
         .map(function (name) {
-           var parts = name.split(',');
-           if (parts.length === 1) { return name; }
-             // Remove the country from the end of the string
-             return parts.slice(0,-1).join(',');
-           })
+          var parts = name.split(',');
+          if (parts.length === 1) {
+            return name;
+          }
+          // Remove the country from the end of the string
+          return parts.slice(0, -1).join(',');
+        })
         .value();
 
       debug('cmd_list_places returning:', places);
@@ -2307,20 +2415,20 @@ module.exports = function (options) {
     });
   }
 
-  function cmd_continents_lat_long(args, done) {
-    setImmediate(function() {
+  function cmd_continents_lat_long (args, done) {
+    setImmediate(function () {
       done(null, continents.coordinatesByAlpha2);
     });
   }
 
-  function cmd_countries_lat_long(args, done) {
-    setImmediate(function() {
+  function cmd_countries_lat_long (args, done) {
+    setImmediate(function () {
       done(null, countries.coordinatesByAlpha2);
     });
   }
 
-  function cmd_get_continent_codes(args, done){
-    setImmediate(function() {
+  function cmd_get_continent_codes (args, done) {
+    setImmediate(function () {
       done(null, continents.alpha2ByName);
     });
   }
@@ -2328,5 +2436,4 @@ module.exports = function (options) {
   return {
     name: plugin
   };
-
 };

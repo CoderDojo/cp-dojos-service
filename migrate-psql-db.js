@@ -2,7 +2,6 @@ var postgrator = require('postgrator');
 var config = require('./config/config.js')();
 
 module.exports = function migrate (cb) {
-
   postgrator.setConfig({
     migrationDirectory: './scripts/database/pg/migrations',
     driver: 'pg',
@@ -17,4 +16,4 @@ module.exports = function migrate (cb) {
       return cb(err, migrations);
     });
   });
-}
+};
