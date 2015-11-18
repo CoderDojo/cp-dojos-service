@@ -28,7 +28,7 @@
     "chai": "2.2.0",
     "lab": "5.15.1",
     "pre-commit": "1.0.7",
-    "semistandard": "7.0.2",
+    "semistandard": "7.0.3",
     "sinon": "1.16.1"
   },
   "dependencies": {
