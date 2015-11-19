@@ -1883,7 +1883,7 @@ module.exports = function (options) {
     });
 
     function loadUser (done) {
-      seneca.act({role: 'cd-users', cmd: 'load', id: requestedByUser, user: args.user}, function (err, response) {
+      seneca.act({role: 'cd-users', cmd: 'load_unvalidated', id: requestedByUser, user: args.user}, function (err, response) {
         if (err) return done(err);
         var user = response;
         var joinRequests = user.joinRequests;
