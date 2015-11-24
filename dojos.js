@@ -1596,8 +1596,7 @@ module.exports = function (options) {
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
 
-      var userIds = _.uniq(_.pluck(response, 'userId'));
-      userListQuery.ids = userIds;
+      userListQuery.ids = _.uniq(_.pluck(response, 'userId'));
       seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
     });
   }
