@@ -2127,11 +2127,15 @@ module.exports = function (options) {
               query: {userId: youthUserId, dojoId: dojoId}
             }, function (err, youthUsersDojos) {
               if (err) return cb(err);
-              var youthUserDojo = youthUsersDojos[0];
-              youthUserDojo.deleted = 1;
-              youthUserDojo.deletedBy = args.user.id;
-              youthUserDojo.deletedAt = new Date();
-              seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
+              if (youthUsersDojos && youthUsersDojos.length > 0) {
+                var youthUserDojo = youthUsersDojos[0];
+                youthUserDojo.deleted = 1;
+                youthUserDojo.deletedBy = args.user.id;
+                youthUserDojo.deletedAt = new Date();
+                seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
+              } else {
+                return cb();
+              }
             });
           }, function (err, res) {
             if (err) return cb(err);
