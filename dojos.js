@@ -784,7 +784,7 @@ module.exports = function (options) {
             });
           } else {
             if (dojo.hasOwnProperty('verified') && dojo.verified === 1) {
-              if (dojo.verifiedAt === null) {
+              if (!dojo.verifiedAt) {
                 dojo.verifiedAt = new Date();
               }
               dojo.verifiedBy = args.user.id;
