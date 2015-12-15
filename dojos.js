@@ -554,12 +554,25 @@ module.exports = function (options) {
     }
   }
 
+  function purgeInviteEmails(invitesArray){
+    return _.map(invitesArray, function(invite) { delete invite.email; return invite; });
+  }
+
   function cmd_list (args, done) {
     logger.info({args: args}, 'cmd_list');
     var query = args.query || {};
     if (!query.limit$) query.limit$ = 'NULL';
     if (query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []);
-    seneca.make$(ENTITY_NS).list$(query, done);
+    seneca.make$(ENTITY_NS).list$(query, function(err, dojos){
+      if (err) return done(err);
+
+      _.each(dojos, function (dojo) {
+        if (dojo.userInvites) {
+          dojo.userInvites = purgeInviteEmails(dojo.userInvites);
+        }
+      });
+      done(null, dojos);
+    });
   }
 
   function cmd_dojos_by_country (args, done) {
@@ -569,6 +582,10 @@ module.exports = function (options) {
     seneca.act({role: plugin, cmd: 'list', query: query}, function (err, dojos) {
       if (err) return done(err);
       _.each(dojos, function (dojo) {
+        if (dojo.userInvites) {
+          dojo.userInvites = purgeInviteEmails(dojo.userInvites);
+        }
+
         if (!dojosByCountry[dojo.countryName]) dojosByCountry[dojo.countryName] = [];
         dojosByCountry[dojo.countryName].push(dojo);
       });
@@ -586,6 +603,8 @@ module.exports = function (options) {
     logger.info({args: args}, 'cmd_load');
     seneca.make$(ENTITY_NS).load$(args.id, function (err, response) {
       if (err) return done(err);
+
+      response.userInvites = purgeInviteEmails(response.userInvites);
       done(null, response);
     });
   }
@@ -597,6 +616,8 @@ module.exports = function (options) {
     }
     seneca.make$(ENTITY_NS).load$(args.query, function (err, response) {
       if (err) return done(err);
+
+      response.userInvites = purgeInviteEmails(response.userInvites);
       done(null, response);
     });
   }
@@ -1077,6 +1098,9 @@ module.exports = function (options) {
         seneca.make$(ENTITY_NS).list$(query, _.partialRight(done, userDojos));
       },
       function (dojos, userDojos, done) {
+        _.each(dojos, function (dojo) {
+          dojo.userInvites = purgeInviteEmails(dojo.userInvites);
+        });
         return done(null, {
           total: userDojos.length,
           records: dojos
@@ -2263,6 +2287,9 @@ module.exports = function (options) {
       client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND verified != 0 AND deleted != 1 ORDER BY distance_from_search_location ASC LIMIT 10", [searchLat, searchLon], function (err, results) {
         if (err) return done(err);
         client.end();
+        _.each(results.rows, function (dojo) {
+          dojo.user_invites = purgeInviteEmails(dojo.user_invites);
+        });
         return done(null, results.rows);
       });
     });
@@ -2295,6 +2322,9 @@ module.exports = function (options) {
       client.query(psqlQuery, psqlQueryVariables, function (err, results) {
         if (err) return done(err);
         client.end();
+        _.each(results.rows, function (dojo) {
+          dojo.user_invites = purgeInviteEmails(dojo.user_invites);
+        });
         return done(null, results.rows);
       });
     });
