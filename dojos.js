@@ -554,8 +554,8 @@ module.exports = function (options) {
     }
   }
 
-  function purgeInviteEmails(invitesArray){
-    return _.map(invitesArray, function(invite) { delete invite.email; return invite; });
+  function purgeInviteEmails (invitesArray) {
+    return _.map(invitesArray, function (invite) { delete invite.email; return invite; });
   }
 
   function cmd_list (args, done) {
@@ -563,7 +563,7 @@ module.exports = function (options) {
     var query = args.query || {};
     if (!query.limit$) query.limit$ = 'NULL';
     if (query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []);
-    seneca.make$(ENTITY_NS).list$(query, function(err, dojos){
+    seneca.make$(ENTITY_NS).list$(query, function (err, dojos) {
       if (err) return done(err);
 
       _.each(dojos, function (dojo) {
@@ -604,7 +604,9 @@ module.exports = function (options) {
     seneca.make$(ENTITY_NS).load$(args.id, function (err, response) {
       if (err) return done(err);
 
-      response.userInvites = purgeInviteEmails(response.userInvites);
+      if (response && response.userInvites) {
+        response.userInvites = purgeInviteEmails(response.userInvites);
+      }
       done(null, response);
     });
   }
@@ -617,7 +619,9 @@ module.exports = function (options) {
     seneca.make$(ENTITY_NS).load$(args.query, function (err, response) {
       if (err) return done(err);
 
-      response.userInvites = purgeInviteEmails(response.userInvites);
+      if (response && response.userInvites) {
+        response.userInvites = purgeInviteEmails(response.userInvites);
+      }
       done(null, response);
     });
   }
