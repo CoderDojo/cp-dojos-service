@@ -47,7 +47,7 @@
     "newrelic": "1.19.2",
     "node-geocoder": "2.23.0",
     "pg": "4.4.0",
-    "postgrator": "2.2.0",
+    "postgrator": "2.5.0",
     "randomstring": "1.0.6",
     "request": "2.55.0",
     "seneca": "0.7.2",

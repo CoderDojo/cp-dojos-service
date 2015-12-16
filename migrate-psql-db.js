@@ -8,7 +8,8 @@ module.exports = function migrate (cb) {
     host: config['postgresql-store'].host,
     database: config['postgresql-store'].name,
     username: config['postgresql-store'].username,
-    password: config['postgresql-store'].password
+    password: config['postgresql-store'].password,
+    newline: 'LF'
   });
 
   postgrator.migrate('max', function (err, migrations) {
