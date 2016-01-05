@@ -52,7 +52,7 @@
     "request": "2.55.0",
     "seneca": "0.7.2",
     "seneca-mail": "0.2.1",
-    "seneca-postgresql-store": "git://github.com/dberesford/seneca-postgresql-store.git",
+    "seneca-postgresql-store": "1.1.2",
     "shortid": "2.2.2",
     "slug": "0.9.1",
     "xoauth2": "1.1.0",
