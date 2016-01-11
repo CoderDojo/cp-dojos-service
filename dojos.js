@@ -1720,7 +1720,6 @@ module.exports = function (options) {
     var data = args.data;
     var dojoId = data.dojoId;
     var inviteToken = data.inviteToken;
-    var currentUserEmail = data.currentUserEmail;
     var currentUserId = data.currentUserId;
 
     async.waterfall([
@@ -1737,7 +1736,7 @@ module.exports = function (options) {
         if (err) return done(err);
         var userInvites = response.userInvites;
         var inviteFound = _.find(userInvites, function (userInvite) {
-          if (userInvite.id === inviteToken && userInvite.email === currentUserEmail) {
+          if (userInvite.id === inviteToken) {
             return userInvite;
           }
         });
