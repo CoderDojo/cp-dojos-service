@@ -100,7 +100,7 @@ module.exports = [
         name:'planContent',
         required:false,
         infoIcon:true,
-        infoText:'Many Dojos start with Scratch or dive straight into HTML. See Kata, the CoderDojo community wiki for <a href="http://kata.coderdojo.com/wiki/Learning_Resource">more information on learning resources.</a>'
+        infoText:'Many Dojos start with Scratch or dive straight into HTML. See Kata, the CoderDojo community wiki for <a href=\"http://kata.coderdojo.com/wiki/Learning_Resource\">more information on learning resources.</a>'
       },
       {
         title:'Setup ticketing and registration for your Dojo',
