@@ -34,7 +34,7 @@ module.exports = [
         requiredTextFieldMessage:'Please explain how your team was background checked',
         placeholder:'Please describe the situation in your Dojo and if your team has been background checked.',
         infoIcon:true,
-        infoText:'The requirements for background checking are specific to the legislation in your jurisdiction. You can see some guidelines on Child Protection and Background Checking on <a href="http://kata.coderdojo.com/wiki/Child_Protection_and_Background_Checking">Kata</a>. Please also ensure you check your local legislation. Please comment below describing the situation in your local Dojo.',
+        infoText:'The requirements for background checking are specific to the legislation in your jurisdiction. You can see some guidelines on Child Protection and Background Checking on <a href=\"http://kata.coderdojo.com/wiki/Child_Protection_and_Background_Checking\">Kata</a>. Please also ensure you check your local legislation. Please comment below describing the situation in your local Dojo.',
         taoIcon:true
       }
     ]
@@ -172,7 +172,7 @@ module.exports = [
         textField:true,
         placeholder:'Please feel free to add comments or more information here',
         infoIcon:true,
-        infoText:'Inclusion is a fundamental principle of CoderDojo, <a href="http://kata.coderdojo.com/wiki/Guiding_Principles_and_Philosophies#Inclusion_Statement">read our short inclusion statement and confirm you and your mentors are in agreement.</a>',
+        infoText:'Inclusion is a fundamental principle of CoderDojo, <a href=\"http://kata.coderdojo.com/wiki/Guiding_Principles_and_Philosophies#Inclusion_Statement\">read our short inclusion statement and confirm you and your mentors are in agreement.</a>',
         taoIcon:true
       },
       {
