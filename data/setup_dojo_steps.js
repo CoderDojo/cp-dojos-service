@@ -163,7 +163,7 @@ module.exports = [
         textField:true,
         placeholder:'Please feel free to add comments or more information here',
         infoIcon:true,
-        infoText:'Data protection is increasingly becoming an important topic, <a href="http://kata.coderdojo.com/wiki/Data_Protection_101">here are some simple tips to make sure you stay informed</a>.',
+        infoText:'Data protection is increasingly becoming an important topic, <a href=\"http://kata.coderdojo.com/wiki/Data_Protection_101\">here are some simple tips to make sure you stay informed</a>.',
         taoIcon:true
       },
       {
