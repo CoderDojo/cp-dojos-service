@@ -20,7 +20,7 @@
     "url": "git://github.com/CoderDojo/cp-core-services.git"
   },
   "author": "",
-  "license": "BSD",
+  "license": "MIT",
   "bugs": {
     "url": "https://github.com/CoderDojo/cp-core-services/issues"
   },
