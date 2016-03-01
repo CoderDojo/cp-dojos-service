@@ -85,6 +85,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'list_query'}, cmd_list_query);
   seneca.add({role: plugin, cmd: 'find_dojolead'}, cmd_find_dojolead);
   seneca.add({role: plugin, cmd: 'load_dojo_email'}, cmd_load_dojo_email);
+  seneca.add({role: plugin, cmd: 'notify_all_members'}, cmd_notify_all_members);
   // from countries service
   seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
   seneca.add({role: plugin, cmd: 'list_countries'}, cmd_list_countries);
@@ -2367,6 +2368,15 @@ module.exports = function (options) {
         return done(null, {email: dojoEmail});
       }
     });
+  }
+
+  function cmd_notify_all_members (args, done) {
+    // var seneca = this;
+    var dojoId = args.data.dojoId;
+    var eventId = args.data.eventId;
+
+    console.log('dojoId, eventId: %s -- %s', dojoId, eventId);
+    return done(null, 'response kiss');
   }
 
   // from countries service
