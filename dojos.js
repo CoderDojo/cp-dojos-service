@@ -2390,10 +2390,7 @@ module.exports = function (options) {
     function getDojoUsers (done) {
       var query = {dojoId: dojoId};
 
-      seneca.act({role: plugin, cmd: 'load_dojo_users', query: query}, function (err, users) {
-        if (err) return done(err);
-        done(null, users);
-      });
+      seneca.act({role: plugin, cmd: 'load_dojo_users', query: query}, done);
     }
 
     function getEvent (users, done) {
