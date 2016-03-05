@@ -896,7 +896,10 @@ module.exports = function (options) {
               return done(null, dojo);
             }
 
-            var urlSlugs = _.pluck(dojos, 'urlSlug');
+            var otherDojos = _.filter(dojos, function (d) {
+              return d.id !== dojo.id;
+            });
+            var urlSlugs = _.pluck(otherDojos, 'urlSlug');
             var urlSlug = baseSlug;
             for (var idx = 1; urlSlugs.indexOf(urlSlug) !== -1; urlSlug = baseSlug + '-' + idx, idx++);
 
