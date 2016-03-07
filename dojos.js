@@ -1618,15 +1618,31 @@ module.exports = function (options) {
   function cmd_load_dojo_users (args, done) {
     logger.info({args: args}, 'cmd_load_dojo_users');
     var query = args.query || {};
+    var typeQuery = null;
     var userListQuery = {};
     if (query.sort$) {
       userListQuery.sort$ = query.sort$;
       delete query.sort$;
     }
 
+    if (query.userType) {
+      typeQuery = query.userType;
+      delete query.userType;
+    }
+
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
+      if (typeQuery) {
+        response = _.filter(response, function (user) {
+          return _.contains(user.userTypes, typeQuery);
+        });
+      }
 
+      if (response.length === 0) {
+        // Force return empty array as querying users
+        // without list of ids returns all users
+        return done(null, []);
+      }
       userListQuery.ids = _.uniq(_.pluck(response, 'userId'));
       seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
     });
