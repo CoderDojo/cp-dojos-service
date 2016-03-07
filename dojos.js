@@ -1619,6 +1619,7 @@ module.exports = function (options) {
     logger.info({args: args}, 'cmd_load_dojo_users');
     var query = args.query || {};
     var typeQuery = null;
+    var nameQuery = null;
     var userListQuery = {};
     if (query.sort$) {
       userListQuery.sort$ = query.sort$;
@@ -1628,6 +1629,11 @@ module.exports = function (options) {
     if (query.userType) {
       typeQuery = query.userType;
       delete query.userType;
+    }
+
+    if (query.name) {
+      nameQuery = new RegExp(query.name, 'i');
+      delete query.name;
     }
 
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
@@ -1644,7 +1650,20 @@ module.exports = function (options) {
         return done(null, []);
       }
       userListQuery.ids = _.uniq(_.pluck(response, 'userId'));
-      seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
+      if (nameQuery) {
+        // Need to do this as passing ids to user list will just get those users
+        // i.e. other criteria are not taken into account
+        seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, function (err, response) {
+          if (err) return done(err);
+
+          response = _.filter(response, function (r) {
+            return r.name.match(nameQuery);
+          });
+
+          return done(null, response);
+        });
+      }
+      else seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
     });
   }
 
