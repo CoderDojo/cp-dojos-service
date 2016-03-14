@@ -1,9 +1,9 @@
 DO $$
 	BEGIN
 		BEGIN
-			ALTER TABLE cd_dojos ADD COLUMN attendee smallint;
+			ALTER TABLE cd_dojos ADD COLUMN expected_attendees smallint;
 		EXCEPTION
-			WHEN duplicate_column THEN RAISE NOTICE 'column attendee already exists in cd_dojos.';
+			WHEN duplicate_column THEN RAISE NOTICE 'column expected_attendees already exists in cd_dojos.';
 		END;
 	END;
 $$
