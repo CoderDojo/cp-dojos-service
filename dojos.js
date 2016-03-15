@@ -1628,6 +1628,9 @@ module.exports = function (options) {
       if (err) return done(err);
 
       userListQuery.ids = _.uniq(_.pluck(response, 'userId'));
+      // user id is returned by default
+      // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
+      userListQuery.fields$ = ['name', 'email', 'init_user_type'];
       seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
     });
   }
