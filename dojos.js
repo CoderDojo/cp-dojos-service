@@ -468,10 +468,10 @@ module.exports = function (options) {
         var userIds = _.chain(searchResult).map('creators').flatten().map('id').uniq().value();
         seneca.act({role: 'cd-agreements', cmd: 'list', userIds: userIds}, function (err, agreements) {
           if (err) return done(err);
-          agreements = _.indexBy(agreements, 'userId');
-          _.each(searchResult, function (dojo) {
+          agreements = _.keyBy(agreements, 'userId');
+          _.forEach(searchResult, function (dojo) {
             dojo.agreements = [];
-            _.each(dojo.creators, function (creator) {
+            _.forEach(dojo.creators, function (creator) {
               creator.agreements = [];
               if (agreements[creator.id]) {
                 creator.agreements = agreements[creator.id].agreements;
@@ -495,7 +495,7 @@ module.exports = function (options) {
     seneca.make$(ENTITY_NS).list$({limit$: 'NULL', alpha2: country, deleted: 0, verified: 1}, function (err, response) {
       if (err) return done(err);
       countData[country] = {};
-      _.each(response, function (dojo) {
+      _.forEach(response, function (dojo) {
         if (dojo.coordinates && dojo.stage !== 4) {
           if (!countData[dojo.alpha2][dojo.admin1Name]) countData[dojo.alpha2][dojo.admin1Name] = {total: 0};
           countData[dojo.alpha2][dojo.admin1Name].total += 1;
@@ -1632,7 +1632,7 @@ module.exports = function (options) {
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
 
-      userListQuery.ids = _.uniq(_.pluck(response, 'userId'));
+      userListQuery.ids = _.uniq(_.map(response, 'userId'));
       // user id is returned by default
       // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
       userListQuery.fields$ = ['name', 'email', 'init_user_type'];
