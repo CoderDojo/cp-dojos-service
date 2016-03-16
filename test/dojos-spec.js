@@ -155,7 +155,7 @@ lab.experiment('Dojo Microservice test', function () {
               'twitter', 'website', 'verified', 'stage', 'creator', 'created',
               'urlSlug', 'id'];
             var actualFields = Object.keys(loadedDojo);
-            _.each(expectedFields, function (field) {
+            _.forEach(expectedFields, function (field) {
               expect(actualFields).to.include(field);
             })
 
@@ -416,7 +416,7 @@ lab.experiment('Dojo Microservice test', function () {
         expect(dojos.continents.SA.countries).to.include.keys(['BR']);
 
         var total = 0;
-        _.each(dojos.continents, function (element) {
+        _.forEach(dojos.continents, function (element) {
           expect(element.total).to.exist;
           total += element.total;
         });
@@ -483,7 +483,7 @@ lab.experiment('Dojo Microservice test', function () {
           expect(dojos).not.to.be.empty;
 
           var value = 'updated.';
-          _.each(dojos, function (element) {
+          _.forEach(dojos, function (element) {
             element.verified = 0;
             element.notes = value;
           });
@@ -500,7 +500,7 @@ lab.experiment('Dojo Microservice test', function () {
               if (err) return done(err);
               expect(dojos).not.to.be.empty;
 
-              _.each(dojos, function (element) {
+              _.forEach(dojos, function (element) {
                 expect(element.notes).to.equal(value);
               });
 
@@ -587,12 +587,12 @@ lab.experiment('Dojo Microservice test', function () {
         expect(dojoSteps).to.not.be.empty;
 
         var all_keys = [];
-        _.each(dojoSteps, function (element) {
+        _.forEach(dojoSteps, function (element) {
           var obj_keys = Object.keys(element);
           all_keys = _.union(all_keys, obj_keys); // append all fields to a list, no duplicates
 
           // check for all fields to be ok
-          _.each(obj_keys, function (key) {
+          _.forEach(obj_keys, function (key) {
             expect(element[key]).to.be.ok;
           });
         });
@@ -804,7 +804,7 @@ lab.experiment('Dojo Microservice test', function () {
 
   lab.experiment('generate_user_invite_token', function () {
     lab.test('executes', function (done) {
-      // Mock the next call to dojos/load to return something  
+      // Mock the next call to dojos/load to return something
       mockSeneca(role, 'load', {});
       seneca.act({role: role, cmd: 'generate_user_invite_token', user: {}}, done);
     });

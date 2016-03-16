@@ -2452,7 +2452,7 @@ module.exports = function (options) {
 
   function cmd_list_countries (args, done) {
     function calculateContinent (alpha2) {
-      return countriesList.countries[alpha2].continent;
+      return countriesList.countries && countriesList.countries[alpha2] ? countriesList.countries[alpha2].continent : null;
     }
 
     var transformed = _.chain(isoc)
