@@ -2305,7 +2305,7 @@ module.exports = function (options) {
 
   function cmd_user_is_dojo_admin (args, done) {
     var seneca = this;
-    var dojoId = args.query.dojoId;
+    var dojoId = args.dojoId || args.query.dojoId;
     var userId = args.user.id;
 
     async.waterfall([
