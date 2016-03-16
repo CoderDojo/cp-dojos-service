@@ -79,6 +79,8 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'uncompleted_dojos'}, cmd_uncompleted_dojos);
   seneca.add({role: plugin, cmd: 'get_dojo_config'}, cmd_get_dojo_config);
   seneca.add({role: plugin, cmd: 'load_dojo_admins'}, cmd_load_dojo_admins);
+  seneca.add({role: plugin, cmd: 'load_ticketing_admins'}, cmd_load_ticketing_admins);
+  seneca.add({role: plugin, cmd: 'user_is_dojo_admin'}, cmd_user_is_dojo_admin);
   seneca.add({role: plugin, cmd: 'update_founder'}, cmd_update_dojo_founder);
   seneca.add({role: plugin, cmd: 'search_nearest_dojos'}, cmd_search_nearest_dojos);
   seneca.add({role: plugin, cmd: 'search_bounding_box'}, cmd_search_bounding_box);
@@ -120,7 +122,7 @@ module.exports = function (options) {
           return done(err);
         }
 
-        if (!_.contains(user.roles, 'cdf-admin')) {
+        if (!_.includes(user.roles, 'cdf-admin')) {
           return done(new Error('Unauthorized'));
         }
 
@@ -175,18 +177,18 @@ module.exports = function (options) {
 
       if (!userDojo.userTypes) userDojo.userTypes = [];
 
-      if (!_.contains(userDojo.userTypes, 'champion')) userDojo.userTypes.push('champion');
+      if (!_.includes(userDojo.userTypes, 'champion')) userDojo.userTypes.push('champion');
 
       if (!userDojo.userPermissions) userDojo.userPermissions = [];
 
-      if (!_.contains(userDojo.userPermissions, 'dojo-admin')) {
+      if (!_.includes(userDojo.userPermissions, 'dojo-admin')) {
         userDojo.userPermissions.push({
           title: 'Dojo Admin',
           name: 'dojo-admin'
         });
       }
 
-      if (!_.contains(userDojo.userPermissions, 'ticketing-admin')) {
+      if (!_.includes(userDojo.userPermissions, 'ticketing-admin')) {
         userDojo.userPermissions.push({
           title: 'Ticketing Admin',
           name: 'ticketing-admin'
@@ -390,7 +392,7 @@ module.exports = function (options) {
 
     if (dojoLead.application.setupYourDojo) {
       var setupYourDojo = dojoLead.application.setupYourDojo;
-      var checkboxes = _.flatten(_.pluck(setupDojoSteps, 'checkboxes'));
+      var checkboxes = _.flatten(_.map(setupDojoSteps, 'checkboxes'));
 
       _.each(checkboxes, function (checkbox) {
         if (!setupYourDojo[checkbox.name]) {
@@ -409,14 +411,14 @@ module.exports = function (options) {
   }
 
   function isUserChampionAndDojoAdmin (query, requestingUser, done) {
-    if (_.contains(requestingUser.roles, 'cdf-admin')) {
+    if (_.includes(requestingUser.roles, 'cdf-admin')) {
       return done(null, true);
     }
 
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
       var userDojo = response[0];
-      var isDojoChampion = _.contains(userDojo.userTypes, 'champion');
+      var isDojoChampion = _.includes(userDojo.userTypes, 'champion');
       var isDojoAdmin = _.find(userDojo.userPermissions, function (userPermission) {
         return userPermission.name === 'dojo-admin';
       });
@@ -448,7 +450,7 @@ module.exports = function (options) {
             function (err, userDojos) {
               if (err) return cb(err);
               if (userDojos.length < 1) return cb();
-              var userIds = _.pluck(userDojos, 'userId');
+              var userIds = _.map(userDojos, 'userId');
               seneca.act({role: 'cd-users', cmd: 'list', ids: userIds}, function (err, users) {
                 if (err) return cb(err);
                 dojo.creators = _.map(users, function (user) {
@@ -463,13 +465,13 @@ module.exports = function (options) {
         });
       },
       function (searchResult, done) {
-        var userIds = _.chain(searchResult).pluck('creators').flatten().pluck('id').uniq().value();
+        var userIds = _.chain(searchResult).map('creators').flatten().map('id').uniq().value();
         seneca.act({role: 'cd-agreements', cmd: 'list', userIds: userIds}, function (err, agreements) {
           if (err) return done(err);
-          agreements = _.indexBy(agreements, 'userId');
-          _.each(searchResult, function (dojo) {
+          agreements = _.keyBy(agreements, 'userId');
+          _.forEach(searchResult, function (dojo) {
             dojo.agreements = [];
-            _.each(dojo.creators, function (creator) {
+            _.forEach(dojo.creators, function (creator) {
               creator.agreements = [];
               if (agreements[creator.id]) {
                 creator.agreements = agreements[creator.id].agreements;
@@ -493,7 +495,7 @@ module.exports = function (options) {
     seneca.make$(ENTITY_NS).list$({limit$: 'NULL', alpha2: country, deleted: 0, verified: 1}, function (err, response) {
       if (err) return done(err);
       countData[country] = {};
-      _.each(response, function (dojo) {
+      _.forEach(response, function (dojo) {
         if (dojo.coordinates && dojo.stage !== 4) {
           if (!countData[dojo.alpha2][dojo.admin1Name]) countData[dojo.alpha2][dojo.admin1Name] = {total: 0};
           countData[dojo.alpha2][dojo.admin1Name].total += 1;
@@ -555,7 +557,10 @@ module.exports = function (options) {
   }
 
   function purgeInviteEmails (invitesArray) {
-    return _.map(invitesArray, function (invite) { delete invite.email; return invite; });
+    return _.map(invitesArray, function (invite) {
+      delete invite.email;
+      return invite;
+    });
   }
 
   function cmd_list (args, done) {
@@ -687,7 +692,7 @@ module.exports = function (options) {
             return cb(null, baseSlug);
           }
 
-          urlSlugs = _.pluck(dojos, 'urlSlug');
+          urlSlugs = _.map(dojos, 'urlSlug');
           var urlSlug = baseSlug;
           for (var idx = 1; urlSlugs.indexOf(urlSlug) !== -1; urlSlug = baseSlug + '-' + idx, idx++);
 
@@ -899,7 +904,7 @@ module.exports = function (options) {
             var otherDojos = _.filter(dojos, function (d) {
               return d.id !== dojo.id;
             });
-            var urlSlugs = _.pluck(otherDojos, 'urlSlug');
+            var urlSlugs = _.map(otherDojos, 'urlSlug');
             var urlSlug = baseSlug;
             for (var idx = 1; urlSlugs.indexOf(urlSlug) !== -1; urlSlug = baseSlug + '-' + idx, idx++);
 
@@ -926,7 +931,7 @@ module.exports = function (options) {
 
   function checkUserDojoPermissions (dojoId, user, cb) {
     // first check user is an admin
-    if (_.contains(user.roles, CDF_ADMIN)) {
+    if (_.includes(user.roles, CDF_ADMIN)) {
       return cb();
     }
 
@@ -955,7 +960,7 @@ module.exports = function (options) {
   function wrapCheckCDFAdmin (f) {
     return function (args, done) {
       var user = args.user;
-      if (!_.contains(user.roles, CDF_ADMIN)) {
+      if (!_.includes(user.roles, CDF_ADMIN)) {
         return done(null, {ok: false, why: 'You must be a CDF Admin user'});
       }
       return f(args, done);
@@ -1089,7 +1094,7 @@ module.exports = function (options) {
           return done(null, [], []);
         }
 
-        var dojoIds = _.pluck(userDojos, 'dojoId');
+        var dojoIds = _.map(userDojos, 'dojoId');
         var query = {ids: dojoIds};
 
         var search = args.search;
@@ -1627,7 +1632,7 @@ module.exports = function (options) {
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
 
-      userListQuery.ids = _.uniq(_.pluck(response, 'userId'));
+      userListQuery.ids = _.uniq(_.map(response, 'userId'));
       // user id is returned by default
       // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
       userListQuery.fields$ = ['name', 'email', 'init_user_type'];
@@ -1888,7 +1893,7 @@ module.exports = function (options) {
           if (err) return cb(err);
           var userDojo = response[0];
           if (!userDojo) return cb();
-          if (_.contains(userDojo.userTypes, 'champion')) champions.push(user);
+          if (_.includes(userDojo.userTypes, 'champion')) champions.push(user);
           cb();
         });
       }, function () {
@@ -2272,6 +2277,62 @@ module.exports = function (options) {
     });
   }
 
+  function cmd_load_ticketing_admins (args, done) {
+    var seneca = this;
+    var dojoId = args.dojoId;
+
+    seneca.act({role: plugin, cmd: 'load_usersdojos', query: {dojoId: dojoId}}, function (err, usersDojos) {
+      if (err) return done(err);
+      async.map(usersDojos, function (userDojo, cb) {
+        var dojoTicketingAdminPermissionFound = _.find(userDojo.userPermissions, function (userPermission) {
+          return userPermission.name === 'ticketing-admin';
+        });
+        if (dojoTicketingAdminPermissionFound) {
+          seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId, user: args.user}, cb);
+        } else {
+          return cb();
+        }
+      }, function (err, dojoTicketingAdmins) {
+        if (err) return done(err);
+        dojoTicketingAdmins = _.chain(dojoTicketingAdmins)
+          .flatten()
+          .compact()
+          .value();
+        return done(null, dojoTicketingAdmins);
+      });
+    });
+  }
+
+  function cmd_user_is_dojo_admin (args, done) {
+    var seneca = this;
+    var dojoId = args.dojoId || args.query.dojoId;
+    var userId = args.user.id;
+
+    async.waterfall([
+      loadDojoAdmins,
+      loadTicketingAdmins,
+      userIsDojoAdmin
+    ], done);
+
+    function loadDojoAdmins (done) {
+      seneca.act({role: plugin, cmd: 'load_dojo_admins', id: dojoId}, done);
+    }
+
+    function loadTicketingAdmins (dojoAdmins, done) {
+      seneca.act({role: plugin, cmd: 'load_ticketing_admins', id: dojoId}, function (err, ticketingAdmins) {
+        if (err) return done(null, {ok: false, why: err.message});
+        return done(null, dojoAdmins, ticketingAdmins);
+      });
+    }
+
+    function userIsDojoAdmin (dojoAdmins, ticketingAdmins, done) {
+      var uniqueAdminIds = _.uniq(_.concat(_.uniq(_.map(dojoAdmins, 'id')), _.uniq(_.map(ticketingAdmins, 'id'))));
+
+      var userIsDojoAdmin = uniqueAdminIds && _.indexOf(uniqueAdminIds, userId) > -1;
+      return done(null, {userIsDojoAdmin: userIsDojoAdmin});
+    }
+  }
+
   function cmd_list_query (args, done) {
     logger.info({args: args}, 'cmd_list_query');
     var seneca = this;
@@ -2391,7 +2452,7 @@ module.exports = function (options) {
 
   function cmd_list_countries (args, done) {
     function calculateContinent (alpha2) {
-      return countriesList.countries[alpha2].continent;
+      return countriesList.countries && countriesList.countries[alpha2] ? countriesList.countries[alpha2].continent : null;
     }
 
     var transformed = _.chain(isoc)
