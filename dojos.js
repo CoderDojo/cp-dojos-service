@@ -87,6 +87,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'list_query'}, cmd_list_query);
   seneca.add({role: plugin, cmd: 'find_dojolead'}, cmd_find_dojolead);
   seneca.add({role: plugin, cmd: 'load_dojo_email'}, cmd_load_dojo_email);
+  seneca.add({role: plugin, cmd: 'notify_all_members'}, cmd_notify_all_members);
   // from countries service
   seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
   seneca.add({role: plugin, cmd: 'list_countries'}, cmd_list_countries);
@@ -2431,6 +2432,79 @@ module.exports = function (options) {
         return done(null, {email: dojoEmail});
       }
     });
+  }
+
+  function cmd_notify_all_members (args, done) {
+    var seneca = this;
+    var dojoId = args.data.dojoId;
+    var eventId = args.data.eventId;
+    var zenHostname = args.zenHostname;
+    var emailSubject = args.data.emailSubject;
+
+    async.waterfall([
+      getDojoUsers,
+      getEvent,
+      getDojo,
+      sendEmails
+    ], done);
+
+    function getDojoUsers (done) {
+      var query = {dojoId: dojoId};
+
+      seneca.act({role: plugin, cmd: 'load_dojo_users', query: query}, done);
+    }
+
+    function getEvent (users, done) {
+      seneca.act({role: 'cd-events', cmd: 'getEvent', id: eventId}, function (err, event) {
+        if (err) return done(err);
+        done(null, users, event);
+      });
+    }
+
+    function getDojo (users, event, done) {
+      seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
+        if (err) return done(err);
+        done(null, users, event, dojo);
+      });
+    }
+
+    function sendEmails (users, event, dojo, done) {
+      if (users) {
+        var content = {
+          link: protocol + '://' + zenHostname + '/dashboard/dojo/' + dojo.urlSlug,
+          dojo: {
+            name: dojo.name,
+            email: dojo.email
+          },
+          event: {},
+          year: moment(new Date()).format('YYYY')
+        };
+
+        var code = '';
+        if (event.type === 'recurring') {
+          code = 'notify-all-members-recurring-';
+        } else {
+          code = 'notify-all-members-oneoff-';
+          var startDateUtcOffset = moment(_.first(event.dates).startTime).utcOffset();
+          var endDateUtcOffset = moment(_.first(event.dates).endTime).utcOffset();
+
+          var startDate = moment.utc(_.first(event.dates).startTime).subtract(startDateUtcOffset, 'minutes').toDate();
+          var endDate = moment.utc(_.first(event.dates).endTime).subtract(endDateUtcOffset, 'minutes').toDate();
+
+          content.event.date = moment(startDate).format('Do MMMM YY') + ', ' +
+            moment(startDate).format('HH:mm') + ' - ' +
+            moment(endDate).format('HH:mm');
+        }
+        var locality = args.locality || 'en_US';
+        emailSubject = emailSubject + ' ' + dojo.name;
+
+        _.forEach(users, function (user) {
+          content.dojoMember = user.name;
+          var payload = {to: user.email, code: code, locality: locality, content: content, subject: emailSubject};
+          seneca.act({role: plugin, cmd: 'send_email', payload: payload}, done);
+        });
+      }
+    }
   }
 
   // from countries service
