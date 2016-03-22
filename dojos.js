@@ -1624,20 +1624,55 @@ module.exports = function (options) {
   function cmd_load_dojo_users (args, done) {
     logger.info({args: args}, 'cmd_load_dojo_users');
     var query = args.query || {};
+    var typeQuery = null;
+    var nameQuery = null;
     var userListQuery = {};
     if (query.sort$) {
       userListQuery.sort$ = query.sort$;
       delete query.sort$;
     }
 
+    if (query.userType) {
+      typeQuery = query.userType;
+      delete query.userType;
+    }
+
+    if (query.name) {
+      nameQuery = new RegExp(query.name, 'i');
+      delete query.name;
+    }
+
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
+      if (typeQuery) {
+        response = _.filter(response, function (user) {
+          return _.includes(user.userTypes, typeQuery);
+        });
+      }
+      if (response.length === 0) {
+        // Force return empty array whe no users are found
+        return done(null, []);
+      }
 
-      userListQuery.ids = _.uniq(_.map(response, 'userId'));
-      // user id is returned by default
       // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
       userListQuery.fields$ = ['name', 'email', 'init_user_type'];
-      seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
+      // user id is returned by default
+      userListQuery.ids = _.uniq(_.map(response, 'userId'));
+
+      if (nameQuery) {
+        // Need to do this as passing ids to user list will just get those users
+        // i.e. other criteria are not taken into account
+        seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, function (err, response) {
+          if (err) return done(err);
+
+          response = _.filter(response, function (r) {
+            return r.name.match(nameQuery);
+          });
+
+          return done(null, response);
+        });
+      }
+      else seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
     });
   }
 
