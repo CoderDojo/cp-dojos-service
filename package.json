@@ -54,8 +54,8 @@
     "seneca-mail": "0.2.1",
     "seneca-postgresql-store": "1.1.3",
     "shortid": "2.2.2",
-    "slug": "0.9.1",
     "xoauth2": "1.1.0",
-    "yargs": "3.7.2"
+    "yargs": "3.7.2",
+    "limax": "~1.2.0"
   }
 }

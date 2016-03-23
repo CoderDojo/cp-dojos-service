@@ -4,7 +4,7 @@ var _ = require('lodash');
 var url = require('url');
 var async = require('async');
 var request = require('request');
-var slug = require('slug');
+var slug = require('limax');
 var seneca = require('seneca')({
   timeout: 10 * 60 * 1000
 });
