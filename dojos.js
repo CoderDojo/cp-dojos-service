@@ -97,6 +97,11 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'continent_codes'}, cmd_get_continent_codes);
   seneca.add({role: plugin, cmd: 'reverse_geocode'}, cmd_reverse_geocode);
 
+  //salesforce specific, added for queuing abilities
+  seneca.add({role: plugin, cmd: 'update_salesforce'}, updateSalesForce);
+  seneca.add({role: plugin, cmd: 'queud_update_salesforce'}, wrapQueue('update_salesforce'));
+
+
   function cmd_update_dojo_founder (args, done) {
     logger.info({args: args}, 'cmd_update_dojo_founder');
     var founder = args.founder;
@@ -677,6 +682,7 @@ module.exports = function (options) {
       }
     }
 
+    console.log(dojo.name);
     baseSlug = _.chain([
       dojo.alpha2, dojo.admin1Name, dojo.placeName, dojo.name
     ]).compact().map(slugify).value().join('/').toLowerCase();
@@ -1150,80 +1156,97 @@ module.exports = function (options) {
     }
   }
 
+  /**
+  * wrapQueue - englobe a seneca act to push it to a queue to avoid blocking & timeouts
+  * @param Function   f   the function to englobe
+  * @return
+  **/
+  function wrapQueue (f) {
+    return function (args, done) {
+      var task = {
+         role: plugin,
+         cmd : f
+      };
+      _.extend(task, args.param);
+      console.log(task);
+      seneca.act({role : 'queue', cmd : 'enqueue', msg: task }, function(err, res){
+        console.log('enqueued');
+        if(err) done(err);
+      });
+    };
+  }
+
+
   // Note at this stage we expect to have an existing Account and Lead types in salesforce, this is
   // done at inital champion registration in cp-users.
-  function updateSalesForce (dojoObj) {
+  function updateSalesForce (args, done) {
+    logger.info({args: args}, 'update_salesforce');
+    console.log(args);
+    var dojoObj = args;
     var converted = dojoObj.dojoLead.converted || false;
+    var sfAccount = void 0;
+    var authorizedSteps = [2, 3, 4, 5];
+    if(_.includes( authorizedSteps, dojoObj.currStep)){
+      getSalesForceAccount(dojoObj.userId, function (err, res) {
+        if (err || res.error) return salesForceLogger('error', err || res.error);
+        sfAccount = res;
+        if(_.isObject(res)){
+          var accId = res.accId;
+          if(accId){
+            switch(dojoObj.currStep){
+              case 2:
+                  updateSalesForceAccount(accId, dojoObj, function (err, res) {
+                    if (err || res.error) return salesForceLogger('error', err || res.error);
+                    if (res.success) salesForceLogger('success', res.success);
+                    updateSalesForceLead(accId, dojoObj, function (err, res) {
+                      if (err || res.error) return salesForceLogger('error', err || res.error);
+                      if (res.success) return salesForceLogger('success', res.success);
+                    });
+                  });
+                break;
 
-    if (dojoObj.currStep === 2) {
-      getSalesForceAccount(dojoObj.userId, function (err, res) {
-        if (err || res.error) return salesForceLogger('error', err || res.error);
-        var accId = res.accId;
-        if (accId) {
-          updateSalesForceAccount(accId, dojoObj, function (err, res) {
-            if (err || res.error) return salesForceLogger('error', err || res.error);
-            if (res.success) salesForceLogger('success', res.success);
-            updateSalesForceLead(accId, dojoObj, function (err, res) {
-              if (err || res.error) return salesForceLogger('error', err || res.error);
-              if (res.success) return salesForceLogger('success', res.success);
-            });
-          });
-        } else {
-          return salesForceLogger('error', '[error][salesforce] no salesforce id recieved');
-        }
-      });
-    } else if (dojoObj.currStep === 3) {
-      getSalesForceAccount(dojoObj.userId, function (err, res) {
-        if (err || res.error) return salesForceLogger('error', err || res.error);
-        var accId = res.accId;
-        if (accId) {
-          updateSalesForceLead(accId, dojoObj, function (err, res) {
-            if (err || res.error) return salesForceLogger('error', err || res.error);
-            if (res.success) return salesForceLogger('success', res.success);
-          });
-        } else {
-          return salesForceLogger('error', '[error][salesforce] no salesforce id recieved');
-        }
-      });
-    } else if (dojoObj.currStep === 4) {
-      getSalesForceAccount(dojoObj.userId, function (err, res) {
-        if (err || res.error) return salesForceLogger('error', err || res.error);
-        var accId = res.accId;
-        if (accId) {
-          if (converted) {
-            updateSalesForceAccount(accId, dojoObj, function (err, res) {
-              if (err || res.error) return salesForceLogger('error', err || res.error);
-              if (res.success) return salesForceLogger('success', res.success);
-            });
-          } else {
-            updateSalesForceLead(accId, dojoObj, function (err, res) {
-              if (err || res.error) return salesForceLogger('error', err || res.error);
-              if (res.success) return salesForceLogger('success', res.success);
-            });
+              case 3:
+                  updateSalesForceLead(accId, dojoObj, function (err, res) {
+                    if (err || res.error) return salesForceLogger('error', err || res.error);
+                    if (res.success) return salesForceLogger('success', res.success);
+                  });
+                break;
+
+              case 4:
+                  if (converted) {
+                    updateSalesForceAccount(accId, dojoObj, function (err, res) {
+                      if (err || res.error) return salesForceLogger('error', err || res.error);
+                      if (res.success) return salesForceLogger('success', res.success);
+                    });
+                  } else {
+                    updateSalesForceLead(accId, dojoObj, function (err, res) {
+                      if (err || res.error) return salesForceLogger('error', err || res.error);
+                      if (res.success) return salesForceLogger('success', res.success);
+                    });
+                  }
+                break;
+
+              case 5 :
+                  if (converted) {
+                    updateSalesForceAccount(accId, dojoObj, function (err, res) {
+                      if (err || res.error) return salesForceLogger('error', err || res.error);
+                      if (res.success) return salesForceLogger('success', res.success);
+                    });
+                  } else {
+                    dojoObj.toBeConverted = true;
+                    updateSalesForceLead(accId, dojoObj, function (err, res) {
+                      if (err || res.error) return salesForceLogger('error', err || res.error);
+                      if (res.success) return salesForceLogger('success', res.success);
+                    });
+                  }
+                break;
+            }
+
+          }else {
+            return salesForceLogger('error', '[error][salesforce] no salesforce id recieved');
           }
-        } else {
-          return salesForceLogger('error', '[error][salesforce] no salesforce id recieved');
-        }
-      });
-    } else if (dojoObj.currStep === 5) {
-      getSalesForceAccount(dojoObj.userId, function (err, res) {
-        if (err || res.error) return salesForceLogger('error', err || res.error);
-        var accId = res.accId;
-        if (accId) {
-          if (converted) {
-            updateSalesForceAccount(accId, dojoObj, function (err, res) {
-              if (err || res.error) return salesForceLogger('error', err || res.error);
-              if (res.success) return salesForceLogger('success', res.success);
-            });
-          } else {
-            dojoObj.toBeConverted = true;
-            updateSalesForceLead(accId, dojoObj, function (err, res) {
-              if (err || res.error) return salesForceLogger('error', err || res.error);
-              if (res.success) return salesForceLogger('success', res.success);
-            });
-          }
-        } else {
-          return salesForceLogger('error', '[error][salesforce] no salesforce id recieved');
+        }else{
+          return salesForceLogger('error', '[error][salesforce] Invalid response recieved');
         }
       });
     } else {
@@ -1517,9 +1540,7 @@ module.exports = function (options) {
 
         if (process.env.SALESFORCE_ENABLED === 'true') {
           // Note: updating SalesForce is slow, ideally this would go on a work queue
-          process.nextTick(function () {
-            updateSalesForce(dojoObj);
-          });
+          seneca.act({role: plugin, cmd: 'queud_update_salesforce', param: dojoObj});
         }
         return cb(null, res);
       });
