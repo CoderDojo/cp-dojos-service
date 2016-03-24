@@ -2,7 +2,7 @@
 
 var _ = require('lodash');
 var async = require('async');
-var slug = require('slug');
+var slug = require('limax');
 var shortid = require('shortid');
 var crypto = require('crypto');
 var randomstring = require('randomstring');
