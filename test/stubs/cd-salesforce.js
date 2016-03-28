@@ -9,6 +9,8 @@ module.exports = function(options) {
   seneca.add({role: plugin, cmd: 'get_account'}, cmd_get_account);
   seneca.add({role: plugin, cmd: 'save_lead'}, cmd_save_lead);
   seneca.add({role: plugin, cmd: 'convert_lead_to_account'}, cmd_convert_lead_to_account);
+  seneca.add({role: plugin, cmd: 'queud_update_dojos'}, cmd_update_dojos);
+
 
   function cmd_get_account(args, done) {
     done(null, { accId: args.accId });
@@ -19,6 +21,10 @@ module.exports = function(options) {
   }
 
   function cmd_convert_lead_to_account(args, done) {
+    done(null, {});
+  }
+
+  function cmd_update_dojos(args, done) {
     done(null, {});
   }
 
