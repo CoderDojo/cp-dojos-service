@@ -1843,7 +1843,7 @@ module.exports = function (options) {
     function deleteInviteToken (inviteToken, done) {
       seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
         if (err) return done(err);
-        dojo.userInvites = _.without(dojo.userInvites, _.findWhere(dojo.userInvites, {id: inviteToken.id}));
+        dojo.userInvites = _.without(dojo.userInvites, _.find(dojo.userInvites, {id: inviteToken.id}));
         seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, function (err, response) {
           if (err) return done(err);
           return done();
@@ -1960,7 +1960,7 @@ module.exports = function (options) {
         if (err) return done(err);
         var user = response;
         var joinRequests = user.joinRequests;
-        var validRequestFound = _.findWhere(joinRequests, {id: inviteTokenId});
+        var validRequestFound = _.find(joinRequests, {id: inviteTokenId});
         if (!validRequestFound) return done(new Error('Join request not found'));
         return done(null, validRequestFound);
       });
@@ -2018,7 +2018,7 @@ module.exports = function (options) {
     function tidyUpJoinRequests (userDojo, done) {
       seneca.act({role: 'cd-users', cmd: 'load', id: requestedByUser, user: args.user}, function (err, user) {
         if (err) return done(err);
-        user.joinRequests = _.without(user.joinRequests, _.findWhere(user.joinRequests, {id: inviteTokenId}));
+        user.joinRequests = _.without(user.joinRequests, _.find(user.joinRequests, {id: inviteTokenId}));
         seneca.act({role: 'cd-users', cmd: 'update', user: user, id: user.id}, done);
       });
     }
@@ -2520,11 +2520,11 @@ module.exports = function (options) {
           code = 'notify-all-members-recurring-';
         } else {
           code = 'notify-all-members-oneoff-';
-          var startDateUtcOffset = moment(_.first(event.dates).startTime).utcOffset();
-          var endDateUtcOffset = moment(_.first(event.dates).endTime).utcOffset();
+          var startDateUtcOffset = moment(_.head(event.dates).startTime).utcOffset();
+          var endDateUtcOffset = moment(_.head(event.dates).endTime).utcOffset();
 
-          var startDate = moment.utc(_.first(event.dates).startTime).subtract(startDateUtcOffset, 'minutes').toDate();
-          var endDate = moment.utc(_.first(event.dates).endTime).subtract(endDateUtcOffset, 'minutes').toDate();
+          var startDate = moment.utc(_.head(event.dates).startTime).subtract(startDateUtcOffset, 'minutes').toDate();
+          var endDate = moment.utc(_.head(event.dates).endTime).subtract(endDateUtcOffset, 'minutes').toDate();
 
           content.event.date = moment(startDate).format('Do MMMM YY') + ', ' +
             moment(startDate).format('HH:mm') + ' - ' +
