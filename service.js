@@ -20,7 +20,6 @@ if (process.env.MAILTRAP_ENABLED === 'true') {
   seneca.use('mail', config.gmail);
 }
 seneca.use(require('./email-notifications.js'));
-seneca.use('queue');
 seneca.use(require('./dojos.js'),
   {limits: config.limits,
    'google-api': config['google-api'],
