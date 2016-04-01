@@ -1322,6 +1322,7 @@ module.exports = function (options) {
     var payload = args.payload;
     var to = payload.to;
     var content = payload.content;
+    var from = payload.from;
     content.year = moment(new Date()).format('YYYY');
     var emailCode = payload.code;
     var emailSubject = payload.subject;
@@ -1330,6 +1331,7 @@ module.exports = function (options) {
     seneca.act({
       role: 'email-notifications',
       cmd: 'send',
+      from: from,
       to: to,
       replyTo: replyTo,
       content: content,
@@ -2175,8 +2177,9 @@ module.exports = function (options) {
         emailSubject = emailSubject + ' ' + dojo.name;
         _.forEach(users, function (user) {
           content.dojoMember = user.name;
-          var payload = {to: user.email, code: code, locality: locality, content: content, subject: emailSubject};
-          seneca.act({role: plugin, cmd: 'send_email', payload: payload});
+          var payload = {replyTo: dojo.email, from: dojo.name + ' <' + dojo.email + '>', to: user.email,
+                        code: code, locality: locality, content: content, subject: emailSubject};
+          seneca.act({role: plugin, cmd: 'send_email', payload: _.cloneDeep(payload)});
         });
         done();
       }

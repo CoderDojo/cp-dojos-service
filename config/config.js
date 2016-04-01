@@ -31,6 +31,7 @@ module.exports = function () {
       sendemail: true,
       sendFrom: 'The CoderDojo Team <info@coderdojo.org>',
       email: {
+        headers: {'X-SMTPAPI': '{"category": ["cp-dojos-service"]}'}
       }
     },
     mailtrap: {
@@ -56,9 +57,6 @@ module.exports = function () {
           user: process.env.MAIL_USER,
           pass: process.env.MAIL_PASS
         }
-      },
-      mail: {
-        headers: {'X-SMTPAPI': '{"category": ["cp-dojos-service"]}'}
       }
     },
     transport: {
