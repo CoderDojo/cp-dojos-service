@@ -1,12 +1,5 @@
 var path = require('path');
 
-var generator = require('xoauth2').createXOAuth2Generator({
-  user: process.env.GMAIL_USER,
-  clientId: process.env.GMAIL_CLIENT_ID,
-  clientSecret: process.env.GMAIL_CLIENT_SECRET,
-  refreshToken: process.env.GMAIL_REFRESH_TOKEN
-});
-
 module.exports = function () {
   function pgConfig () {
     return {
@@ -54,13 +47,18 @@ module.exports = function () {
         }
       }
     },
-    gmail: {
+    email: {
       folder: path.resolve(__dirname + '/../email-templates'),
       config: {
-        service: 'gmail',
+        pool: true,
+        service: 'sendgrid',
         auth: {
-          xoauth2: generator
+          user: process.env.MAIL_USER,
+          pass: process.env.MAIL_PASS
         }
+      },
+      mail: {
+        headers: {'X-SMTPAPI': '{"category": ["cp-dojos-service"]}'}
       }
     },
     transport: {
