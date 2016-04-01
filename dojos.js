@@ -2173,12 +2173,12 @@ module.exports = function (options) {
         }
         var locality = args.locality || 'en_US';
         emailSubject = emailSubject + ' ' + dojo.name;
-
         _.forEach(users, function (user) {
           content.dojoMember = user.name;
           var payload = {to: user.email, code: code, locality: locality, content: content, subject: emailSubject};
-          seneca.act({role: plugin, cmd: 'send_email', payload: payload}, done);
+          seneca.act({role: plugin, cmd: 'send_email', payload: payload});
         });
+        done();
       }
     }
   }
