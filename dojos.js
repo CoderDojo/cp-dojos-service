@@ -1994,11 +1994,11 @@ module.exports = function (options) {
     ], done);
 
     function loadDojoAdmins (done) {
-      seneca.act({role: plugin, cmd: 'load_dojo_admins', id: dojoId}, done);
+      seneca.act({role: plugin, cmd: 'load_dojo_admins', dojoId: dojoId}, done);
     }
 
     function loadTicketingAdmins (dojoAdmins, done) {
-      seneca.act({role: plugin, cmd: 'load_ticketing_admins', id: dojoId}, function (err, ticketingAdmins) {
+      seneca.act({role: plugin, cmd: 'load_ticketing_admins', dojoId: dojoId}, function (err, ticketingAdmins) {
         if (err) return done(null, {ok: false, why: err.message});
         return done(null, dojoAdmins, ticketingAdmins);
       });
