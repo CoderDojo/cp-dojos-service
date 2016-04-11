@@ -1267,6 +1267,7 @@ module.exports = function (options) {
     var query = args.query || {};
     var typeQuery = null;
     var nameQuery = null;
+    var skip = 0;
     var userListQuery = {};
     if (query.sort$) {
       userListQuery.sort$ = query.sort$;
@@ -1279,8 +1280,19 @@ module.exports = function (options) {
     }
 
     if (query.name) {
-      nameQuery = new RegExp(query.name, 'i');
+      nameQuery = RegExp(query.name, 'i');
       delete query.name;
+    }
+
+    if (query.limit$) {
+      var limit = query.limit$;
+      query.limit$ = 'NULL';
+    }
+
+    if (query.skip$) {
+      userListQuery.skip$ = query.skip$;
+      skip = userListQuery.skip$;
+      delete query.skip$;
     }
 
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
@@ -1291,7 +1303,7 @@ module.exports = function (options) {
         });
       }
       if (response.length === 0) {
-        // Force return empty array whe no users are found
+        // Force return empty array when no users are found
         return done(null, []);
       }
 
@@ -1301,19 +1313,19 @@ module.exports = function (options) {
       userListQuery.ids = _.uniq(_.map(response, 'userId'));
 
       if (nameQuery) {
-        // Need to do this as passing ids to user list will just get those users
-        // i.e. other criteria are not taken into account
         seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, function (err, response) {
           if (err) return done(err);
-
           response = _.filter(response, function (r) {
             return r.name.match(nameQuery);
           });
-
+          if (limit === 'NULL') return done(null, response);
+          response = response.slice(skip, limit + skip);
           return done(null, response);
         });
+      } else {
+        userListQuery.limit$ = limit;
+        seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
       }
-      else seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
     });
   }
 
