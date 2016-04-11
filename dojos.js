@@ -56,8 +56,9 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'bulk_update'}, cmd_bulk_update);
   seneca.add({role: plugin, cmd: 'bulk_delete'}, cmd_bulk_delete);
   seneca.add({role: plugin, cmd: 'get_stats'}, wrapCheckCDFAdmin(cmd_get_stats));
-  seneca.add({role: plugin, cmd: 'save_dojo_lead'}, cmd_save_dojo_lead);
-  seneca.add({role: plugin, cmd: 'update_dojo_lead'}, cmd_save_dojo_lead);
+  seneca.add({role: plugin, cmd: 'simple_save_dojo_lead'}, cmd_save_dojo_lead);
+  seneca.add({role: plugin, cmd: 'save_dojo_lead'}, cmd_save_dojo_lead_and_profile);
+  seneca.add({role: plugin, cmd: 'update_dojo_lead'}, cmd_save_dojo_lead_and_profile);
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_dojo_lead'}, cmd_load_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_setup_dojo_steps'}, cmd_load_setup_dojo_steps);
@@ -1142,29 +1143,37 @@ module.exports = function (options) {
     });
   }
 
-  function cmd_save_dojo_lead (args, done) {
+  function cmd_save_dojo_lead (args, cb) {
     logger.info({args: args}, 'cmd_save_dojo_lead');
     var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
     var dojoLead = args.dojoLead;
+    dojoLeadEntity.save$(dojoLead, function (err, res) {
+      if (err) {
+        return cb(err);
+      }
+      return cb(null, res);
+    });
+  }
+
+  function cmd_save_dojo_lead_and_profile (args, done) {
+    logger.info({args: args}, 'cmd_save_dojo_lead_and_profile');
+    var dojoLead = args.dojoLead;
+    var dojoObj = {
+      dojoAction: args.dojoAction || 'blank',
+      dojoLead: args.dojoLead || null,
+      currStep: args.dojoLead.currentStep || null,
+      userId: args.dojoLead.userId || null
+    };
 
     function saveLead (cb) {
-      dojoLeadEntity.save$(dojoLead, function (err, res) {
-        if (err) {
-          return cb(err);
-        }
+      seneca.act({role: plugin, cmd: 'simple_save_dojo_lead', dojoLead: dojoLead}, cb);
+    }
 
-        var dojoObj = {
-          dojoAction: args.dojoAction || 'blank',
-          dojoLead: args.dojoLead || null,
-          currStep: args.dojoLead.currentStep || null,
-          userId: args.dojoLead.userId || null
-        };
-
-        if (process.env.SALESFORCE_ENABLED === 'true') {
-          seneca.act({role: 'cd-salesforce', cmd: 'queud_update_dojos', param: dojoObj, fatal$: false});
-        }
-        return cb(null, res);
-      });
+    function updateSalesforce (cb, res) {
+      if (process.env.SALESFORCE_ENABLED === 'true') {
+        seneca.act({role: 'cd-salesforce', cmd: 'queud_update_dojos', param: dojoObj, fatal$: false});
+      }
+      return cb();
     }
 
     function updateDojoLeadProfile (cb) {
@@ -1207,6 +1216,7 @@ module.exports = function (options) {
 
     async.series([
       saveLead,
+      updateSalesforce,
       updateDojoLeadProfile
     ], function (err, results) {
       if (err) return done(err);
