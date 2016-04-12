@@ -1267,7 +1267,6 @@ module.exports = function (options) {
       if (err) {
         return done(err);
       }
-
       done(null, usersDojos);
     });
   }
@@ -1277,6 +1276,7 @@ module.exports = function (options) {
     var query = args.query || {};
     var typeQuery = null;
     var nameQuery = null;
+    var skip = 0;
     var userListQuery = {};
     if (query.sort$) {
       userListQuery.sort$ = query.sort$;
@@ -1289,41 +1289,56 @@ module.exports = function (options) {
     }
 
     if (query.name) {
-      nameQuery = new RegExp(query.name, 'i');
+      nameQuery = RegExp(query.name, 'i');
       delete query.name;
+    }
+
+    if (query.limit$) {
+      var limit = query.limit$;
+      query.limit$ = 'NULL';
+    }
+
+    if (query.skip$) {
+      userListQuery.skip$ = query.skip$;
+      skip = userListQuery.skip$;
+      delete query.skip$;
     }
 
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
+      // user id is returned by default
+      userListQuery.ids = _.uniq(_.map(response, 'userId'));
+      var length = userListQuery.ids.length;
+      console.log(response.length, length);
+      // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
+      userListQuery.fields$ = ['name', 'email', 'init_user_type'];
+
       if (typeQuery) {
         response = _.filter(response, function (user) {
           return _.includes(user.userTypes, typeQuery);
         });
       }
-      if (response.length === 0) {
-        // Force return empty array whe no users are found
-        return done(null, []);
+      if (length === 0) {
+        // Force return empty array when no users are found
+        return done(null, {response: [], length: 0});
       }
 
-      // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
-      userListQuery.fields$ = ['name', 'email', 'init_user_type'];
-      // user id is returned by default
-      userListQuery.ids = _.uniq(_.map(response, 'userId'));
-
       if (nameQuery) {
-        // Need to do this as passing ids to user list will just get those users
-        // i.e. other criteria are not taken into account
         seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, function (err, response) {
           if (err) return done(err);
-
           response = _.filter(response, function (r) {
             return r.name.match(nameQuery);
           });
-
-          return done(null, response);
+          response = response.slice(skip, limit + skip);
+          return done(null, {response: response, length: length});
+        });
+      } else {
+        userListQuery.limit$ = limit;
+        seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, function (err, response) {
+          if (err) return done(err);
+          done(null, {response: response, length: length});
         });
       }
-      else seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
     });
   }
 
@@ -1576,6 +1591,7 @@ module.exports = function (options) {
       if (err) return done(err);
       // Check cd/usersdojos for the champion user type
       var champions = [];
+      response = response.response;
       async.each(response, function (user, cb) {
         var query = {userId: user.id, dojoId: dojoId};
         seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
@@ -2123,6 +2139,7 @@ module.exports = function (options) {
   }
 
   function cmd_notify_all_members (args, done) {
+    //  TODO: enqueue this process
     var seneca = this;
     var dojoId = args.data.dojoId;
     var eventId = args.data.eventId;
@@ -2131,6 +2148,7 @@ module.exports = function (options) {
 
     async.waterfall([
       getDojoUsers,
+      checkEmail,
       getEvent,
       getDojo,
       sendEmails
@@ -2139,7 +2157,34 @@ module.exports = function (options) {
     function getDojoUsers (done) {
       var query = {dojoId: dojoId};
 
-      seneca.act({role: plugin, cmd: 'load_dojo_users', query: query}, done);
+      seneca.act({role: plugin, cmd: 'load_dojo_users', query: query}, function (err, response) {
+        if (err) return done(err);
+        done(null, response.response);
+      });
+    }
+
+    function checkEmail (users, done) {
+      async.map(users, function (user, callback) {
+        if (_.isEmpty(user.email)) {
+          seneca.act({role: 'cd-profiles', cmd: 'load_parents_for_user', userId: user.id}, function (err, parents) {
+            if (err) return seneca.log.warn('No parent found for', user.id);
+            //  TODO: handle multiple parents
+            user.parent = parents[0];
+
+            //  excluse this child if the parent email is already in the list, to avoid multiple emails
+            if (_.some(users, {email: user.parent.email})) {
+              user = void 0;
+            }
+            callback(null, user);
+          });
+        } else {
+          callback(null, user);
+        }
+      },
+      function (err, users) {
+        if (err) done(err);
+        done(null, _.pull(users, void 0));
+      });
     }
 
     function getEvent (users, done) {
@@ -2169,10 +2214,11 @@ module.exports = function (options) {
         };
 
         var code = '';
+        var baseCode = '';
         if (event.type === 'recurring') {
-          code = 'notify-all-members-recurring-';
+          baseCode = 'notify-all-members-recurring-';
         } else {
-          code = 'notify-all-members-oneoff-';
+          baseCode = 'notify-all-members-oneoff-';
           var startDateUtcOffset = moment(_.head(event.dates).startTime).utcOffset();
           var endDateUtcOffset = moment(_.head(event.dates).endTime).utcOffset();
 
@@ -2185,11 +2231,22 @@ module.exports = function (options) {
         }
         var locality = args.locality || 'en_US';
         emailSubject = emailSubject + ' ' + dojo.name;
+
         _.forEach(users, function (user) {
           content.dojoMember = user.name;
-          var payload = {replyTo: dojo.email, from: dojo.name + ' <' + dojo.email + '>', to: user.email,
-                        code: code, locality: locality, content: content, subject: emailSubject};
-          seneca.act({role: plugin, cmd: 'send_email', payload: _.cloneDeep(payload)});
+          var email = user.email;
+          code = baseCode;
+          if (!_.isEmpty(user.parent) && !_.isEmpty(user.parent.email)) {
+            email = user.parent.email;
+            code = 'parents-' + baseCode;
+            content.childrenName = user.name;
+            content.dojoMember = user.parent.name;
+          }
+          if (!_.isEmpty(email)) {
+            var payload = {replyTo: dojo.email, from: dojo.name + ' <' + dojo.email + '>', to: email,
+              code: code, locality: locality, content: content, subject: emailSubject};
+            seneca.act({role: plugin, cmd: 'send_email', payload: _.cloneDeep(payload)});
+          }
         });
         done();
       }
