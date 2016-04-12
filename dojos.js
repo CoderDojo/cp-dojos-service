@@ -1309,7 +1309,6 @@ module.exports = function (options) {
       // user id is returned by default
       userListQuery.ids = _.uniq(_.map(response, 'userId'));
       var length = userListQuery.ids.length;
-      console.log(response.length, length);
       // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
       userListQuery.fields$ = ['name', 'email', 'init_user_type'];
 
