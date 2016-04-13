@@ -1267,7 +1267,6 @@ module.exports = function (options) {
       if (err) {
         return done(err);
       }
-
       done(null, usersDojos);
     });
   }
@@ -1277,6 +1276,7 @@ module.exports = function (options) {
     var query = args.query || {};
     var typeQuery = null;
     var nameQuery = null;
+    var skip = 0;
     var userListQuery = {};
     if (query.sort$) {
       userListQuery.sort$ = query.sort$;
@@ -1289,41 +1289,55 @@ module.exports = function (options) {
     }
 
     if (query.name) {
-      nameQuery = new RegExp(query.name, 'i');
+      nameQuery = RegExp(query.name, 'i');
       delete query.name;
+    }
+
+    if (query.limit$) {
+      var limit = query.limit$;
+      query.limit$ = 'NULL';
+    }
+
+    if (query.skip$) {
+      userListQuery.skip$ = query.skip$;
+      skip = userListQuery.skip$;
+      delete query.skip$;
     }
 
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
+      // user id is returned by default
+      userListQuery.ids = _.uniq(_.map(response, 'userId'));
+      var length = userListQuery.ids.length;
+      // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
+      userListQuery.fields$ = ['name', 'email', 'init_user_type'];
+
       if (typeQuery) {
         response = _.filter(response, function (user) {
           return _.includes(user.userTypes, typeQuery);
         });
       }
-      if (response.length === 0) {
-        // Force return empty array whe no users are found
-        return done(null, []);
+      if (length === 0) {
+        // Force return empty array when no users are found
+        return done(null, {response: [], length: 0});
       }
 
-      // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
-      userListQuery.fields$ = ['name', 'email', 'init_user_type'];
-      // user id is returned by default
-      userListQuery.ids = _.uniq(_.map(response, 'userId'));
-
       if (nameQuery) {
-        // Need to do this as passing ids to user list will just get those users
-        // i.e. other criteria are not taken into account
         seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, function (err, response) {
           if (err) return done(err);
-
           response = _.filter(response, function (r) {
             return r.name.match(nameQuery);
           });
-
-          return done(null, response);
+          response = response.slice(skip, limit + skip);
+          return done(null, {response: response, length: length});
+        });
+      } else {
+        userListQuery.limit$ = limit;
+        seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, function (err, response) {
+          if (err) return done(err);
+          done(null, {response: response, length: length});
         });
       }
-      else seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, done);
     });
   }
 
@@ -1576,6 +1590,7 @@ module.exports = function (options) {
       if (err) return done(err);
       // Check cd/usersdojos for the champion user type
       var champions = [];
+      response = response.response;
       async.each(response, function (user, cb) {
         var query = {userId: user.id, dojoId: dojoId};
         seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
@@ -2141,7 +2156,10 @@ module.exports = function (options) {
     function getDojoUsers (done) {
       var query = {dojoId: dojoId};
 
-      seneca.act({role: plugin, cmd: 'load_dojo_users', query: query}, done);
+      seneca.act({role: plugin, cmd: 'load_dojo_users', query: query}, function (err, response) {
+        if (err) return done(err);
+        done(null, response.response);
+      });
     }
 
     function checkEmail (users, done) {
