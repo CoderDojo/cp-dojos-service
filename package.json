@@ -40,6 +40,7 @@
     "googleapis": "2.0.5",
     "heapdump": "0.3.7",
     "isoc": "0.0.1",
+    "json2csv": "2.11.0",
     "js-yaml": "3.2.7",
     "le_node": "1.1.0",
     "limax": "~1.2.0",

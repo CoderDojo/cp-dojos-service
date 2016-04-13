@@ -19,6 +19,7 @@ var bunyan = require('bunyan');
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
 var fs = require('fs');
+var cmd_export_dojo_users = require('./lib/export-csv');
 
 var logger;
 if (process.env.LOGENTRIES_ENABLED === 'true') {
@@ -64,6 +65,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_setup_dojo_steps'}, cmd_load_setup_dojo_steps);
   seneca.add({role: plugin, cmd: 'load_usersdojos'}, cmd_load_users_dojos);
   seneca.add({role: plugin, cmd: 'load_dojo_users'}, cmd_load_dojo_users);
+  seneca.add({role: plugin, cmd: 'export_dojo_users'}, cmd_export_dojo_users);
   seneca.add({role: plugin, cmd: 'send_email'}, cmd_send_email);
   seneca.add({role: plugin, cmd: 'generate_user_invite_token'}, cmd_generate_user_invite_token);
   seneca.add({role: plugin, cmd: 'accept_user_invite'}, cmd_accept_user_invite);
