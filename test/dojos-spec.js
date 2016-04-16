@@ -429,6 +429,29 @@ lab.experiment('Dojo Microservice test', function () {
   });
 
   lab.experiment('Dojos by country', function () {
+    lab.test('sort dojos case-insensitively', function (done) {
+      mockSeneca('cd-dojos', 'list', [
+        {
+          countryName: 'Ireland',
+          name: 'Dublin'
+        },
+        {
+          countryName: 'Ireland',
+          name: 'athlone'
+        }
+      ]);
+      seneca.act({role: role, cmd: 'dojos_by_country'}, function (err, dojos) {
+        if (err) return done(err);
+
+        expect(dojos).to.exist;
+        expect(dojos['Ireland'].length).to.be.equal(2);
+        expect(dojos['Ireland'][0].name).to.be.equal('athlone');
+        expect(dojos['Ireland'][1].name).to.be.equal('Dublin');
+
+        done();
+      });
+    });
+
     lab.test.skip('list dojos by country', function (done) {
       seneca.act({role: role, cmd: 'dojos_by_country', countries: {US: '', BR: '', RO: ''}}, function (err, dojos) {
         if (err) return done(err);
