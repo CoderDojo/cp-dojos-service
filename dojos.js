@@ -662,6 +662,7 @@ module.exports = function (options) {
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
     var user = args.user;
     var userDojo = {};
+    var zenHostname = args.zenHostname;
 
     dojo.creator = user.id;
     dojo.creatorEmail = user.email;
@@ -721,8 +722,25 @@ module.exports = function (options) {
           userDojo.dojoId = dojo.id;
           usersDojosEntity.save$(userDojo, function (err, userDojo) {
             if (err) return cb(err);
-            cb(null, dojo);
+            cb(null, dojo, userDojo);
           });
+        });
+      },
+      function (dojo, userDojo, cb) {
+        var content = {
+          dojoName: dojo.name,
+          dojoLeadName: user.name,
+          dojoEmail: dojo.email,
+          dojoLink: protocol + '://' + zenHostname + '/dashboard/dojo/' + dojo.urlSlug,
+          applicationLink: protocol + '://' + zenHostname + '/dashboard/champion-applications/' + dojo.dojoLeadId
+        };
+        var payload = {to: 'enquiries@coderdojo.com', code: 'new-dojo-', locality: 'en_US', content: content, subject: 'A new dojo has been created'};
+
+        seneca.act({role: plugin, cmd: 'send_email', payload: payload}, function (err, res) {
+          if (err) {
+            return cb(err);
+          }
+          cb(null, dojo);
         });
       }], done);
   }
