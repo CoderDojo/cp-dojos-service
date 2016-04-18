@@ -599,7 +599,7 @@ module.exports = function (options) {
 
       _.each(Object.keys(dojosByCountry), function (countryName) {
         dojosByCountry[countryName] = _.sortBy(dojosByCountry[countryName], function (dojos) {
-          return dojos.name;
+          return dojos.name.toLowerCase();
         });
       });
       return done(null, dojosByCountry);
