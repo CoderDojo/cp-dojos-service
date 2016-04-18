@@ -1299,39 +1299,38 @@ module.exports = function (options) {
     }
 
     if (query.skip$) {
-      userListQuery.skip$ = query.skip$;
-      skip = userListQuery.skip$;
+      skip = query.skip$;
       delete query.skip$;
     }
 
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
-      // user id is returned by default
-      userListQuery.ids = _.uniq(_.map(response, 'userId'));
-      var length = userListQuery.ids.length;
       // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
       userListQuery.fields$ = ['name', 'email', 'init_user_type'];
-
       if (typeQuery) {
         response = _.filter(response, function (user) {
           return _.includes(user.userTypes, typeQuery);
         });
       }
+      // user id is returned by default
+      userListQuery.ids = _.uniq(_.map(response, 'userId'));
+      var length = userListQuery.ids.length;
       if (length === 0) {
         // Force return empty array when no users are found
         return done(null, {response: [], length: 0});
       }
-
       if (nameQuery) {
         seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, function (err, response) {
           if (err) return done(err);
           response = _.filter(response, function (r) {
             return r.name.match(nameQuery);
           });
+          length = response.length;
           response = response.slice(skip, limit + skip);
           return done(null, {response: response, length: length});
         });
       } else {
+        userListQuery.skip$ = skip;
         userListQuery.limit$ = limit;
         seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, function (err, response) {
           if (err) return done(err);
