@@ -730,7 +730,7 @@ module.exports = function (options) {
         var content = {
           dojoName: dojo.name,
           dojoLeadName: user.name,
-          dojoEmail: dojo.email,
+          dojoEmail: dojo.email || 'without email',
           dojoLink: protocol + '://' + zenHostname + '/dashboard/dojo/' + dojo.urlSlug,
           applicationLink: protocol + '://' + zenHostname + '/dashboard/champion-applications/' + dojo.dojoLeadId
         };
