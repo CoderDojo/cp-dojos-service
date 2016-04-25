@@ -20,6 +20,10 @@ var google = require('googleapis');
 var admin = google.admin('directory_v1');
 var fs = require('fs');
 
+//  Internal lib
+//  TODO: globbing to avoid manual declaration ?
+var addChildrenParentDojo = require('./lib/add-children-parent-dojo');
+
 var logger;
 if (process.env.LOGENTRIES_ENABLED === 'true') {
   var Logger = require('le_node');
@@ -89,6 +93,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'find_dojolead'}, cmd_find_dojolead);
   seneca.add({role: plugin, cmd: 'load_dojo_email'}, cmd_load_dojo_email);
   seneca.add({role: plugin, cmd: 'notify_all_members'}, cmd_notify_all_members);
+  seneca.add({role: plugin, cmd: 'add_children_parent_dojo'}, addChildrenParentDojo.bind(seneca));
   // from countries service
   seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
   seneca.add({role: plugin, cmd: 'list_countries'}, cmd_list_countries);
@@ -724,6 +729,12 @@ module.exports = function (options) {
             if (err) return cb(err);
             cb(null, dojo, userDojo);
           });
+        });
+      },
+      function (dojo, userDojo, cb) {
+        seneca.act({role: plugin, cmd: 'add_children_parent_dojo', userId: userDojo.userId, dojoId: userDojo.dojoId}, function (err) {
+          if (err) return cb(err);
+          cb(null, dojo, userDojo);
         });
       },
       function (dojo, userDojo, cb) {
@@ -1801,41 +1812,7 @@ module.exports = function (options) {
     }
 
     function saveNinjasUserDojo (done) {
-      seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: userDojo.userId}}, function (err, userProfiles) {
-        if (err) return done(err);
-
-        var userProfile = userProfiles[0];
-
-        if (!userProfile.children) return done();
-        async.each(userProfile.children, function (youthUserId, cb) {
-          seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: youthUserId}}, function (err, youthProfiles) {
-            if (err) return cb(err);
-
-            var youthProfile = youthProfiles[0];
-
-            seneca.act({
-              role: plugin,
-              cmd: 'load_usersdojos',
-              query: {userId: youthUserId, dojoId: userDojo.dojoId}
-            }, function (err, res) {
-              if (err) return done(err);
-
-              if (!res.length) {
-                var youthUserDojo = {
-                  userId: youthUserId,
-                  dojoId: userDojo.dojoId,
-                  owner: 0,
-                  userTypes: [youthProfile.userType]
-                };
-
-                seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
-              } else {
-                return done();
-              }
-            });
-          });
-        }, done);
-      });
+      seneca.act({role: plugin, cmd: 'add_children_parent_dojo', userId: userDojo.userId, dojoId: userDojo.dojoId}, done);
     }
   }
 
