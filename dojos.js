@@ -1453,7 +1453,7 @@ module.exports = function (options) {
       var locality = args.locality || 'en_US';
       var code = 'invite-user-';
 
-      var payload = {to: inviteEmail, code: code, locality: locality, content: content, subject: emailSubject};
+      var payload = {to: inviteEmail, code: code, locality: locality, from: dojo.name + ' <' + dojo.email + '>', replyTo: dojo.email, content: content, subject: emailSubject};
       seneca.act({role: plugin, cmd: 'send_email', payload: payload}, done);
     }
   }
