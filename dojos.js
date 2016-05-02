@@ -746,7 +746,8 @@ module.exports = function (options) {
           applicationLink: protocol + '://' + zenHostname + '/dashboard/champion-applications/' + dojo.dojoLeadId
         };
         var sendTo = 'enquiries@coderdojo.com';
-        var payload = {to: sendTo, code: 'new-dojo-', locality: 'en_US', content: content, replyTo: dojo.email || sendTo, subject: 'A new dojo has been created'};
+        var respondTo = user.email || sendTo;
+        var payload = {to: sendTo, code: 'new-dojo-', locality: 'en_US', content: content, replyTo: respondTo, from: respondTo, subject: 'A new dojo has been created !'};
 
         seneca.act({role: plugin, cmd: 'send_email', payload: payload}, function (err, res) {
           if (err) {
