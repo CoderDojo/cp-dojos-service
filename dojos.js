@@ -2294,6 +2294,7 @@ module.exports = function (options) {
     var options = {
       url: 'https://maps.googleapis.com/maps/api/place/autocomplete/json',
       method: 'GET',
+      headers: {'Referer': 'zen.coderdojo.com'},
       qs: {
         key: process.env.GOOGLE_MAPS_KEY,
         types: '(cities)',
