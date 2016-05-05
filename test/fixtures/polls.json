@@ -1,0 +1,16 @@
+[
+  {
+    "id": 1000,
+    "question": "q1",
+    "valueUnity": "children",
+    "maxAnswers": 1,
+    "endDate": "2999-12-12"
+  },
+  {
+    "id": 1001,
+    "question": "q2",
+    "valueUnity": "kittens",
+    "maxAnswers": 2,
+    "endDate": "2015-12-12"
+  }
+]
