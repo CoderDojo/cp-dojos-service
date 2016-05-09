@@ -29,7 +29,7 @@ seneca
   .use(__dirname + '/stubs/cd-salesforce.js')
   .use(__dirname + '/stubs/cd-users.js')
   .use(__dirname + '/stubs/email-notifications.js')
-  .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}});
+  .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}, shared: config.shared});
 
 var usersEnt = seneca.make$("sys/user"),
   dojosEnt = seneca.make$("cd/dojos"),
@@ -996,4 +996,3 @@ lab.experiment('Dojo Microservice test', function () {
   });
 
 });
-

@@ -22,6 +22,7 @@ if (process.env.MAILTRAP_ENABLED === 'true') {
 seneca.use(require('./email-notifications.js'));
 seneca.use(require('./dojos.js'),
   {limits: config.limits,
+    shared: config.shared,
    'google-api': config['google-api'],
    postgresql: config['postgresql-store'],
    logger: config.logger

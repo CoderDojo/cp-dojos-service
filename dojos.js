@@ -747,9 +747,9 @@ module.exports = function (options) {
           dojoLink: protocol + '://' + zenHostname + '/dashboard/dojo/' + dojo.urlSlug,
           applicationLink: protocol + '://' + zenHostname + '/dashboard/champion-applications/' + dojo.dojoLeadId
         };
-        var sendTo = 'enquiries@coderdojo.com';
+        var sendTo = options.shared.botEmail;
         var respondTo = user.email || sendTo;
-        var payload = {to: sendTo, code: 'new-dojo-', locality: 'en_US', content: content, replyTo: respondTo, from: respondTo, subject: 'A new dojo has been created !'};
+        var payload = {to: sendTo, code: 'new-dojo-', locality: 'en_US', content: content, from: sendTo, replyTo: respondTo, subject: 'A new dojo has been created !'};
 
         seneca.act({role: plugin, cmd: 'send_email', payload: payload}, function (err, res) {
           if (err) {
@@ -1456,7 +1456,7 @@ module.exports = function (options) {
       var locality = args.locality || 'en_US';
       var code = 'invite-user-';
 
-      var payload = {to: inviteEmail, code: code, locality: locality, from: dojo.name + ' <' + dojo.email + '>', replyTo: dojo.email, content: content, subject: emailSubject};
+      var payload = {to: inviteEmail, code: code, locality: locality, from: dojo.name + ' <' + options.shared.botEmail + '>', replyTo: dojo.email, content: content, subject: emailSubject};
       seneca.act({role: plugin, cmd: 'send_email', payload: payload}, done);
     }
   }

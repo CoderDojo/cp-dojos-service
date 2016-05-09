@@ -66,6 +66,9 @@ module.exports = function () {
         port: 10301
       }
     },
+    shared: {
+      botEmail: 'enquiries+bot@coderdojo.com'
+    },
     limits: {
       maxUserDojos: process.env.LIMITS_MAX_USER_DOJOS || 30
     },
