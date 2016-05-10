@@ -19,11 +19,17 @@ var bunyan = require('bunyan');
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
 var fs = require('fs');
-var cmd_export_dojo_users = require('./lib/export-csv');
 
 //  Internal lib
 //  TODO: globbing to avoid manual declaration ?
 var addChildrenParentDojo = require('./lib/add-children-parent-dojo');
+var cmd_export_dojo_users = require('./lib/export-csv');
+var cmd_send_email_poll = require('./lib/send-email-poll');
+var cmd_save_poll_result = require('./lib/poll/save-poll-result');
+var cmd_poll_count = require('./lib/poll/poll-count');
+var cmd_get_poll_results = require('./lib/poll/get-poll-results');
+var cmd_get_poll_setup = require('./lib/poll/get-poll-setup');
+var cmd_save_poll_setup = require('./lib/poll/save-poll-setup');
 
 var logger;
 if (process.env.LOGENTRIES_ENABLED === 'true') {
@@ -96,6 +102,13 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_dojo_email'}, cmd_load_dojo_email);
   seneca.add({role: plugin, cmd: 'notify_all_members'}, cmd_notify_all_members);
   seneca.add({role: plugin, cmd: 'add_children_parent_dojo'}, addChildrenParentDojo.bind(seneca));
+  seneca.add({role: plugin, cmd: 'send_email_poll'}, cmd_send_email_poll);
+  seneca.add({role: plugin, cmd: 'get_poll_setup'}, cmd_get_poll_setup);
+  seneca.add({role: plugin, cmd: 'save_poll_setup'}, cmd_save_poll_setup);
+  seneca.add({role: plugin, cmd: 'save_poll_result'}, cmd_save_poll_result);
+  seneca.add({role: plugin, cmd: 'poll_count'}, cmd_poll_count);
+  seneca.add({role: plugin, cmd: 'get_poll_results'}, cmd_get_poll_results);
+
   // from countries service
   seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
   seneca.add({role: plugin, cmd: 'list_countries'}, cmd_list_countries);
