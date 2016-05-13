@@ -2067,9 +2067,22 @@ module.exports = function (options) {
     var searchLat = args.query.lat;
     var searchLon = args.query.lon;
 
+    var search = args.query.search || null;
+
+    var psqlQuery;
+    var psqlQueryVariables;
+
+    if (search) {
+      search = '%' + search + '%';
+      psqlQuery = "SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND verified != 0 AND deleted != 1 OR name ILIKE $3 ORDER BY distance_from_search_location ASC LIMIT 10";
+      psqlQueryVariables = [searchLat, searchLon, search];
+    } else {
+      return done(null, []);
+    }
+
     pg.connect(localPgOptions, function (err, client) {
       if (err) return done(err);
-      client.query("SELECT *, earth_distance(ll_to_earth($1, $2), ll_to_earth((geo_point->'lat')::text::float8, (geo_point->'lon')::text::float8)) AS distance_from_search_location FROM cd_dojos WHERE stage != 4 AND verified != 0 AND deleted != 1 ORDER BY distance_from_search_location ASC LIMIT 10", [searchLat, searchLon], function (err, results) {
+      client.query(psqlQuery, psqlQueryVariables, function (err, results) {
         if (err) return done(err);
         client.end();
         _.each(results.rows, function (dojo) {
