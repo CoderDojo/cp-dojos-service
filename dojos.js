@@ -20,6 +20,7 @@ var google = require('googleapis');
 var admin = google.admin('directory_v1');
 var fs = require('fs');
 var cmd_export_dojo_users = require('./lib/export-csv');
+var cmd_backfill_champions = require('./lib/backfill-champions');
 
 //  Internal lib
 //  TODO: globbing to avoid manual declaration ?
@@ -104,6 +105,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'continents_lat_long'}, cmd_continents_lat_long);
   seneca.add({role: plugin, cmd: 'continent_codes'}, cmd_get_continent_codes);
   seneca.add({role: plugin, cmd: 'reverse_geocode'}, cmd_reverse_geocode);
+  seneca.add({role: plugin, cmd: 'backfill_champions'}, cmd_backfill_champions);
 
   function cmd_update_dojo_founder (args, done) {
     logger.info({args: args}, 'cmd_update_dojo_founder');
