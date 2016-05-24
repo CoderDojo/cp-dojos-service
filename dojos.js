@@ -1908,7 +1908,10 @@ module.exports = function (options) {
       });
 
       function loadUser (callback) {
-        seneca.act({role: 'cd-users', cmd: 'load', id: userId, user: args.user}, callback);
+        seneca.act({role: 'cd-users', cmd: 'load', id: userId, user: args.user}, function (err, user) {
+          if (err) return callback(err);
+          return callback(null, user);
+        });
       }
 
       function loadDojo (user, callback) {
