@@ -97,6 +97,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_dojo_email'}, cmd_load_dojo_email);
   seneca.add({role: plugin, cmd: 'notify_all_members'}, cmd_notify_all_members);
   seneca.add({role: plugin, cmd: 'add_children_parent_dojo'}, addChildrenParentDojo.bind(seneca));
+  seneca.add({role: plugin, cmd: 'backfill_champions'}, cmd_backfill_champions);
   // from countries service
   seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
   seneca.add({role: plugin, cmd: 'list_countries'}, cmd_list_countries);
@@ -105,7 +106,6 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'continents_lat_long'}, cmd_continents_lat_long);
   seneca.add({role: plugin, cmd: 'continent_codes'}, cmd_get_continent_codes);
   seneca.add({role: plugin, cmd: 'reverse_geocode'}, cmd_reverse_geocode);
-  seneca.add({role: plugin, cmd: 'backfill_champions'}, cmd_backfill_champions);
 
   function cmd_update_dojo_founder (args, done) {
     logger.info({args: args}, 'cmd_update_dojo_founder');
