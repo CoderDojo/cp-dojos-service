@@ -11,6 +11,7 @@ var seneca = require('seneca')(),
   _ = require('lodash'),
   async = require('async'),
   sinon = require('sinon'),
+  logger = require('cp-logs')({}).logger,
   lab = exports.lab = require('lab').script();
 
 var role = "cd-dojos";
@@ -31,7 +32,7 @@ seneca
   .use(__dirname + '/stubs/cd-salesforce.js')
   .use(__dirname + '/stubs/cd-users.js')
   .use(__dirname + '/stubs/email-notifications.js')
-  .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}, shared: config.shared});
+  .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}, shared: config.shared, logger: logger});
 
 var usersEnt = seneca.make$("sys/user"),
   dojosEnt = seneca.make$("cd/dojos"),

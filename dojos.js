@@ -15,7 +15,6 @@ var continents = require('./data/continents');
 var countriesList = require('countries-list');
 var geocoder = require('node-geocoder')('google', 'https', {'apiKey': process.env.GOOGLE_MAPS_KEY});
 var debug = require('debug')('dojos');
-var bunyan = require('bunyan');
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
 var fs = require('fs');
@@ -39,13 +38,6 @@ var cmd_belongs_to_dojo = require('./lib/perm/belongs-to-dojo');
 var cmd_is_own_invite = require('./lib/perm/is-own-invite');
 
 var logger;
-if (process.env.LOGENTRIES_ENABLED === 'true') {
-  var Logger = require('le_node');
-  var loggerDefinition = Logger.bunyanStream({token: process.env.LOGENTRIES_TOKEN});
-  logger = bunyan.createLogger(loggerDefinition);
-} else {
-  logger = bunyan.createLogger({name: 'cp-dojos-service', level: 'warn'});
-}
 
 module.exports = function (options) {
   var seneca = this;
@@ -59,6 +51,7 @@ module.exports = function (options) {
   var setupDojoSteps = require('./data/setup_dojo_steps');
   var dojoConfig = require('./data/dojos_config');
   var protocol = process.env.PROTOCOL || 'http';
+  logger = options.logger;
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
@@ -2368,7 +2361,7 @@ module.exports = function (options) {
       var status = response.statusCode;
 
       if (status >= 400) {
-        console.error(data);
+        logger.error({time: new Date()}, data);
         return done(new Error('Got a ' + status + ' status code from the Google Maps API.'));
       }
 
