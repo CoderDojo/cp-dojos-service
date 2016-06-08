@@ -1,114 +1,112 @@
+api_key: <%= ENV['CROWDIN_API_KEY'] %>
+project_identifier: zen-community-platform
 base_path: .
-   
+
 files:
   -
     source: '/email-templates/accept-badge-award-en_US/dojos-accept-badge-award.html.ejs'
     dest: '/dojos-accept-badge-award.html.html'
     translation: '/email-templates/accept-badge-award-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
-  
+
   -
     source: '/email-templates/accept-badge-award-en_US/dojos-accept-badge-award.text.ejs'
     dest: '/dojos-accept-badge-award.text.txt'
     translation: '/email-templates/accept-badge-award-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
-  
+
   -
     source: '/email-templates/google-email-pass-en_US/dojos-google-email-pass.html.ejs'
     dest: '/dojos-google-email-pass.html.html'
     translation: '/email-templates/google-email-pass-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
-  
+
   -
     source: '/email-templates/google-email-pass-en_US/dojos-google-email-pass.text.ejs'
     dest: '/dojos-google-email-pass.text.txt'
     translation: '/email-templates/google-email-pass-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
-  
+
   -
     source: '/email-templates/invite-user-en_US/dojos-invite-user.html.ejs'
     dest: '/dojos-invite-user.html.html'
     translation: '/email-templates/invite-user-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
-  
+
   -
     source: '/email-templates/invite-user-en_US/dojos-invite-user.text.ejs'
     dest: '/dojos-invite-user.text.txt'
     translation: '/email-templates/invite-user-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
-  
+
   -
     source: '/email-templates/one-off-event-application-approved-en_US/dojos-one-off-event-application-approved.html.ejs'
     dest: '/dojos-one-off-event-application-approved.html.html'
     translation: '/email-templates/one-off-event-application-approved-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
-  
+
   -
     source: '/email-templates/one-off-event-application-approved-en_US/dojos-one-off-event-application-approved.text.ejs'
     dest: '/email-templates/one-off-event-application-approved-en_US/dojos-one-off-event-application-approved.text.txt'
     translation: '/email-templates/one-off-event-application-approved-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
-  
+
   -
     source: '/email-templates/one-off-event-application-received-en_US/dojos-one-off-event-application-received.html.ejs'
     dest: '/dojos-one-off-event-application-received.html.html'
     translation: '/email-templates/one-off-event-application-received-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
-  
+
   -
     source: '/email-templates/one-off-event-application-received-en_US/dojos-one-off-event-application-received.text.ejs'
     dest: '/dojos-one-off-event-application-received.text.txt'
     translation: '/email-templates/one-off-event-application-received-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
-  
+
   -
     source: '/email-templates/recurring-event-application-approved-en_US/dojos-recurring-event-application-approved.html.ejs'
     dest: '/dojos-recurring-event-application-approved.html.html'
     translation: '/email-templates/recurring-event-application-approved-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
-  
+
   -
     source: '/email-templates/recurring-event-application-approved-en_US/dojos-recurring-event-application-approved.text.ejs'
     dest: '/dojos-recurring-event-application-approved.text.txt'
     translation: '/email-templates/recurring-event-application-approved-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
-  
+
   -
     source: '/email-templates/recurring-event-application-received-en_US/dojos-recurring-event-application-received.html.ejs'
     dest: '/dojos-recurring-event-application-received.html.html'
     translation: '/email-templates/recurring-event-application-received-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
-  
+
   -
     source: '/email-templates/recurring-event-application-received-en_US/dojos-recurring-event-application-received.text.ejs'
     dest: '/dojos-recurring-event-application-received.text.txt'
     translation: '/email-templates/recurring-event-application-received-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
-  
+
   -
     source: '/email-templates/user-left-dojo-en_US/dojos-user-left-dojo.html.ejs'
     dest: '/dojos-user-left-dojo.html.html'
     translation: '/email-templates/user-left-dojo-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
-  
+
   -
     source: '/email-templates/user-left-dojo-en_US/dojos-user-left-dojo.text.ejs'
     dest: '/dojos-user-left-dojo.text.txt'
     translation: '/email-templates/user-left-dojo-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
-  
+
   -
     source: '/email-templates/user-request-to-join-en_US/dojos-user-request-to-join.html.ejs'
     dest: '/dojos-user-request-to-join.html.html'
     translation: '/email-templates/user-request-to-join-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
-  
+
   -
     source: '/email-templates/user-request-to-join-en_US/dojos-user-request-to-join.text.ejs'
     dest: '/dojos-user-request-to-join.text.txt'
     translation: '/email-templates/user-request-to-join-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
-  
-  
-  
-  
