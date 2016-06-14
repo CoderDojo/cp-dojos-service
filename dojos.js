@@ -34,6 +34,7 @@ var cmd_save_poll_setup = require('./lib/poll/save-poll-setup');
 var cmd_own_dojo = require('./lib/perm/own-dojo');
 var cmd_have_perm = require('./lib/perm/have-permissions');
 var cmd_is_founder = require('./lib/perm/is-founder');
+var cmd_is_own_lead = require('./lib/perm/is-own-lead');
 
 var logger;
 if (process.env.LOGENTRIES_ENABLED === 'true') {
@@ -116,6 +117,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'own_dojo'}, cmd_own_dojo);
   seneca.add({role: plugin, cmd: 'is_founder'}, cmd_is_founder);
   seneca.add({role: plugin, cmd: 'have_permissions'}, cmd_have_perm);
+  seneca.add({role: plugin, cmd: 'is_own_lead'}, cmd_is_own_lead);
 
   // from countries service
   seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);

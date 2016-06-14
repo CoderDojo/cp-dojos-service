@@ -73,12 +73,13 @@ module.exports = function () {
         role: 'cdf-admin'
       }],
 
+      //  TODO : No need for a check if the user is the one who started this lead if the args extend user
       'save_dojo_lead': [{
         role: 'basic-user',
         userType: 'champion',
         customValidator: [{
           role: 'cd-dojos',
-          cmd: 'is_founder'
+          cmd: 'is_own_lead'
         }]
       }],
       'update_dojo_lead': [{
@@ -86,9 +87,10 @@ module.exports = function () {
         userType: 'champion',
         customValidator: [{
           role: 'cd-dojos',
-          cmd: 'is_founder'
+          cmd: 'is_own_lead'
         }]
       }],
+
       'load_user_dojo_lead': [{
         role: 'basic-user'
       }],
