@@ -118,13 +118,13 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'continent_codes'}, cmd_get_continent_codes);
   seneca.add({role: plugin, cmd: 'reverse_geocode'}, cmd_reverse_geocode);
 
-  function cmd_update_dojo_founder (args, done) {
+  function cmd_update_dojo_founder (args, cmdCb) {
     logger.info({args: args}, 'cmd_update_dojo_founder');
     var founder = args.founder;
     var seneca = this;
 
     if (_.isEmpty(founder)) {
-      return done(new Error('Founder is empty'));
+      return cmdCb(new Error('Founder is empty'));
     }
 
     async.waterfall([
@@ -134,7 +134,7 @@ module.exports = function (options) {
       getCurrentFounderUserDojo,
       updateOrCreateUserDojo,
       updateDojoCreatorEmail
-    ], done);
+    ], cmdCb);
 
     function isCDFAdmin (done) {
       var userId = args.user.id;
@@ -158,12 +158,10 @@ module.exports = function (options) {
       query.userId = founder.previousFounderId;
       query.owner = 1;
       query.dojoId = founder.dojoId;
-
       seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: query}, function (err, usersDojos) {
         if (err) {
           return done(err);
         }
-
         var userDojo = usersDojos[0];
         return done(null, userDojo);
       });
@@ -231,15 +229,18 @@ module.exports = function (options) {
         updateDojo
       ], done);
 
-      function loadUser (done) {
-        seneca.act({role: 'cd-users', cmd: 'load', id: userId, user: args.user}, done);
+      function loadUser (cb) {
+        seneca.act({role: 'cd-users', cmd: 'load', id: userId, user: args.user}, function (err, val) {
+          if (err) return done(err);
+          cb(err, val);
+        });
       }
 
-      function updateDojo (user, done) {
+      function updateDojo (user, cb) {
         seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
           if (err) return done(err);
           dojo.creatorEmail = user.email;
-          seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, done);
+          seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, cb);
         });
       }
     }
