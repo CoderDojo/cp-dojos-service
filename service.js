@@ -30,7 +30,6 @@ seneca.use(require('./dojos.js'),
  });
 seneca.use(require('seneca-queue'));
 seneca.use(require('cp-permissions'), {
-  target: 'cd-dojos',
   config: __dirname + '/config/permissions-rules'});
 
 process.on('SIGINT', shutdown);
