@@ -40,51 +40,123 @@ files:
     type: 'txt'
 
   -
-    source: '/email-templates/one-off-event-application-approved-en_US/dojos-one-off-event-application-approved.html.ejs'
-    dest: '/dojos-one-off-event-application-approved.html.html'
-    translation: '/email-templates/one-off-event-application-approved-%locale_with_underscore%/%file_name%.ejs'
+    source: '/email-templates/invited-to-session-en_US/html.ejs'
+    dest: '/email-templates/invited-to-session-en_US/html.html'
+    translation: '/email-templates/invited-to-session-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
 
   -
-    source: '/email-templates/one-off-event-application-approved-en_US/dojos-one-off-event-application-approved.text.ejs'
-    dest: '/email-templates/one-off-event-application-approved-en_US/dojos-one-off-event-application-approved.text.txt'
-    translation: '/email-templates/one-off-event-application-approved-%locale_with_underscore%/%file_name%.ejs'
+    source: '/email-templates/invited-to-session-en_US/text.ejs'
+    dest: '/email-templates/invited-to-session-en_US/text.txt'
+    translation: '/email-templates/invited-to-session-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
 
   -
-    source: '/email-templates/one-off-event-application-received-en_US/dojos-one-off-event-application-received.html.ejs'
-    dest: '/dojos-one-off-event-application-received.html.html'
-    translation: '/email-templates/one-off-event-application-received-%locale_with_underscore%/%file_name%.ejs'
+    source: '/email-templates/notify-all-members-oneoff-en_US/html.ejs'
+    dest: '/email-templates/notify-all-members-oneoff-en_US/html.html'
+    translation: '/email-templates/notify-all-members-oneoff-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
 
   -
-    source: '/email-templates/one-off-event-application-received-en_US/dojos-one-off-event-application-received.text.ejs'
-    dest: '/dojos-one-off-event-application-received.text.txt'
-    translation: '/email-templates/one-off-event-application-received-%locale_with_underscore%/%file_name%.ejs'
+    source: '/email-templates/notify-all-members-oneoff-en_US/text.ejs'
+    dest: '/email-templates/notify-all-members-oneoff-en_US/text.txt'
+    translation: '/email-templates/notify-all-members-oneoff-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
 
   -
-    source: '/email-templates/recurring-event-application-approved-en_US/dojos-recurring-event-application-approved.html.ejs'
-    dest: '/dojos-recurring-event-application-approved.html.html'
-    translation: '/email-templates/recurring-event-application-approved-%locale_with_underscore%/%file_name%.ejs'
+    source: '/email-templates/notify-all-members-recurring-en_US/html.ejs'
+    dest: '/email-templates/notify-all-members-recurring-en_US/html.html'
+    translation: '/email-templates/notify-all-members-recurring-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
 
   -
-    source: '/email-templates/recurring-event-application-approved-en_US/dojos-recurring-event-application-approved.text.ejs'
-    dest: '/dojos-recurring-event-application-approved.text.txt'
-    translation: '/email-templates/recurring-event-application-approved-%locale_with_underscore%/%file_name%.ejs'
+    source: '/email-templates/notify-all-members-recurring-en_US/text.ejs'
+    dest: '/email-templates/notify-all-members-recurring-en_US/text.txt'
+    translation: '/email-templates/notify-all-members-recurring-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
 
   -
-    source: '/email-templates/recurring-event-application-received-en_US/dojos-recurring-event-application-received.html.ejs'
-    dest: '/dojos-recurring-event-application-received.html.html'
-    translation: '/email-templates/recurring-event-application-received-%locale_with_underscore%/%file_name%.ejs'
+    source: '/email-templates/parents-notify-all-members-oneoff-en_US/html.ejs'
+    dest: '/email-templates/parents-notify-all-members-oneoff-en_US/html.html'
+    translation: '/email-templates/parents-notify-all-members-oneoff-%locale_with_underscore%/%file_name%.ejs'
     type: 'html'
 
   -
-    source: '/email-templates/recurring-event-application-received-en_US/dojos-recurring-event-application-received.text.ejs'
-    dest: '/dojos-recurring-event-application-received.text.txt'
-    translation: '/email-templates/recurring-event-application-received-%locale_with_underscore%/%file_name%.ejs'
+    source: '/email-templates/parents-notify-all-members-oneoff-en_US/text.ejs'
+    dest: '/email-templates/parents-notify-all-members-oneoff-en_US/text.txt'
+    translation: '/email-templates/parents-notify-all-members-oneoff-%locale_with_underscore%/%file_name%.ejs'
+    type: 'txt'
+
+  -
+    source: '/email-templates/parents-notify-all-members-recurring-en_US/html.ejs'
+    dest: '/email-templates/parents-notify-all-members-recurring-en_US/html.html'
+    translation: '/email-templates/parents-notify-all-members-recurring-%locale_with_underscore%/%file_name%.ejs'
+    type: 'html'
+
+  -
+    source: '/email-templates/parents-notify-all-members-recurring-en_US/text.ejs'
+    dest: '/email-templates/parents-notify-all-members-recurring-en_US/text.txt'
+    translation: '/email-templates/parents-notify-all-members-recurring-%locale_with_underscore%/%file_name%.ejs'
+    type: 'txt'
+
+  -
+    source: '/email-templates/polls-notification-en_US/html.ejs'
+    dest: '/email-templates/polls-notification-en_US/html.html'
+    translation: '/email-templates/polls-notification-%locale_with_underscore%/%file_name%.ejs'
+    type: 'html'
+
+  -
+    source: '/email-templates/polls-notification-en_US/text.ejs'
+    dest: '/email-templates/polls-notification-en_US/text.txt'
+    translation: '/email-templates/polls-notification-%locale_with_underscore%/%file_name%.ejs'
+    type: 'txt'
+
+  -
+    source: '/email-templates/session-cancelled-en_US/html.ejs'
+    dest: '/email-templates/session-cancelled-en_US/html.html'
+    translation: '/email-templates/session-cancelled-%locale_with_underscore%/%file_name%.ejs'
+    type: 'html'
+
+  -
+    source: '/email-templates/session-cancelled-en_US/text.ejs'
+    dest: '/email-templates/session-cancelled-en_US/text.txt'
+    translation: '/email-templates/session-cancelled-%locale_with_underscore%/%file_name%.ejs'
+    type: 'txt'
+
+  -
+    source: '/email-templates/ticket-application-approved-en_US/html.ejs'
+    dest: '/email-templates/ticket-application-approved-en_US/html.html'
+    translation: '/email-templates/ticket-application-approved-%locale_with_underscore%/%file_name%.ejs'
+    type: 'html'
+
+  -
+    source: '/email-templates/ticket-application-approved-en_US/text.ejs'
+    dest: '/email-templates/ticket-application-approved-en_US/text.txt'
+    translation: '/email-templates/ticket-application-approved-%locale_with_underscore%/%file_name%.ejs'
+    type: 'txt'
+
+  -
+    source: '/email-templates/ticket-application-cancelled-en_US/html.ejs'
+    dest: '/email-templates/ticket-application-cancelled-en_US/html.html'
+    translation: '/email-templates/ticket-application-cancelled-%locale_with_underscore%/%file_name%.ejs'
+    type: 'html'
+
+  -
+    source: '/email-templates/ticket-application-cancelled-en_US/text.ejs'
+    dest: '/email-templates/ticket-application-cancelled-en_US/text.txt'
+    translation: '/email-templates/ticket-application-cancelled-%locale_with_underscore%/%file_name%.ejs'
+    type: 'txt'
+
+  -
+    source: '/email-templates/ticket-application-received-en_US/html.ejs'
+    dest: '/email-templates/ticket-application-received-en_US/html.html'
+    translation: '/email-templates/ticket-application-received-%locale_with_underscore%/%file_name%.ejs'
+    type: 'html'
+
+  -
+    source: '/email-templates/ticket-application-received-en_US/text.ejs'
+    dest: '/email-templates/ticket-application-received-en_US/text.txt'
+    translation: '/email-templates/ticket-application-received-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
 
   -
@@ -110,3 +182,8 @@ files:
     dest: '/dojos-user-request-to-join.text.txt'
     translation: '/email-templates/user-request-to-join-%locale_with_underscore%/%file_name%.ejs'
     type: 'txt'
+
+  -
+    source: '/web/locale/en_US/messages.po'
+    dest: '/messages.po'
+    translation: '/web/locale/%locale_with_underscore%/%original_file_name%'
