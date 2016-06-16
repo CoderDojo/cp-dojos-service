@@ -36,7 +36,6 @@ module.exports = function () {
       }],
       'update': [{
         role: 'basic-user',
-        userType: 'champion',
         customValidator: [{
             role: 'cd-dojos',
             cmd: 'have_permissions',
@@ -66,17 +65,19 @@ module.exports = function () {
       }],
       'uncompleted_dojos': [{
         role: 'basic-user',
-        userType: 'champion'
+        userType: 'champion',
+        extendedUserTypes: true
       }],
 
       'get_stats': [{
         role: 'cdf-admin'
       }],
 
-      //  TODO : No need for a check if the user is the one who started this lead if the args extend user
+      //  We can't enforce to be a champion, elsewhat no user appart from champion can start a dojo
+      //  NOTE : No need for a check if the user is the one who started this lead if the args extend user
       'save_dojo_lead': [{
         role: 'basic-user',
-        userType: 'champion',
+        // userType: 'champion',
         customValidator: [{
           role: 'cd-dojos',
           cmd: 'is_own_lead'
@@ -84,7 +85,6 @@ module.exports = function () {
       }],
       'update_dojo_lead': [{
         role: 'basic-user',
-        userType: 'champion',
         customValidator: [{
           role: 'cd-dojos',
           cmd: 'is_own_lead'
@@ -97,6 +97,7 @@ module.exports = function () {
       'load_dojo_lead': [{
         role: 'basic-user',
         userType: 'champion',
+        extendedUserTypes: true,
         customValidator: [{
           role: 'cd-dojos',
           cmd: 'own_dojo'
@@ -110,12 +111,7 @@ module.exports = function () {
       }],
 
       'load_setup_dojo_steps': [{
-        role: 'basic-user',
-        userType: 'champion',
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'own_dojo'
-        }]
+        role: 'basic-user'
       }],
 
       //  TODO:120 split as "belongs_to_dojo"
@@ -124,13 +120,6 @@ module.exports = function () {
       }],
 
       'load_dojo_users': [{
-        role: 'basic-user',
-        userType: 'champion',
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'own_dojo'
-        }]
-      }, {
         role: 'basic-user',
         customValidator: [{
           role: 'cd-dojos',
@@ -147,15 +136,22 @@ module.exports = function () {
       'save_usersdojos': [{
         role: 'basic-user'
       }],
-
-      'export_dojo_users': [{
+      'remove_usersdojos': [ {
         role: 'basic-user',
-        userType: 'champion',
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'own_dojo'
+        customValidator:[{
+          role: 'cd-users',
+          cmd: 'is_self'
         }]
-      }, {
+      } ,{
+        role: 'basic-user',
+        customValidator:[{
+          role: 'cd-dojos',
+          cmd: 'have_permissions',
+          perm: 'dojo-admin'
+        }]
+      }
+    ],
+      'export_dojo_users': [{
         role: 'basic-user',
         customValidator: [{
           role: 'cd-dojos',
@@ -165,13 +161,6 @@ module.exports = function () {
       }],
       'generate_user_invite_token': [{
         role: 'basic-user',
-        userType: 'champion',
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'own_dojo'
-        }]
-      }, {
-        role: 'basic-user',
         customValidator: [{
           role: 'cd-dojos',
           cmd: 'have_permissions',
@@ -180,14 +169,9 @@ module.exports = function () {
       }],
       'accept_user_invite': [{
         role: 'basic-user'
-        //  TODO:90 is_own_invite
       }],
       'request_user_invite': [{
-        role: 'basic-user',
-        userType: 'mentor'
-      }, {
-        role: 'basic-user',
-        userType: 'champion'
+        role: 'basic-user'
       }],
       'accept_user_request': [{
         role: 'basic-user',
@@ -195,13 +179,6 @@ module.exports = function () {
           role: 'cd-dojos',
           cmd: 'have_permissions',
           perm: 'dojo-admin'
-        }]
-      }, {
-        role: 'basic-user',
-        userType: 'champion',
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'own_dojo'
         }]
       }],
 
@@ -215,14 +192,8 @@ module.exports = function () {
       }],
 
 
-      'notify_all_members': [{
-        role: 'basic-user',
-        userType: 'champion',
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'own_dojo'
-        }]
-      }, {
+      'notify_all_members': [
+      {
         role: 'basic-user',
         customValidator: [{
           role: 'cd-dojos',
@@ -231,20 +202,9 @@ module.exports = function () {
         }]
       }],
 
+      //  It returns an static object, don't be afraid
       'get_user_permissions': [{
-        role: 'basic-user',
-        userType: 'champion',
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'own_dojo'
-        }]
-      }, {
-        role: 'basic-user',
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'have_permissions',
-          perm: 'dojo-admin'
-        }]
+        role: 'none',
       }],
       'get_user_types': [{
         role: 'none'
