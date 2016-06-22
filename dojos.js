@@ -683,7 +683,7 @@ module.exports = function (options) {
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
     var user = args.user;
     var userDojo = {};
-    var zenHostname = args.zenHostname;
+    var zenHostname = process.env.HOSTNAME || '127.0.0.1:8000';
 
     dojo.creator = user.id;
     dojo.creatorEmail = user.email;
@@ -763,7 +763,7 @@ module.exports = function (options) {
         };
         var sendTo = options.shared.botEmail;
         var respondTo = user.email || sendTo;
-        var payload = {to: sendTo, code: 'new-dojo-', locality: 'en_US', content: content, from: sendTo, replyTo: respondTo, subject: 'A new dojo has been created !'};
+        var payload = {to: sendTo, code: 'new-dojo-', locality: 'en_US', content: content, from: sendTo, replyTo: respondTo, subject: 'A new dojo has been created'};
 
         seneca.act({role: plugin, cmd: 'send_email', payload: payload}, function (err, res) {
           if (err) {
@@ -1396,6 +1396,7 @@ module.exports = function (options) {
     content.year = moment(new Date()).format('YYYY');
     var emailCode = payload.code;
     var emailSubject = payload.subject;
+    var subjectVariables = payload.subjectVariables;
     var emailLocality = payload.locality;
     var replyTo = payload.replyTo;
     seneca.act({
@@ -1407,12 +1408,13 @@ module.exports = function (options) {
       content: content,
       code: emailCode,
       locality: emailLocality,
-      subject: emailSubject
+      subject: emailSubject,
+      subjectVariables: subjectVariables
     }, done);
   }
 
   function cmd_generate_user_invite_token (args, done) {
-    var zenHostname = args.zenHostname;
+    var zenHostname = process.env.HOSTNAME || '127.0.0.1:8000';
     var inviteEmail = args.email;
     var emailSubject = args.emailSubject;
     var dojoId = args.dojoId;
@@ -1568,7 +1570,7 @@ module.exports = function (options) {
   function cmd_request_user_invite (args, done) {
     logger.info({args: args}, 'cmd_request_user_invite');
     var inviteToken = shortid.generate();
-    var zenHostname = args.zenHostname;
+    var zenHostname = process.env.HOSTNAME || '127.0.0.1:8000';
     var data = args.data;
     var user = data.user || {};
     var userType = data.userType;
@@ -2170,7 +2172,7 @@ module.exports = function (options) {
     var seneca = this;
     var dojoId = args.data.dojoId;
     var eventId = args.data.eventId;
-    var zenHostname = args.zenHostname;
+    var zenHostname = process.env.HOSTNAME || '127.0.0.1:8000';
     var emailSubject = args.data.emailSubject;
 
     async.waterfall([
@@ -2257,7 +2259,6 @@ module.exports = function (options) {
             moment(endDate).format('HH:mm');
         }
         var locality = args.locality || 'en_US';
-        emailSubject = emailSubject + ' ' + dojo.name;
 
         _.forEach(users, function (user) {
           content.dojoMember = user.name;
@@ -2271,7 +2272,7 @@ module.exports = function (options) {
           }
           if (!_.isEmpty(email)) {
             var payload = {replyTo: dojo.email, from: dojo.name + ' <' + dojo.email + '>', to: email,
-              code: code, locality: locality, content: content, subject: emailSubject};
+              code: code, locality: locality, content: content, subject: emailSubject, subjectVariables: [dojo.name]};
             seneca.act({role: plugin, cmd: 'send_email', payload: _.cloneDeep(payload)});
           }
         });
