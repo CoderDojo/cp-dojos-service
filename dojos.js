@@ -21,7 +21,7 @@ var admin = google.admin('directory_v1');
 var fs = require('fs');
 
 //  Internal lib
-//  TODO: globbing to avoid manual declaration ?
+//  TODO:70 globbing to avoid manual declaration ?
 var addChildrenParentDojo = require('./lib/add-children-parent-dojo');
 var cmd_export_dojo_users = require('./lib/export-csv');
 var cmd_send_email_poll = require('./lib/send-email-poll');
@@ -30,6 +30,13 @@ var cmd_poll_count = require('./lib/poll/poll-count');
 var cmd_get_poll_results = require('./lib/poll/get-poll-results');
 var cmd_get_poll_setup = require('./lib/poll/get-poll-setup');
 var cmd_save_poll_setup = require('./lib/poll/save-poll-setup');
+
+var cmd_own_dojo = require('./lib/perm/own-dojo');
+var cmd_have_perm = require('./lib/perm/have-permissions');
+var cmd_is_founder = require('./lib/perm/is-founder');
+var cmd_is_own_lead = require('./lib/perm/is-own-lead');
+var cmd_belongs_to_dojo = require('./lib/perm/belongs-to-dojo');
+var cmd_is_own_invite = require('./lib/perm/is-own-invite');
 
 var logger;
 if (process.env.LOGENTRIES_ENABLED === 'true') {
@@ -108,6 +115,13 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'save_poll_result'}, cmd_save_poll_result);
   seneca.add({role: plugin, cmd: 'poll_count'}, cmd_poll_count);
   seneca.add({role: plugin, cmd: 'get_poll_results'}, cmd_get_poll_results);
+  // Perms
+  seneca.add({role: plugin, cmd: 'own_dojo'}, cmd_own_dojo);
+  seneca.add({role: plugin, cmd: 'is_founder'}, cmd_is_founder);
+  seneca.add({role: plugin, cmd: 'have_permissions'}, cmd_have_perm);
+  seneca.add({role: plugin, cmd: 'is_own_lead'}, cmd_is_own_lead);
+  seneca.add({role: plugin, cmd: 'belongs_to_dojo'}, cmd_belongs_to_dojo);
+  seneca.add({role: plugin, cmd: 'is_own_invite'}, cmd_is_own_invite);
 
   // from countries service
   seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
@@ -2168,7 +2182,7 @@ module.exports = function (options) {
   }
 
   function cmd_notify_all_members (args, done) {
-    //  TODO: enqueue this process
+    //  TODO:40 enqueue this process
     var seneca = this;
     var dojoId = args.data.dojoId;
     var eventId = args.data.eventId;
@@ -2197,7 +2211,7 @@ module.exports = function (options) {
         if (_.isEmpty(user.email)) {
           seneca.act({role: 'cd-profiles', cmd: 'load_parents_for_user', userId: user.id}, function (err, parents) {
             if (err) return seneca.log.warn('No parent found for', user.id);
-            //  TODO: handle multiple parents
+            //  TODO:80 handle multiple parents
             user.parent = parents[0];
 
             //  excluse this child if the parent email is already in the list, to avoid multiple emails
@@ -2282,6 +2296,7 @@ module.exports = function (options) {
   }
 
   // from countries service
+  // TODO:0 : clear this up, it seems a good couple of those are unused from: code:262
 
   function cmd_reverse_geocode (args, done) {
     var coords = args.coords;
