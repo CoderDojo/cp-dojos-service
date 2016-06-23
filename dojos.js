@@ -1290,7 +1290,7 @@ module.exports = function (options) {
     seneca.make$(DOJO_LEADS_ENTITY_NS).load$(args.query, done);
   }
 
-  /**
+  /*
    * Returns the uncompleted dojo lead for a certain user.
    * There should be only one uncompleted dojo lead at a moment.
    */
@@ -1986,6 +1986,13 @@ module.exports = function (options) {
     });
   }
 
+  function sanitiseAdmin (admin) {
+    delete admin.pass;
+    delete admin.salt;
+    delete admin.phone;
+    return (admin);
+  }
+
   function cmd_load_dojo_admins (args, done) {
     var seneca = this;
     var dojoId = args.dojoId;
@@ -1997,7 +2004,7 @@ module.exports = function (options) {
           return userPermission.name === 'dojo-admin';
         });
         if (dojoAdminPermissionFound) {
-          seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId, user: args.user}, cb);
+          seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId, user: args.user}, function (err, admin) { return cb(err, sanitiseAdmin(admin)); });
         } else {
           return cb();
         }
@@ -2023,7 +2030,7 @@ module.exports = function (options) {
           return userPermission.name === 'ticketing-admin';
         });
         if (dojoTicketingAdminPermissionFound) {
-          seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId, user: args.user}, cb);
+          seneca.act({role: 'cd-users', cmd: 'load', id: userDojo.userId, user: args.user}, function (err, admin) { return cb(err, sanitiseAdmin(admin)); });
         } else {
           return cb();
         }
