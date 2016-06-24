@@ -36,7 +36,7 @@
     "bunyan": "1.5.1",
     "countries-list": "1.0.3",
     "cp-i18n-lib": "git+https://github.com/CoderDojo/cp-i18n-lib.git",
-    "cp-permissions": "git://github.com/CoderDojo/cp-permissions-plugin#0.0.1",
+    "cp-permissions-plugin": "git://github.com/CoderDojo/cp-permissions-plugin#0.0.1",
     "debug": "2.2.0",
     "ejs": "1.0.0",
     "googleapis": "2.0.5",
