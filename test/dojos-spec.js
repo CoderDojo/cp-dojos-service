@@ -11,7 +11,7 @@ var seneca = require('seneca')(),
   _ = require('lodash'),
   async = require('async'),
   sinon = require('sinon'),
-  logger = require('cp-logs')({}).logger,
+  logger = require('cp-logs-lib')({}).logger,
   lab = exports.lab = require('lab').script();
 
 var role = "cd-dojos";

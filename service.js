@@ -9,7 +9,7 @@ var seneca = require('seneca')(config);
 var util = require('util');
 var store = require('seneca-postgresql-store');
 var heapdump = require('heapdump');
-var log = require('cp-logs')({name: 'cp-dojos-service', level: 'warn'});
+var log = require('cp-logs-lib')({name: 'cp-dojos-service', level: 'warn'});
 config.log = log.log;
 // logger creates a circular JSON
 seneca.log.info('using config', JSON.stringify(config, null, 4));
