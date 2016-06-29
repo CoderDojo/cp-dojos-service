@@ -17,12 +17,12 @@
   ],
   "repository": {
     "type": "git",
-    "url": "git://github.com/CoderDojo/cp-core-services.git"
+    "url": "git://github.com/CoderDojo/cp-dojos-service.git"
   },
-  "author": "",
+  "author": "CoderDojo Foundation",
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/CoderDojo/cp-core-services/issues"
+    "url": "https://github.com/CoderDojo/community-platform/issues"
   },
   "devDependencies": {
     "chai": "2.2.0",
