@@ -9,7 +9,9 @@ var seneca = require('seneca')(config);
 var util = require('util');
 var store = require('seneca-postgresql-store');
 var heapdump = require('heapdump');
-
+var log = require('cp-logs-lib')({name: 'cp-dojos-service', level: 'warn'});
+config.log = log.log;
+// logger creates a circular JSON
 seneca.log.info('using config', JSON.stringify(config, null, 4));
 
 seneca.options(config);
@@ -26,7 +28,7 @@ seneca.use(require('./dojos.js'),
     shared: config.shared,
    'google-api': config['google-api'],
    postgresql: config['postgresql-store'],
-   logger: config.logger
+   logger: log.logger
  });
 seneca.use(require('seneca-queue'));
 seneca.use(require('cp-permissions-plugin'), {
