@@ -1479,7 +1479,7 @@ module.exports = function (options) {
       var locality = args.locality || 'en_US';
       var code = 'invite-user-';
 
-      var payload = {to: inviteEmail, code: code, locality: locality, from: dojo.name + ' <' + options.shared.botEmail + '>', replyTo: dojo.email, content: content, subject: emailSubject};
+      var payload = {to: inviteEmail, code: code, locality: locality, from: '"' + dojo.name + '" <' + options.shared.botEmail + '>', replyTo: dojo.email, content: content, subject: emailSubject};
       seneca.act({role: plugin, cmd: 'send_email', payload: payload}, done);
     }
   }
@@ -2285,7 +2285,7 @@ module.exports = function (options) {
             content.dojoMember = user.parent.name;
           }
           if (!_.isEmpty(email)) {
-            var payload = {replyTo: dojo.email, from: dojo.name + ' <' + dojo.email + '>', to: email,
+            var payload = {replyTo: dojo.email, from: '"' + dojo.name + '" <' + dojo.email + '>', to: email,
               code: code, locality: locality, content: content, subject: emailSubject, subjectVariables: [dojo.name]};
             seneca.act({role: plugin, cmd: 'send_email', payload: _.cloneDeep(payload)});
           }
