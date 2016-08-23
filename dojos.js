@@ -29,6 +29,7 @@ var cmd_poll_count = require('./lib/poll/poll-count');
 var cmd_get_poll_results = require('./lib/poll/get-poll-results');
 var cmd_get_poll_setup = require('./lib/poll/get-poll-setup');
 var cmd_save_poll_setup = require('./lib/poll/save-poll-setup');
+var cmd_update_image = require('./lib/update-image');
 
 var cmd_own_dojo = require('./lib/perm/own-dojo');
 var cmd_have_perm = require('./lib/perm/have-permissions');
@@ -60,6 +61,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'create'}, wrapCheckRateLimitCreateDojo(cmd_create));
   seneca.add({role: plugin, cmd: 'update'}, wrapDojoExists(wrapDojoPermissions(cmd_update)));
   seneca.add({role: plugin, cmd: 'delete'}, wrapDojoExists(wrapDojoPermissions(cmd_delete)));
+  seneca.add({role: plugin, cmd: 'update_image'}, cmd_update_image);
   seneca.add({role: plugin, cmd: 'my_dojos'}, cmd_my_dojos);
   seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
   seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
