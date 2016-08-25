@@ -42,6 +42,14 @@ module.exports = function () {
             perm: 'dojo-admin'
         }]
       }],
+      'update_image': [{
+        role: 'basic-user',
+        customValidator: [{
+            role: 'cd-dojos',
+            cmd: 'have_permissions',
+            perm: 'dojo-admin'
+        }]
+      }],
       'delete': [{
         role: 'cdf-admin',
       }],
