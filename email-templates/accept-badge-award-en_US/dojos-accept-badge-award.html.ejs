@@ -1,17 +1,14 @@
 <% include ../common-en_US/header.ejs %>
 
-<h1>Hi there,</h1>
+<h1>Hi <%=recipientName%></h1>
 
-<p>You have been nominated to receive the following CoderDojo Badge: <b><%=badgeName%></b></p>
+<p>You have just been awarded an official CoderDojo Badge, <b><%=badgeName%></b>, for your awesome skills !</p>
 
-<div>
-  <img class="badge-thumbnail" src="<%=badgeImage%>">
-</div>
+<p>To claim this badge and get it to display on your profile just click the button below.</p>
+<a href="<%=link%>"><button type="button">Claim your badge now !</button></a>
+<p>There are lots of other badges you can be awarded. Check them out <a href="<%=badgelistUrl%>">here.</a></p>
 
-<p>Please go to the following link to accept the award <a href="<%=link%>"><%=link%></a></p>
+<p>Create Cool Code!</br>
+The CoderDojo Team</p>
 
-<p>Best wishes,</br>
-The CoderDojo Foundation Team</p>
-  
 <% include ../common-en_US/footer.ejs %>
-
