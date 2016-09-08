@@ -23,13 +23,15 @@ var fs = require('fs');
 //  TODO:70 globbing to avoid manual declaration ?
 var addChildrenParentDojo = require('./lib/add-children-parent-dojo');
 var cmd_export_dojo_users = require('./lib/export-csv');
+var cmd_update_image = require('./lib/update-image');
+// Polls
 var cmd_send_email_poll = require('./lib/send-email-poll');
 var cmd_save_poll_result = require('./lib/poll/save-poll-result');
+var cmd_remove_poll_result = require('./lib/poll/remove-poll-result');
 var cmd_poll_count = require('./lib/poll/poll-count');
 var cmd_get_poll_results = require('./lib/poll/get-poll-results');
 var cmd_get_poll_setup = require('./lib/poll/get-poll-setup');
 var cmd_save_poll_setup = require('./lib/poll/save-poll-setup');
-var cmd_update_image = require('./lib/update-image');
 
 var cmd_own_dojo = require('./lib/perm/own-dojo');
 var cmd_have_perm = require('./lib/perm/have-permissions');
@@ -106,12 +108,14 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_dojo_email'}, cmd_load_dojo_email);
   seneca.add({role: plugin, cmd: 'notify_all_members'}, cmd_notify_all_members);
   seneca.add({role: plugin, cmd: 'add_children_parent_dojo'}, addChildrenParentDojo.bind(seneca));
+  //  Polls
   seneca.add({role: plugin, cmd: 'send_email_poll'}, cmd_send_email_poll);
   seneca.add({role: plugin, cmd: 'get_poll_setup'}, cmd_get_poll_setup);
   seneca.add({role: plugin, cmd: 'save_poll_setup'}, cmd_save_poll_setup);
-  seneca.add({role: plugin, cmd: 'save_poll_result'}, cmd_save_poll_result);
-  seneca.add({role: plugin, cmd: 'poll_count'}, cmd_poll_count);
   seneca.add({role: plugin, cmd: 'get_poll_results'}, cmd_get_poll_results);
+  seneca.add({role: plugin, cmd: 'save_poll_result'}, cmd_save_poll_result);
+  seneca.add({role: plugin, cmd: 'remove_poll_result'}, cmd_remove_poll_result);
+  seneca.add({role: plugin, cmd: 'poll_count'}, cmd_poll_count);
   // Perms
   seneca.add({role: plugin, cmd: 'own_dojo'}, cmd_own_dojo);
   seneca.add({role: plugin, cmd: 'is_founder'}, cmd_is_founder);
