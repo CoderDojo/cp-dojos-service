@@ -59,10 +59,12 @@
     "randomstring": "1.0.6",
     "request": "2.55.0",
     "seneca": "1.4.0",
+    "seneca-kue": "git://github.com/wardormeur/seneca-kue",
     "seneca-mail": "0.2.2",
     "seneca-postgresql-store": "1.1.3",
     "seneca-queue": "^0.3.0",
     "shortid": "2.2.2",
+    "twilio": "~2.9.1",
     "util": "^0.10.3",
     "xoauth2": "1.1.0",
     "yargs": "3.7.2"

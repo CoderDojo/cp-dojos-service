@@ -23,11 +23,13 @@ if (process.env.MAILTRAP_ENABLED === 'true') {
   seneca.use('mail', config.email);
 }
 seneca.use(require('./email-notifications.js'));
+seneca.use(require('seneca-kue'));
 seneca.use(require('./dojos.js'),
   {limits: config.limits,
     shared: config.shared,
    'google-api': config['google-api'],
    postgresql: config['postgresql-store'],
+   kue: config.kue,
    logger: log.logger
  });
 seneca.use(require('seneca-queue'));
