@@ -11,6 +11,7 @@ var seneca = require('seneca')(),
   _ = require('lodash'),
   async = require('async'),
   sinon = require('sinon'),
+  logger = require('cp-logs-lib')({name: 'cd-dojos-service'}).logger,
   lab = exports.lab = require('lab').script();
 
 var role = "cd-dojos";
@@ -19,6 +20,8 @@ var users = require('./fixtures/users.json');
 var dojos = require('./fixtures/dojos.json');
 var dojoleads = require('./fixtures/dojoleads.json');
 var usersDojos = require('./fixtures/usersdojos.json');
+var polls = require('./fixtures/polls.json');
+var pollsResults = require('./fixtures/polls_results.json');
 
 seneca.options(config);
 
@@ -29,12 +32,14 @@ seneca
   .use(__dirname + '/stubs/cd-salesforce.js')
   .use(__dirname + '/stubs/cd-users.js')
   .use(__dirname + '/stubs/email-notifications.js')
-  .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}});
+  .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}, shared: config.shared, logger: logger});
 
 var usersEnt = seneca.make$("sys/user"),
   dojosEnt = seneca.make$("cd/dojos"),
   usersDojosEnt = seneca.make$("cd/usersdojos"),
-  dojoLeadsEnt = seneca.make$("cd/dojoleads");
+  dojoLeadsEnt = seneca.make$("cd/dojoleads"),
+  pollsEnt = seneca.make$("cd/polls"),
+  pollsResultsEnt = seneca.make$("cd/polls_results");
 
 // this is unusually necessary
 // when interrupted, node doesn't stop without this
@@ -73,7 +78,6 @@ function create_dojo(obj, creator, done) {
   seneca.act({role: role, cmd: 'create', dojo: obj, user: {id: creator.id, roles: ['cdf-admin']}},
     function (err, savedDojo) {
       if (err) return done(err);
-
       expect(savedDojo.id).to.be.ok;
 
       done(null, savedDojo);
@@ -84,6 +88,27 @@ function create_users_dojos(obj, done) {
   seneca.act({role: role, cmd: 'save_usersdojos', userDojo: obj}, done);
 }
 
+function create_poll(obj, done) {
+  seneca.act({role: role, cmd: 'save_poll_setup', poll: obj},
+    function (err, savedPoll) {
+      if (err) return done(err);
+
+      expect(savedPoll.id).to.be.ok;
+
+      done(null, savedPoll);
+    });
+}
+
+function create_poll_answer(obj, done) {
+  seneca.act({role: role, cmd: 'save_poll_result', poll: obj},
+    function (err, savedPollResult) {
+      if (err) return done(err);
+
+      expect(savedPollResult.id).to.be.ok;
+
+      done(null, savedPollResult);
+    });
+}
 
 lab.experiment('Dojo Microservice test', function () {
 
@@ -120,6 +145,19 @@ lab.experiment('Dojo Microservice test', function () {
   });
 
   lab.before(function (done) {
+    seneca.util.recurse(2, function (index, next) {
+      create_poll(polls[index], next);
+    }, done);
+  });
+
+  lab.before(function (done) {
+    seneca.util.recurse(pollsResults.length, function (index, next) {
+
+      create_poll_answer(pollsResults[index], next);
+    }, done);
+  });
+
+  lab.before(function (done) {
     async.eachSeries(usersDojos, function (item, callback) {
 
       dojosEnt.list$(function (err, dojos) {
@@ -139,7 +177,6 @@ lab.experiment('Dojo Microservice test', function () {
       create_dojo(dojos[4], users[4],
         function (err, savedDojo) {
           if (err) return done(err);
-
           dojosEnt.load$({creator: users[4].id}, function (err, loadedDojo) {
             if (err) return done(err);
             expect(dojos).not.to.be.empty;
@@ -307,7 +344,6 @@ lab.experiment('Dojo Microservice test', function () {
         var dojo = dojos[0];
         dojo.verified = 0;
         dojo.notes = "updated";
-
         seneca.act({role: role, cmd: 'update', dojo: dojo, user: {roles: ['cdf-admin']}}, function (err, updatedDojo) {
           if (err) return done(err);
 
@@ -380,7 +416,7 @@ lab.experiment('Dojo Microservice test', function () {
             // second update, already verified
             seneca.act({role: role, cmd: 'update', dojo: dojo, user: {roles: ['cdf-admin']}}, function (err, updatedTwiceDojo) {
 
-              expect(updatedDojo.verifiedAt).to.be.equal(updatedTwiceDojo.verifiedAt);
+              expect(updatedDojo.verifiedAt.toString()).to.be.equal(updatedTwiceDojo.verifiedAt.toString());
               done();
             });
           }, 1000);
@@ -687,11 +723,12 @@ lab.experiment('Dojo Microservice test', function () {
     });
   });
 
-  lab.experiment('create', function () {
-    lab.test('executes', function (done) {
-      seneca.act({role: role, cmd: 'create', user: {}, dojo: {}}, done);
-    });
-  });
+  //  TODO: Creating an empty dojo should be forbidden
+  // lab.experiment('create', function () {
+  //   lab.test('executes', function (done) {
+  //     seneca.act({role: role, cmd: 'create', user: {}, dojo: {}}, done);
+  //   });
+  // });
 
   lab.experiment('update', function () {
     lab.test('executes', function (done) {
@@ -995,5 +1032,100 @@ lab.experiment('Dojo Microservice test', function () {
     });
   });
 
-});
+  lab.experiment('savePoll', function () {
+    lab.test('save poll to db', function (done) {
+      dojosEnt.list$({}, function (err, dojos) {
+        if (err) return done(err);
 
+        expect(dojos).to.exist;
+        expect(dojos[0]).to.be.ok;
+
+        var dojo = dojos[0];
+        var poll = polls[0];
+        poll.dojoId = dojo.id;
+        create_poll(poll, function (err, savedPoll) {
+          if (err) return done(err);
+
+          pollsEnt.load$({id: savedPoll.id}, function (err, loadedPoll) {
+            if (err) return done(err);
+            expect(loadedPoll).not.to.be.empty;
+
+            var expectedFields = ['question', 'valueUnity', 'maxAnswers', 'endDate', 'dojoId', 'id'];
+            var actualFields = Object.keys(loadedPoll);
+            _.forEach(expectedFields, function (field) {
+              expect(actualFields).to.include(field);
+            })
+            done();
+          });
+        });
+      });
+    });
+  });
+
+  lab.experiment('savePollResult', function () {
+    lab.test('save pollResult to db', function (done) {
+      dojosEnt.list$({creator: users[3].id}, function (err, dojos) {
+        if (err) return done(err);
+
+        expect(dojos).to.exist;
+        expect(dojos[0]).to.be.ok;
+
+        var dojo = dojos[0];
+        pollsEnt.list$({}, function (err, polls) {
+          if (err) return done(err);
+
+          expect(polls).to.exist;
+          expect(polls.length).to.be.equal(2);
+          expect(polls[0]).to.be.ok;
+
+          var poll = polls[0];
+          var pollResult = pollsResults[0];
+          pollResult.dojoId = dojo.id;
+          pollResult.pollId = poll.id;
+          create_poll_answer(pollResult, function (err, savedPollResult) {
+            if (err) return done(err);
+
+            pollsResultsEnt.load$({id: savedPollResult.id}, function (err, loadedPollResult) {
+              if (err) return done(err);
+              expect(loadedPollResult).not.to.be.empty;
+
+              var expectedFields = ['pollId', 'dojoId', 'createdAt', 'value', 'id'];
+              var actualFields = Object.keys(loadedPollResult);
+              _.forEach(expectedFields, function (field) {
+                expect(actualFields).to.include(field);
+              });
+              done();
+            });
+          });
+        });
+      });
+    });
+  });
+
+  lab.experiment('pollCount', function () {
+    lab.test('get poll sum of value', function (done) {
+      pollsEnt.list$({}, function (err, polls) {
+        if (err) return done(err);
+
+        expect(polls).to.exist;
+        expect(polls.length).to.be.equal(2);
+        expect(polls[0]).to.be.ok;
+        var poll = polls[1];
+        var pollResult = pollsResults[0];
+        pollResult.pollId = poll.id;
+        seneca.act({role: role, cmd: 'poll_count', pollId: poll.id}, function (err, sumPollResult) {
+          if (err) return done(err);
+          expect(sumPollResult).not.to.be.empty;
+
+          var expectedFields = ['count'];
+          var actualFields = Object.keys(sumPollResult);
+          _.forEach(expectedFields, function (field) {
+            expect(actualFields).to.include(field);
+          });
+          done();
+        });
+      });
+    });
+  });
+
+});

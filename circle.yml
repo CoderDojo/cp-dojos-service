@@ -1,0 +1,31 @@
+machine:
+  node:
+    version: 0.10.40
+  environment:
+    LANG: en_US.utf8
+dependencies:
+  pre:
+    - gem install mime-types -v 2.6.2
+    - gem install rest-client -v 1.8
+    - gem install crowdin-cli
+    - crowdin-cli upload sources
+    - for lang in it pt-PT de nl ro mt sl sk fr uk es-ES es-AR el pl et bg tr ja hi lt; do crowdin-cli download -l $lang; done
+  override:
+    - npm install
+test:
+  override:
+    - npm run test
+deployment:
+  production:
+    branch: master
+    codedeploy:
+      cp-dojos-service:
+        application_root: /
+        region: eu-west-1
+        revision_location:
+          revision_type: S3
+          s3_location:
+            bucket: zen-deployments
+            key_pattern: applications/cp-dojos-service-ci-{BUILD_NUM}.zip
+        deployment_group: prod-zen
+        deployment_config: CodeDeployDefault.OneAtATime
