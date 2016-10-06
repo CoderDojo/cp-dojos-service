@@ -1,0 +1,57 @@
+[
+  { 
+    "id": 1000,
+    "username": "test1",
+    "email": "test1@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "banReason": null,
+    "profile_id": 2000,
+    "dob": "2005-05-31T00:00:00Z"
+  },
+  {
+    "id": 1001,
+    "username": "test2",
+    "email": "test2@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "banReason": null,
+    "profile_id": 2001,
+    "dob": "2000-01-19T00:00:00Z"
+  },
+  {
+    "id": 1002,
+    "username": "test3",
+    "email": "test3@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "banReason": null,
+    "profile_id": 2002,
+    "dob": "1991-09-24T00:00:00Z"
+  },
+  {
+    "id": 1003,
+    "username": "test4",
+    "email": "test4@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "banReason": null,
+    "profile_id": 2003,
+    "dob": "2002-07-05T00:00:00Z"
+  },
+  {
+    "id": 1004,
+    "username": "test5",
+    "email": "test5@example.com",
+    "level": 0,
+    "activated": 1,
+    "banned": 0,
+    "banReason": null,
+    "profile_id": 2004,
+    "dob": "1997-10-09T00:00:00Z"
+  }
+]

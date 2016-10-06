@@ -22,6 +22,7 @@ var dojoleads = require('./fixtures/dojoleads.json');
 var usersDojos = require('./fixtures/usersdojos.json');
 var polls = require('./fixtures/polls.json');
 var pollsResults = require('./fixtures/polls_results.json');
+var usersProfiles = require('./fixtures/users_profiles.json');
 
 seneca.options(config);
 
@@ -31,6 +32,7 @@ seneca
   .use(__dirname + '/stubs/cd-profiles.js')
   .use(__dirname + '/stubs/cd-salesforce.js')
   .use(__dirname + '/stubs/cd-users.js')
+  .use(__dirname + '/stubs/cd-user-profile.js')
   .use(__dirname + '/stubs/email-notifications.js')
   .use(__dirname + '/../dojos.js', {limits: {maxUserDojos: 10}, shared: config.shared, logger: logger});
 
