@@ -1362,7 +1362,7 @@ module.exports = function (options) {
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
       // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
-      userListQuery.fields$ = ['name', 'email', 'init_user_type'];
+      userListQuery.fields$ = ['name', 'email', 'init_user_type', 'profile_id', 'dob'];
       if (typeQuery) {
         response = _.filter(response, function (user) {
           return _.includes(user.userTypes, typeQuery);
@@ -1376,7 +1376,7 @@ module.exports = function (options) {
         return done(null, {response: [], length: 0});
       }
       if (nameQuery) {
-        seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, function (err, response) {
+        seneca.act({role: 'cd-user-profile', cmd: 'list', query: userListQuery}, function (err, response) {
           if (err) return done(err);
           response = _.filter(response, function (r) {
             return r.name.match(nameQuery);
@@ -1388,7 +1388,7 @@ module.exports = function (options) {
       } else {
         userListQuery.skip$ = skip;
         userListQuery.limit$ = limit;
-        seneca.act({role: 'cd-users', cmd: 'list', query: userListQuery}, function (err, response) {
+        seneca.act({role: 'cd-user-profile', cmd: 'list', query: userListQuery}, function (err, response) {
           if (err) return done(err);
           done(null, {response: response, length: length});
         });

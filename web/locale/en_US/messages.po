@@ -21,6 +21,9 @@ msgstr "Yes"
 msgid "No"
 msgstr "No"
 
+msgid "Loading ..."
+msgstr "Loading ..."
+
 msgid "Register a Dojo"
 msgstr "Register a Dojo"
 
@@ -54,6 +57,12 @@ msgstr "Name is empty"
 msgid "Name"
 msgstr "Name"
 
+msgid "Surname"
+msgstr "Surname"
+
+msgid "Surname is empty"
+msgstr "Surname is empty"
+
 msgid "Email is empty"
 msgstr "Email is empty"
 
@@ -77,6 +86,12 @@ msgstr "Select user type"
 
 msgid "Login"
 msgstr "Login"
+
+msgid "Reset"
+msgstr "Reset"
+
+msgid "Sign in"
+msgstr "Enter your email to sign in"
 
 msgid "Zen Terms of Service"
 msgstr "Zen Terms of Service"
@@ -447,6 +462,9 @@ msgstr "Languages Spoken"
 msgid "Projects"
 msgstr "Projects"
 
+msgid "No project yet"
+msgstr "No project yet"
+
 msgid "Prerequisites"
 msgstr "Prerequisites"
 
@@ -468,8 +486,8 @@ msgstr "Development Community"
 msgid "Events"
 msgstr "Events"
 
-msgid "There are no events currently listed for this Dojo. You may need to contact this Dojo to find out about upcoming events."
-msgstr "There are no events currently listed for this Dojo. You may need to contact this Dojo to find out about upcoming events."
+msgid "There are no events currently listed for this Dojo. Please contact the Dojo to find out about upcoming events."
+msgstr "There are no events currently listed for this Dojo. Please contact the Dojo to find out about upcoming events."
 
 msgid "Word of Mouth"
 msgstr "Word of Mouth"
@@ -699,6 +717,12 @@ msgstr "The Dojos listed here are all verified by the CoderDojo team."
 msgid "Learn more"
 msgstr "Learn more..."
 
+msgid "View more"
+msgstr "View more"
+
+msgid "View less"
+msgstr "View less"
+
 msgid "Search Results"
 msgstr "Search Results"
 
@@ -819,6 +843,9 @@ msgstr "Contact for more information"
 msgid "Inactive"
 msgstr "Inactive"
 
+msgid "Active Dojo"
+msgstr "Active Dojo"
+
 msgid "Uh-oh! Unfortunately this Dojo is no longer active. If you would like to set up a new Dojo at this location, please email us at info@coderdojo.com"
 msgstr "Uh-oh! Unfortunately this Dojo is no longer active. If you would like to set up a new Dojo at this location, please email us at info@coderdojo.com"
 
@@ -929,6 +956,9 @@ msgstr "Times"
 
 msgid "Tao verified"
 msgstr "Tao verified"
+
+msgid "Tao unverified"
+msgstr "Tao unverified"
 
 msgid "Join Mailing List"
 msgstr "Join Mailing List"
@@ -1391,6 +1421,9 @@ msgstr "Every"
 
 msgid "From"
 msgstr "From"
+
+msgid "Next date:"
+msgstr "Next date:"
 
 msgid "Close"
 msgstr "Close"
@@ -2317,6 +2350,9 @@ msgstr "No Dojos match your search query."
 msgid "Private Dojo"
 msgstr "Private Dojo"
 
+msgid "Public Dojo"
+msgstr "Public Dojo"
+
 msgid "This means this Dojo is only open to specific people (for example, students in a school). Please do not contact this Dojo."
 msgstr "This means this Dojo is only open to specific people (for example, students in a school). Please do not contact this Dojo."
 
@@ -2503,6 +2539,9 @@ msgstr "Check in"
 msgid "Book"
 msgstr "Book"
 
+msgid "Booking closed"
+msgstr "Booking closed"
+
 msgid "Session description"
 msgstr "Session description"
 
@@ -2529,6 +2568,9 @@ msgstr "Cancel Session"
 
 msgid "Cancelling a session will notify all of the attendees by email. Are you sure you want to continue?"
 msgstr "Cancelling a session will notify all of the attendees by email. Are you sure you want to continue?"
+
+msgid "Avatar"
+msgstr "Avatar"
 
 msgid "Your profile image is too large. Please resize to a maximum of 640/640 pixels."
 msgstr "Your profile image is too large. Please resize to a maximum of 640/640 pixels."
@@ -2735,17 +2777,29 @@ msgstr "No invites found"
 msgid "How do I choose?"
 msgstr "How do I choose?"
 
-msgid "Champion - A CoderDojo Champion is an individual who spearheads setting up and maintaining a Dojo. Champions do not necessarily have to have the ability to code but possess the skills required to bring together technical mentors and supporters to run a Dojo frequently!"
-msgstr "Champion - A CoderDojo Champion is an individual who spearheads setting up and maintaining a Dojo. Champions do not necessarily have to have the ability to code but possess the skills required to bring together technical mentors and supporters to run a Dojo frequently!"
+msgid "CoderDojo Champions are those who take the lead in organising a Dojo and ensure each session runs smoothly. Champions can be one person or it can be a few people who Co-Champion a Dojo to share the work. Champions should join their Dojo on Zen to set up events, award badges and to contribute to the CoderDojo Forums."
+msgstr "CoderDojo Champions are those who take the lead in organising a Dojo and ensure each session runs smoothly. Champions can be one person or it can be a few people who Co-Champion a Dojo to share the work. Champions should join their Dojo on Zen to set up events, award badges and to contribute to the CoderDojo Forums."
 
-msgid "Mentor/Volunteer - these volunteers power their local Dojos with their technical and organisational skills and inspire the next generation of coders, entrepreneurs and innovators!"
-msgstr "Mentor/Volunteer - these volunteers power their local Dojos with their technical and organisational skills and inspire the next generation of coders, entrepreneurs and innovators!"
+msgid "Volunteers are the driving force behind Dojos around the world. Volunteers do everything from setting up the space, to mentoring during the Dojo, and to ensuring there is cool content for the Ninjas to do at each Dojo! Volunteers should join their Dojo on Zen to get updates on cool content, contribute to the CoderDojo Forums and to help administer the Dojo by awarding badges and setting up events!"
+msgstr "Volunteers are the driving force behind Dojos around the world. Volunteers do everything from setting up the space, to mentoring during the Dojo, and to ensuring there is cool content for the Ninjas to do at each Dojo! Volunteers should join their Dojo on Zen to get updates on cool content, contribute to the CoderDojo Forums and to help administer the Dojo by awarding badges and setting up events!"
 
-msgid "Youth Over 13 - A Ninja is a young person who attends their local Dojo! Only Ninjas over 13 can have their own account, Ninjas under 13 must register under their Parent/Guardians account."
-msgstr "Youth Over 13 - A Ninja is a young person who attends their local Dojo! Only Ninjas over 13 can have their own account, Ninjas under 13 must register under their Parent/Guardians account."
+msgid "Attendees at CoderDojo are young people under 18 who attend and make CoderDojo cool. Often known as Ninjas, CoderDojo attendees come to the Dojo to have fun and bring their awesome ideas to life."
+msgstr "Attendees at CoderDojo are young people under 18 who attend and make CoderDojo cool. Often known as Ninjas, CoderDojo attendees come to the Dojo to have fun and bring their awesome ideas to life."
 
-msgid "Parent/Guardian - Parents/kids are super important in CoderDojo as they encourage and inspire CoderDojo Ninjas on a daily basis! Parents can sign up on the platform to register their kids (both aged under 13 and over 13) for their Local Dojos events and so their kids can earn badges for their profile!"
-msgstr "Parent/Guardian - Parents/kids are super important in CoderDojo as they encourage and inspire CoderDojo Ninjas on a daily basis! Parents can sign up on the platform to register their kids (both aged under 13 and over 13) for their Local Dojos events and so their kids can earn badges for their profile!"
+msgid "Parents/Guardians are super important in the CoderDojo journey as they encourage and inspire CoderDojo Ninjas on a daily basis. Parents should register and join a Dojo so the young people attached to their account can sign up to events and earn badges from their Champions and Mentors."
+msgstr "Parents/Guardians are super important in the CoderDojo journey as they encourage and inspire CoderDojo Ninjas on a daily basis. Parents should register and join a Dojo so the young people attached to their account can sign up to events and earn badges from their Champions and Mentors."
+
+msgid "You will be joined to a Dojo as an adult, along with any young people added to your profile. We would like to know if you have any volunteering role in the Dojo too."
+msgstr "You will be joined to a Dojo as an adult, along with any young people added to your profile. We would like to know if you have any volunteering role in the Dojo too."
+
+msgid "If you join the Dojo you will receive event updates from the Dojo and some newsletters from CoderDojo HQ! If you aren't a Dojo attendee and want to join as a volunteer or Champion please get in touch with the Dojo directly."
+msgstr "If you join the Dojo you will receive event updates from the Dojo and some newsletters from CoderDojo HQ! If you aren't a Dojo attendee and want to join as a volunteer or Champion please get in touch with the Dojo directly."
+
+msgid "Youths can be mentors too! If one of your Ninjas is regularly helping out others in your Dojo, give them recognition by giving them the Youth Volunteer title."
+msgstr "Youths can be mentors too! If one of your Ninjas is regularly helping out others in your Dojo, give them recognition by giving them the Youth Volunteer title."
+
+msgid "These young people are trailblazers who set an example and inspire other young people by organising and leading their local club. Young people should participate in the Dojo they Champion, meaning that Youth Champions improve their coding skills too!"
+msgstr "These young people are trailblazers who set an example and inspire other young people by organising and leading their local club. Young people should participate in the Dojo they Champion, meaning that Youth Champions improve their coding skills too!"
 
 msgid "Enabling this will require you or another admin with Ticketing Admin permissions to approve applications to attend this event."
 msgstr "Enabling this will require you or another admin with Ticketing Admin permissions to approve applications to attend this event."
@@ -2804,6 +2858,11 @@ msgstr "Not all information entered on your profile is viewable. You can choose 
 msgid "Only your username and profile picture are publicly viewable. Other fields are for administration purposes only."
 msgstr "Only your username and profile picture are publicly viewable. Other fields are for administration purposes only."
 
+msgid "Click to view your public profile"
+msgstr "Click to view your public profile"
+
+msgid "Public profile"
+msgstr "Public profile"
 
 msgid "Registering an account does not guarantee you entry to a Dojo event. To gain entry to an event you must fill out your profile and book via the Dojo listing page. You will need your email confirmation to attend or direct permission from the Dojo administrators."
 msgstr "Registering an account does not guarantee you entry to a Dojo event. To gain entry to an event you must fill out your profile and book via the Dojo listing page. You will need your email confirmation to attend or direct permission from the Dojo administrators."
@@ -3039,6 +3098,12 @@ msgstr "An error has occurred while saving youth profile"
 msgid "Profile(s) have been saved successfully"
 msgstr "Profile(s) have been saved successfully"
 
+msgid "Your details"
+msgstr "Your details"
+
+msgid "About you"
+msgstr "About you"
+
 msgid "Got a child? Add them below"
 msgstr "Got a child? Add them below"
 
@@ -3060,8 +3125,26 @@ msgstr "Zen roadmap"
 msgid " and see what we are working on, as well as the latest features for Zen."
 msgstr " and see what we are working on, as well as the latest features for Zen."
 
+msgid "Access our e-learning module"
+msgstr "Access our e-learning module"
+
+msgid "By using this functionality, you allow us to share basic information with this provider (email, name, user type)"
+msgstr "By using this functionality, you allow us to share basic information with this provider (email, name, user type)"
+
+msgid "By clicking this button, you allow us to share basic information with this provider (email, name, user type)"
+msgstr "By clicking this button, you allow us to share basic information with this provider (email, name, user type)"
+
+msgid "Only modules for mentors and champions are available at the moment, come back later on to discover more!"
+msgstr "Only modules for mentors and champions are available at the moment, come back later on to discover more!"
+
+msgid "Do you agree?"
+msgstr "Do you agree?"
+
 msgid "A new dojo has been created"
 msgstr "A new dojo has been created!"
 
 msgid "You have been invited to a Dojo session"
 msgstr "You have been invited to a Dojo session"
+
+msgid "Change Role"
+msgstr "Change Role"
