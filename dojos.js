@@ -51,6 +51,8 @@ var cmd_is_own_lead = require('./lib/perm/is-own-lead');
 var cmd_belongs_to_dojo = require('./lib/perm/belongs-to-dojo');
 var cmd_is_own_invite = require('./lib/perm/is-own-invite');
 
+var cmd_get_dojo_stats = require('./lib/dojos/stats');
+
 var cmd_backfill_champions = require('./lib/backfill-champions');
 
 var logger;
@@ -156,7 +158,9 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'continent_codes'}, cmd_get_continent_codes);
   seneca.add({role: plugin, cmd: 'reverse_geocode'}, cmd_reverse_geocode);
 
-<<<<<<< 9291840b0619acaf0d9911af7aa7b16e17aee438
+  // User stats of a dojo
+  seneca.add({role: plugin, cmd: 'get_dojo_stats'}, cmd_get_dojo_stats);
+
   // One shot
   seneca.add({role: plugin, cmd: 'backfill_champions'}, cmd_backfill_champions);
 
@@ -175,79 +179,6 @@ module.exports = function (options) {
         return new Error('Redis queue couldn\'t be started');
       }
     });
-=======
-  // User stats of a dojo
-  seneca.add({role: plugin, cmd: 'get_dojo_stats'}, cmd_get_dojo_stats);
-
-  function cmd_get_dojo_stats (args, done) {
-    logger.info({args: args}, 'cmd_get_dojo_stats');
-    var dojoStats = {};
-
-    async.waterfall([
-      getMentorCount,
-      getNinjaCount,
-      getNinjaMentorCount,
-      getVolunteerCount
-    ], function (err) {
-      if (err) return done(err);
-      return done(null, dojoStats);
-    });
-
-    function getMentorCount (cb) {
-      // The user_types should contain only 'mentor'
-      var sqlQuery = 'SELECT COUNT(*) FROM cd_usersdojos ' +
-        'WHERE dojo_id = \'' + args.dojoId + '\' ' +
-        'AND user_types = ARRAY[\'mentor\']::character varying[];';
-      makeNativeCall(sqlQuery, 'mentorCount', cb);
-    }
-
-    function getNinjaCount (cb) {
-      // The user_types should contain either 'attendee-u13' or 'attendee-o13'
-      var sqlQuery = 'SELECT COUNT(*) FROM cd_usersdojos ' +
-        'WHERE dojo_id = \'' + args.dojoId + '\' ' +
-        'AND user_types && ARRAY[\'attendee-o13\',\'attendee-u13\']::character varying[];';
-      makeNativeCall(sqlQuery, 'ninjaCount', cb);
-    }
-
-    function getNinjaMentorCount (cb) {
-      // The user_types should contain one of 'attendee-u13' or 'attendee-o13',
-      // and also 'mentor'
-      var sqlQuery = 'SELECT COUNT(*) FROM cd_usersdojos ' +
-        'WHERE dojo_id = \'' + args.dojoId + '\' ' +
-        'AND user_types && ARRAY[\'attendee-o13\',\'attendee-u13\']::character varying[] ' +
-        'AND user_types @> ARRAY[\'mentor\']::character varying[];';
-      makeNativeCall(sqlQuery, 'ninjaMentorCount', cb);
-    }
-
-    function getVolunteerCount (cb) {
-      // The user_types should contain 'mentor' or 'champion',
-      // but not 'attendee-u13' or 'attendee-o13'
-      var sqlQuery = 'SELECT COUNT(*) FROM ' +
-        '(SELECT dojo_id, user_types FROM cd_usersdojos ' +
-          'WHERE dojo_id = \'' + args.dojoId + '\' ' +
-          'AND user_types && ARRAY[\'mentor\', \'champion\']::character varying[] ' +
-          'EXCEPT ALL ' +
-          'SELECT dojo_id, user_types FROM cd_usersdojos ' +
-          'WHERE dojo_id = \'' + args.dojoId + '\' ' +
-          'AND user_types && ARRAY[\'attendee-o13\', \'attendee-u13\']::character varying[]) AS COUNT';
-      makeNativeCall(sqlQuery, 'volunteerCount', cb);
-    }
-
-    // Make a native call with 'sql' sql statement,
-    // Put the result in the 'stat' property of the dojoStats object,
-    // Call 'done'.
-    function makeNativeCall (sql, stat, done) {
-      seneca.make$(USER_DOJO_ENTITY_NS).native$(function (err, client, release) {
-        if (err) return done(err);
-        client.query(sql, function (error, result) {
-          if (error) return done(error);
-          release();
-          dojoStats[stat] = result.rows[0]['count'];
-          done();
-        });
-      });
-    }
->>>>>>> Add service to return user types in a given dojo
   }
 
   function cmd_update_dojo_founder (args, cmdCb) {
