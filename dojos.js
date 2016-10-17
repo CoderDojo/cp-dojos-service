@@ -38,6 +38,8 @@ var cmd_is_own_lead = require('./lib/perm/is-own-lead');
 var cmd_belongs_to_dojo = require('./lib/perm/belongs-to-dojo');
 var cmd_is_own_invite = require('./lib/perm/is-own-invite');
 
+var cmd_backfill_champions = require('./lib/backfill-champions');
+
 var logger;
 
 module.exports = function (options) {
@@ -126,6 +128,9 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'continents_lat_long'}, cmd_continents_lat_long);
   seneca.add({role: plugin, cmd: 'continent_codes'}, cmd_get_continent_codes);
   seneca.add({role: plugin, cmd: 'reverse_geocode'}, cmd_reverse_geocode);
+
+  // One shot
+  seneca.add({role: plugin, cmd: 'backfill_champions'}, cmd_backfill_champions);
 
   function cmd_update_dojo_founder (args, cmdCb) {
     logger.info({args: args}, 'cmd_update_dojo_founder');
