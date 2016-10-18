@@ -23,13 +23,26 @@ var fs = require('fs');
 //  TODO:70 globbing to avoid manual declaration ?
 var addChildrenParentDojo = require('./lib/add-children-parent-dojo');
 var cmd_export_dojo_users = require('./lib/export-csv');
-var cmd_send_email_poll = require('./lib/send-email-poll');
+var cmd_update_image = require('./lib/update-image');
+// Polls
+// TODO: change import to require polls out of dojos.js
 var cmd_save_poll_result = require('./lib/poll/save-poll-result');
+var cmd_remove_poll_result = require('./lib/poll/remove-poll-result');
 var cmd_poll_count = require('./lib/poll/poll-count');
+var cmd_poll_get_list = require('./lib/poll/get-polled-list');
 var cmd_get_poll_results = require('./lib/poll/get-poll-results');
 var cmd_get_poll_setup = require('./lib/poll/get-poll-setup');
 var cmd_save_poll_setup = require('./lib/poll/save-poll-setup');
-var cmd_update_image = require('./lib/update-image');
+//  Poll Channels
+var cmd_start_poll = require('./lib/poll/start-poller');
+var cmd_queue_email_poll = require('./lib/poll/channels/queue-email-poll');
+var cmd_queue_sms_poll = require('./lib/poll/channels/queue-sms-poll');
+var cmd_send_email_poll = require('./lib/poll/channels/send-email-poll');
+var cmd_test_send_email_poll = require('./lib/poll/channels/send-test-email-poll');
+var cmd_send_sms_poll = require('./lib/poll/channels/send-sms-poll');
+var cmd_receive_sms_poll = require('./lib/poll/channels/save-sms-result');
+var cmd_get_sms = require('./lib/poll/channels/get-sms');
+var cmd_get_twiML = require('./lib/poll/channels/get-twiml');
 
 var cmd_own_dojo = require('./lib/perm/own-dojo');
 var cmd_have_perm = require('./lib/perm/have-permissions');
@@ -106,12 +119,26 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_dojo_email'}, cmd_load_dojo_email);
   seneca.add({role: plugin, cmd: 'notify_all_members'}, cmd_notify_all_members);
   seneca.add({role: plugin, cmd: 'add_children_parent_dojo'}, addChildrenParentDojo.bind(seneca));
+
+  //  TODO:10 : export as a different microservice?
+  //  Polls channels
+  seneca.add({role: plugin, cmd: 'start_poll'}, cmd_start_poll);
+  seneca.add({role: plugin, cmd: 'get_polled_list'}, cmd_poll_get_list);
+  seneca.add({role: plugin, cmd: 'queue_email_poll'}, cmd_queue_email_poll);
+  seneca.add({role: plugin, cmd: 'queue_sms_poll'}, cmd_queue_sms_poll);
   seneca.add({role: plugin, cmd: 'send_email_poll'}, cmd_send_email_poll);
+  seneca.add({role: plugin, cmd: 'send_test_email_poll'}, cmd_test_send_email_poll);
+  seneca.add({role: plugin, cmd: 'send_sms_poll'}, cmd_send_sms_poll);
+  seneca.add({role: plugin, cmd: 'save_sms_poll_result'}, cmd_receive_sms_poll);
+  seneca.add({role: plugin, cmd: 'get_sms'}, cmd_get_sms);
+  seneca.add({role: plugin, cmd: 'get_twiML'}, cmd_get_twiML);
+  // Poll entity
   seneca.add({role: plugin, cmd: 'get_poll_setup'}, cmd_get_poll_setup);
   seneca.add({role: plugin, cmd: 'save_poll_setup'}, cmd_save_poll_setup);
-  seneca.add({role: plugin, cmd: 'save_poll_result'}, cmd_save_poll_result);
-  seneca.add({role: plugin, cmd: 'poll_count'}, cmd_poll_count);
   seneca.add({role: plugin, cmd: 'get_poll_results'}, cmd_get_poll_results);
+  seneca.add({role: plugin, cmd: 'save_poll_result'}, cmd_save_poll_result);
+  seneca.add({role: plugin, cmd: 'remove_poll_result'}, cmd_remove_poll_result);
+  seneca.add({role: plugin, cmd: 'poll_count'}, cmd_poll_count);
   // Perms
   seneca.add({role: plugin, cmd: 'own_dojo'}, cmd_own_dojo);
   seneca.add({role: plugin, cmd: 'is_founder'}, cmd_is_founder);
@@ -131,6 +158,23 @@ module.exports = function (options) {
 
   // One shot
   seneca.add({role: plugin, cmd: 'backfill_champions'}, cmd_backfill_champions);
+
+  if (options.kue && options.kue.start) {
+    var kues = ['batch-poller', 'sms-poll', 'email-poll'];
+
+    seneca.act({role: 'kue-queue', cmd: 'start', config: options.kue}, function (err, queue) {
+      if (!err) {
+        async.eachSeries(kues, function (kue, cb) {
+          seneca.act({role: 'kue-queue', cmd: 'work', name: kue}, function (err, worker) {
+            if (err) return new Error(err);
+            cb();
+          });
+        });
+      } else {
+        return new Error('Redis queue couldn\'t be started');
+      }
+    });
+  }
 
   function cmd_update_dojo_founder (args, cmdCb) {
     logger.info({args: args}, 'cmd_update_dojo_founder');

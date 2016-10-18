@@ -248,7 +248,16 @@ module.exports = function () {
       }],
       'get-poll-results': [{
         role: 'none'
-      }]
+      }],
+      'send_test_email_poll': [{
+       role: 'cdf-admin'
+      }],
+      'start_poll': [{
+       role: 'cdf-admin'
+     }],
+     'queue_email_poll': [{
+      role: 'cdf-admin'
+     }]
     }
   };
 };
