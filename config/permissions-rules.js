@@ -232,9 +232,8 @@ module.exports = function () {
       'countries_lat_long': [{
         role: 'none'
       }],
-      // Only used by stat page, but is not containing anything special
       'continent_codes': [{
-        role: 'cdf-admin'
+        role: 'none'
       }],
       'poll_count': [{
         role: 'none'
