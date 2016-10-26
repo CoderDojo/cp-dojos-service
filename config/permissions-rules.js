@@ -182,12 +182,8 @@ module.exports = function () {
         role: 'basic-user'
       }],
       'accept_user_request': [{
-        role: 'basic-user',
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'have_permissions',
-          perm: 'dojo-admin'
-        }]
+        // No validator here as check is very custom, and is done already in the actual command code.
+        role: 'basic-user'
       }],
 
       'update_founder': [{
