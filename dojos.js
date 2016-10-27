@@ -50,6 +50,7 @@ var cmd_is_founder = require('./lib/perm/is-founder');
 var cmd_is_own_lead = require('./lib/perm/is-own-lead');
 var cmd_belongs_to_dojo = require('./lib/perm/belongs-to-dojo');
 var cmd_is_own_invite = require('./lib/perm/is-own-invite');
+var cmd_can_award_badge = require('./lib/perm/can-award-badge');
 
 var cmd_get_dojo_stats = require('./lib/dojos/stats');
 
@@ -148,6 +149,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'is_own_lead'}, cmd_is_own_lead);
   seneca.add({role: plugin, cmd: 'belongs_to_dojo'}, cmd_belongs_to_dojo);
   seneca.add({role: plugin, cmd: 'is_own_invite'}, cmd_is_own_invite);
+  seneca.add({role: plugin, cmd: 'can_award_badge'}, cmd_can_award_badge);
 
   // from countries service
   seneca.add({role: plugin, cmd: 'countries_continents'}, cmd_countries_continents);
