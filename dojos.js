@@ -18,7 +18,6 @@ var debug = require('debug')('dojos');
 var google = require('googleapis');
 var admin = google.admin('directory_v1');
 var fs = require('fs');
-
 //  Internal lib
 //  TODO:70 globbing to avoid manual declaration ?
 var addChildrenParentDojo = require('./lib/add-children-parent-dojo');
@@ -1669,8 +1668,8 @@ module.exports = function (options) {
         .uniq(true, function (joinRequest) {
           return joinRequest.dojoId;
         });
-
-      seneca.act({role: 'cd-users', cmd: 'update', user: user, id: user.id}, function (err, response) {
+      var toBeUpdated = _.pick(user, ['id', 'joinRequests']);
+      seneca.act({role: 'cd-users', cmd: 'update', user: toBeUpdated, id: user.id}, function (err, response) {
         if (err) return done(err);
         return done(null, dojo);
       });
@@ -1800,7 +1799,8 @@ module.exports = function (options) {
       seneca.act({role: 'cd-users', cmd: 'load', id: requestedByUser, user: args.user}, function (err, user) {
         if (err) return done(err);
         user.joinRequests = _.without(user.joinRequests, _.find(user.joinRequests, {id: inviteTokenId}));
-        seneca.act({role: 'cd-users', cmd: 'update', user: user, id: user.id}, done);
+        var toBeUpdated = _.pick(user, ['id', 'joinRequests']);
+        seneca.act({role: 'cd-users', cmd: 'update', user: toBeUpdated, id: user.id}, done);
       });
     }
   }
