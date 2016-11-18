@@ -19,7 +19,6 @@ module.exports = function (options) {
         seneca.act({role: 'cd-dojos', cmd: 'create', dojo: dojo, user: champ}, sCb);
       })
     }, function (err) {
-      console.log('Finished creating dojos')
       done(err);
     });
   });
