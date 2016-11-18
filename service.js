@@ -10,7 +10,9 @@ var util = require('util');
 var _ = require('lodash');
 var store = require('seneca-postgresql-store');
 var heapdump = require('heapdump');
-var log = require('cp-logs-lib')({name: 'cp-dojos-service', level: 'warn'});
+var dgram = require('dgram');
+var service = 'cp-dojos-service';
+var log = require('cp-logs-lib')({name: service, level: 'warn'});
 config.log = log.log;
 // logger creates a circular JSON
 seneca.log.info('using config', JSON.stringify(config, null, 4));
@@ -66,16 +68,20 @@ require('./migrate-psql-db.js')(function (err) {
     process.exit(-1);
   }
   console.log('Migrations ok');
-  seneca.listen()
-    .client({type: 'web', port: 10303, pin: 'role:cd-users,cmd:*'})
-    .client({type: 'web', port: 10303, pin: 'role:cd-agreements,cmd:*'})
-    .client({type: 'web', port: 10303, pin: 'role:cd-profiles,cmd:*'})
-    .client({type: 'web', port: 10303, pin: 'role:cd-user-profile,cmd:*'})
-    .client({type: 'web', port: 10304, pin: {role: 'cd-salesforce', cmd: '*'}})
-    .client({type: 'web', port: 10306, pin: 'role:cd-events,cmd:*'});
+  require('./network')(seneca);
 });
 seneca.ready(function () {
   seneca.act({ role: 'queue', cmd: 'start' });
+  var message = new Buffer(service);
+
+  var client = dgram.createSocket('udp4');
+  client.send(message, 0, message.length, 11404, 'localhost', function (err, bytes) {
+    if (err) {
+      console.error(err);
+      process.exit(-1);
+    }
+    client.close();
+  });
   var escape = require('seneca-postgresql-store/lib/relational-util').escapeStr;
   ['load', 'list'].forEach(function (cmd) {
     seneca.wrap('role: entity, cmd: ' + cmd, function filterFields (args, cb) {
