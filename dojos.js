@@ -1783,16 +1783,20 @@ module.exports = function (options) {
           userDojo.dojoId = joinRequest.dojoId;
           userDojo.userTypes = [];
           userDojo.userTypes.push(joinRequest.userType);
-
-          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, done);
         } else {
           // Update cd/usersdojos
           userDojo = response[0];
           if (!userDojo.userTypes) userDojo.userTypes = [];
           userDojo.userTypes.push(joinRequest.userType);
-
-          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, done);
         }
+        // If invite token user type is champion, update user permissions
+        if (joinRequest.userType === 'champion') {
+          userDojo.userPermissions = [
+            {title: 'Dojo Admin', name: 'dojo-admin'},
+            {title: 'Ticketing Admin', name: 'ticketing-admin'}
+          ];
+        }
+        seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, done);
       });
     }
 
