@@ -16,8 +16,16 @@ module.exports = function (options) {
       function (err, champions){
         index ++;
         var champ = champions[0];
-        seneca.act({role: 'cd-dojos', cmd: 'create', dojo: dojo, user: champ}, sCb);
-      })
+        seneca.act({role: 'cd-dojos', cmd: 'load_user_dojo_lead', query: {id: champ.id} }, function (err, lead) {
+          dojo.dojoLeadId = lead.id;
+          seneca.act({role: 'cd-dojos', cmd: 'create', dojo: dojo, user: champ}, function (err, createdDojo) {
+            // Bypass the restriction on cd_dojos for verified
+            createdDojo.verified = dojo.verified;
+            // A champ shouldn't verify himself, but that's for test data purpose, it's not like it's checked ...
+            seneca.act({role: 'cd-dojos', cmd: 'update', dojo: createdDojo, user: {id: champ.id}}, sCb);
+          });
+        });
+      });
     }, function (err) {
       done(err);
     });

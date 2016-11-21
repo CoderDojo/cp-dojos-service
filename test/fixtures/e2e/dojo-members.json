@@ -46,14 +46,5 @@
       "email": "dojo2@example.com"
     },
     "approved": false
-  },
-  {
-    "email": "champion2@example.com",
-    "userTypes": ["champion"],
-    "dojo": {
-      "email": "dojo2@example.com"
-    },
-    "owner": 1,
-    "approved": true
   }
 ]
