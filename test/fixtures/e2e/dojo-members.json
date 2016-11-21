@@ -45,11 +45,10 @@
     "dojo": {
       "email": "dojo2@example.com"
     },
-    "owner": 1,
     "approved": false
   },
   {
-    "email": "champion3@example.com",
+    "email": "champion2@example.com",
     "userTypes": ["champion"],
     "dojo": {
       "email": "dojo2@example.com"
