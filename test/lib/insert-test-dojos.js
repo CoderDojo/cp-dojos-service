@@ -37,7 +37,7 @@ module.exports = function (options) {
       async.waterfall([
         getDojo(dojoMember.dojo.email),
         getUser(dojoMember.email),
-        saveUserDojo(dojoMember.approved, dojoMember.userTypes)
+        saveUserDojo(dojoMember, dojoMember.userTypes)
       ], sCb);
 
     }, done);
@@ -57,11 +57,11 @@ module.exports = function (options) {
         });
       };
     }
-    function saveUserDojo (approved, userTypes) {
+    function saveUserDojo (dojoMember, userTypes) {
       return function (dojo, user, wfCb) {
         var payload = {role: 'cd-dojos', cmd: 'request_user_invite', data: {user: user, dojoId: dojo.id, userType: userTypes[0], emailSubject: 'imabanana'}}; // By default, consider it requires approval
-        if (approved) {
-          payload = {role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: {userId: user.id, userTypes: userTypes, dojoId: dojo.id}};
+        if (dojoMember.approved) {
+          payload = {role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: {userId: user.id, userTypes: userTypes, dojoId: dojo.id, owner: dojoMember.owner}};
         }
         seneca.act(payload, wfCb);
       };
