@@ -52,5 +52,68 @@
     },
     "owner": 0,
     "approved": false
+  },
+
+  {
+    "email": "mentorAdmin1@example.com",
+    "userTypes": ["mentor"],
+    "dojo": {
+      "email": "dojo1@example.com"
+    },
+    "userPermissions": [{"title": "Dojo Admin", "name": "dojo-admin"}],
+    "owner": 0,
+    "approved": true
+  },
+  {
+    "email": "mentorTicketing1@example.com",
+    "userTypes": ["mentor"],
+    "dojo": {
+      "email": "dojo1@example.com"
+    },
+    "userPermissions": [{"title": "Ticketing Admin", "name": "ticketing-admin"}],
+    "owner": 0,
+    "approved": true
+  },
+  {
+    "email": "mentorFullAccess1@example.com",
+    "userTypes": ["mentor"],
+    "dojo": {
+      "email": "dojo1@example.com"
+    },
+    "userPermissions": [{"title": "Dojo Admin", "name": "dojo-admin"}, {"title": "Ticketing Admin", "name": "ticketing-admin"}],
+    "owner": 0,
+    "approved": true
+  },
+
+
+  {
+    "email": "parentAdmin1@example.com",
+    "userTypes": ["parent-guardian"],
+    "dojo": {
+      "email": "dojo1@example.com"
+    },
+    "userPermissions": [{"title": "Dojo Admin", "name": "dojo-admin"}],
+    "owner": 0,
+    "approved": true
+  },
+  {
+    "email": "parentTicketing1@example.com",
+    "userTypes": ["parent-guardian"],
+    "dojo": {
+      "email": "dojo1@example.com"
+    },
+    "userPermissions": [{"title": "Ticketing Admin", "name": "ticketing-admin"}],
+    "owner": 0,
+    "approved": true
+  },
+  {
+    "email": "parentFullAccess1@example.com",
+    "userTypes": ["parent-guardian"],
+    "dojo": {
+      "email": "dojo1@example.com"
+    },
+    "userPermissions": [{"title": "Dojo Admin", "name": "dojo-admin"}, {"title": "Ticketing Admin", "name": "ticketing-admin"}],
+    "owner": 0,
+    "approved": true
   }
 ]
