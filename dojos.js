@@ -1941,7 +1941,7 @@ module.exports = function (options) {
       // Remove ninjas.
       seneca.make$(USER_DOJO_ENTITY_NS).save$(usersDojo, function (err, response) {
         if (err) return cb(err);
-        seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: args.user.id}}, function (err, userProfiles) {
+        seneca.act({role: 'cd-profiles', cmd: 'list', query: {userId: userId}}, function (err, userProfiles) {
           if (err) return cb(err);
           var userProfile = userProfiles[0];
           if (!userProfile.children) return cb(null, response);
