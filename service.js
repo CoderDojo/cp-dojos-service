@@ -81,7 +81,7 @@ seneca.ready(function () {
     seneca.wrap('role: entity, cmd: ' + cmd, function filterFields (args, cb) {
       try {
         ['limit$', 'skip$'].forEach(function (field) {
-          if (args.q[field] && args.q[field] !== 'NULL' && !(args.q[field] + '').match(/^[0-9]+$/g)) {
+          if (args.q[field] && args.q[field] !== 'NULL' && !/^[0-9]+$/g.test(args.q[field] + '')) {
             throw new Error('Expect limit$, skip$ to be a number');
           }
         });
@@ -89,7 +89,7 @@ seneca.ready(function () {
           if (args.q.sort$ && typeof args.q.sort$ === 'object') {
             var order = args.q.sort$;
             _.each(order, function (ascdesc, column) {
-              if (!column.match(/^[a-zA-Z0-9_]+$/g)) {
+              if (!/^[a-zA-Z0-9_]+$/g.test(column.match)) {
                 throw new Error('Unexpect characters in sort$');
               }
             });
@@ -104,7 +104,8 @@ seneca.ready(function () {
         }
         this.prior(args, cb);
       } catch (err) {
-        cb(err);
+        // cb to avoid seneca-transport to hang while waiting for timeout error
+        return cb(err);
       }
     });
   });
