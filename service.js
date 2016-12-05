@@ -76,7 +76,7 @@ require('./migrate-psql-db.js')(function (err) {
 });
 seneca.ready(function () {
   seneca.act({ role: 'queue', cmd: 'start' });
-  var escape = require('./node_modules/seneca-postgresql-store/lib/relational-util.js').escapeStr;
+  var escape = require('seneca-postgresql-store/lib/relational-util').escapeStr;
   ['load', 'list'].forEach(function (cmd) {
     seneca.wrap('role: entity, cmd: ' + cmd, function filterFields (args, cb) {
       try {
