@@ -7,6 +7,7 @@ if (process.env.NEW_RELIC_ENABLED === 'true') require('newrelic');
 var config = require('./config/config.js')();
 var seneca = require('seneca')(config);
 var util = require('util');
+var _ = require('lodash');
 var store = require('seneca-postgresql-store');
 var heapdump = require('heapdump');
 var log = require('cp-logs-lib')({name: 'cp-dojos-service', level: 'warn'});
@@ -73,5 +74,38 @@ require('./migrate-psql-db.js')(function (err) {
     .client({type: 'web', port: 10304, pin: {role: 'cd-salesforce', cmd: '*'}})
     .client({type: 'web', port: 10306, pin: 'role:cd-events,cmd:*'});
 });
-
-seneca.act({ role: 'queue', cmd: 'start' });
+seneca.ready(function () {
+  seneca.act({ role: 'queue', cmd: 'start' });
+  var escape = require('./node_modules/seneca-postgresql-store/lib/relational-util.js').escapeStr;
+  ['load', 'list'].forEach(function (cmd) {
+    seneca.wrap('role: entity, cmd: ' + cmd, function filterFields (args, cb) {
+      try {
+        ['limit$', 'skip$'].forEach(function (field) {
+          if (args.q[field] && args.q[field] !== 'NULL' && !(args.q[field] + '').match(/^[0-9]+$/g)) {
+            throw new Error('Expect limit$, skip$ to be a number');
+          }
+        });
+        if (args.q.sort$) {
+          if (args.q.sort$ && typeof args.q.sort$ === 'object') {
+            var order = args.q.sort$;
+            _.each(order, function (ascdesc, column) {
+              if (!column.match(/^[a-zA-Z0-9_]+$/g)) {
+                throw new Error('Unexpect characters in sort$');
+              }
+            });
+          } else {
+            throw new Error('Expect sort$ to be an object');
+          }
+        }
+        if (args.q.fields$) {
+          args.q.fields$.forEach(function (field, index) {
+            args.q.fields$[index] = '\"' + escape(field) + '\"';
+          });
+        }
+        this.prior(args, cb);
+      } catch (err) {
+        cb(err);
+      }
+    });
+  });
+});
