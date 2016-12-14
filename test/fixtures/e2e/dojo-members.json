@@ -1,0 +1,56 @@
+[
+  {
+    "email": "parent1@example.com",
+    "userTypes": ["parent-guardian"],
+    "dojo": {
+      "email": "dojo1@example.com"
+    },
+    "owner": 0,
+    "approved": true
+  },
+  {
+    "email": "parent1@example.com",
+    "userTypes": ["parent-guardian"],
+    "dojo": {
+      "email": "dojo2@example.com"
+    },
+    "owner": 0,
+    "approved": true
+  },
+  {
+    "email": "parent2@example.com",
+    "userTypes": ["parent-guardian"],
+    "dojo": {
+      "email": "dojo2@example.com"
+    },
+    "owner": 0,
+    "approved": true
+  },
+  {
+    "email": "mentor1@example.com",
+    "userTypes": ["mentor"],
+    "dojo": {
+      "email": "dojo1@example.com"
+    },
+    "owner": 0,
+    "approved": true
+  },
+  {
+    "email": "mentor2@example.com",
+    "userTypes": ["mentor"],
+    "dojo": {
+      "email": "dojo2@example.com"
+    },
+    "owner": 0,
+    "approved": false
+  },
+  {
+    "email": "champion1@example.com",
+    "userTypes": ["champion"],
+    "dojo": {
+      "email": "dojo2@example.com"
+    },
+    "owner": 0,
+    "approved": false
+  }
+]
