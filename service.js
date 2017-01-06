@@ -18,7 +18,7 @@ config.log = log.log;
 seneca.log.info('using config', JSON.stringify(config, null, 4));
 
 seneca.options(config);
-
+seneca.decorate('customValidatorLogFormatter', require('./lib/custom-validator-log-formatter'));
 seneca.use(store, config['postgresql-store']);
 if (process.env.MAILTRAP_ENABLED === 'true') {
   seneca.use('mail', config.mailtrap);
