@@ -37,7 +37,7 @@
     "countries-list": "1.0.3",
     "cp-i18n-lib": "git+https://github.com/CoderDojo/cp-i18n-lib.git",
     "cp-logs-lib": "git://github.com/CoderDojo/cp-logs-lib#1.1.0",
-    "cp-permissions-plugin": "git://github.com/CoderDojo/cp-permissions-plugin#1.0.2",
+    "cp-permissions-plugin": "git://github.com/CoderDojo/cp-permissions-plugin#1.0.3",
     "csvtojson": "^1.0.2",
     "debug": "2.2.0",
     "ejs": "1.0.0",
