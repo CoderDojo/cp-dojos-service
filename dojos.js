@@ -44,7 +44,8 @@ var cmd_get_sms = require('./lib/poll/channels/get-sms');
 var cmd_get_twiML = require('./lib/poll/channels/get-twiml');
 
 var cmd_own_dojo = require('./lib/perm/own-dojo');
-var cmd_have_perm = require('./lib/perm/have-permissions');
+var cmd_have_perm_on_user = require('./lib/perm/have-permissions-on-user');
+var cmd_have_perm_on_dojo = require('./lib/perm/have-permissions-on-dojo');
 var cmd_is_founder = require('./lib/perm/is-founder');
 var cmd_is_own_lead = require('./lib/perm/is-own-lead');
 var cmd_belongs_to_dojo = require('./lib/perm/belongs-to-dojo');
@@ -144,7 +145,8 @@ module.exports = function (options) {
   // Perms
   seneca.add({role: plugin, cmd: 'own_dojo'}, cmd_own_dojo);
   seneca.add({role: plugin, cmd: 'is_founder'}, cmd_is_founder);
-  seneca.add({role: plugin, cmd: 'have_permissions'}, cmd_have_perm);
+  seneca.add({role: plugin, cmd: 'have_permissions_on_user'}, cmd_have_perm_on_user);
+  seneca.add({role: plugin, cmd: 'have_permissions_on_dojo'}, cmd_have_perm_on_dojo);
   seneca.add({role: plugin, cmd: 'is_own_lead'}, cmd_is_own_lead);
   seneca.add({role: plugin, cmd: 'belongs_to_dojo'}, cmd_belongs_to_dojo);
   seneca.add({role: plugin, cmd: 'is_own_invite'}, cmd_is_own_invite);

@@ -9,7 +9,8 @@
   "scripts": {
     "start": "node service.js",
     "lint": "./node_modules/.bin/semistandard *.js config/config.js",
-    "test": "bash -c 'source ./config/development.env; npm run lint && ./node_modules/.bin/lab --ignore __core-js_shared__ --flat --threshold 68 -r html -o ./coverage/coverage.html -r lcov -o ./coverage/lcov.info -r json -o ./coverage/coverage.json -r console -o stdout'",
+    "test": "bash -c 'source ./config/development.env; npm run lint && ./node_modules/.bin/lab --ignore __core-js_shared__ --flat'",
+    "coverage": "bash -c 'source ./config/development.env; ./node_modules/.bin/lab --threshold 68 -r html -o ./coverage/coverage.html -r lcov -o ./coverage/lcov.info -r json -o ./coverage/coverage.json -r console -o stdout'",
     "covrep": "bash test/covrep.sh"
   },
   "pre-commit": [
@@ -36,7 +37,7 @@
     "countries-list": "1.0.3",
     "cp-i18n-lib": "git+https://github.com/CoderDojo/cp-i18n-lib.git",
     "cp-logs-lib": "git://github.com/CoderDojo/cp-logs-lib#1.1.0",
-    "cp-permissions-plugin": "git://github.com/CoderDojo/cp-permissions-plugin#1.0.0",
+    "cp-permissions-plugin": "git://github.com/CoderDojo/cp-permissions-plugin#1.0.3",
     "csvtojson": "^1.0.2",
     "debug": "2.2.0",
     "ejs": "1.0.0",
