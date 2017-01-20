@@ -37,6 +37,7 @@ module.exports = function (options) {
       async.waterfall([
         getDojo(dojoMember.dojo.email),
         getUser(dojoMember.email),
+        getExistingMembership(dojoMember.existing),
         saveUserDojo(dojoMember, dojoMember.userTypes)
       ], sCb);
 
@@ -57,11 +58,24 @@ module.exports = function (options) {
         });
       };
     }
-    function saveUserDojo (dojoMember, userTypes) {
+    function getExistingMembership (dojoMemberExists) {
       return function (dojo, user, wfCb) {
+        if (dojoMemberExists) {
+          seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: {userId: user.id, dojoId: dojo.id}}, function (err, dojoMembers) {
+            wfCb(null, dojo, user, dojoMembers[0]);
+          });
+        } else {
+          wfCb(null, dojo, user, null);
+        }
+      };
+    }
+    function saveUserDojo (dojoMember, userTypes) {
+      return function (dojo, user, membership, wfCb) {
         var payload = {role: 'cd-dojos', cmd: 'request_user_invite', data: {user: user, dojoId: dojo.id, userType: userTypes[0], userPermissions: dojoMember.userPermissions, emailSubject: 'imabanana'}}; // By default, consider it requires approval
         if (dojoMember.approved) {
-          payload = {role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: {userId: user.id, userTypes: userTypes, dojoId: dojo.id, owner: dojoMember.owner, userPermissions: dojoMember.userPermissions}};
+          var userDojo = {userId: user.id, userTypes: userTypes, dojoId: dojo.id, owner: dojoMember.owner, userPermissions: dojoMember.userPermissions};
+          if (membership) userDojo.id = membership.id;
+          payload = {role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo};
         }
         seneca.act(payload, wfCb);
       };

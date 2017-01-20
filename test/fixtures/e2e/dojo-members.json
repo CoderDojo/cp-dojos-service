@@ -9,6 +9,17 @@
     "approved": true
   },
   {
+    "email": "child2-1@example.com",
+    "userTypes": ["champion"],
+    "dojo": {
+      "email": "dojo1@example.com"
+    },
+    "userPermissions": [{"title": "Dojo Admin", "name": "dojo-admin"}, {"title": "Ticketing Admin", "name": "ticketing-admin"}],
+    "owner": 0,
+    "existing": true,
+    "approved": true
+  },
+  {
     "email": "parent1@example.com",
     "userTypes": ["parent-guardian"],
     "dojo": {
@@ -59,6 +70,7 @@
     "dojo": {
       "email": "dojo2@example.com"
     },
+    "userPermissions": [{"title": "Dojo Admin", "name": "dojo-admin"}, {"title": "Ticketing Admin", "name": "ticketing-admin"}],
     "owner": 0,
     "approved": false
   },
