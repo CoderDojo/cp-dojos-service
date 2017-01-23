@@ -2273,7 +2273,7 @@ module.exports = function (options) {
     function checkEmail (users, done) {
       async.map(users, function (user, callback) {
         if (_.isEmpty(user.email)) {
-          seneca.act({role: 'cd-profiles', cmd: 'load_parents_for_user', userId: user.id}, function (err, parents) {
+          seneca.act({role: 'cd-profiles', cmd: 'load_parents_for_user', userId: user.id, user: args.user}, function (err, parents) {
             if (err) return seneca.log.warn('No parent found for', user.id);
             //  TODO:80 handle multiple parents
             user.parent = parents[0];
