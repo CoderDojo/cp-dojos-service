@@ -103,7 +103,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_dojo_champion'}, cmd_load_dojo_champion);
   seneca.add({role: plugin, cmd: 'accept_user_request'}, cmd_accept_user_request);
   seneca.add({role: plugin, cmd: 'dojos_for_user'}, cmd_dojos_for_user);
-  seneca.add({role: plugin, cmd: 'save_usersdojos'}, cmd_save_usersdojos);
+  seneca.add({role: plugin, cmd: 'save_usersdojos'}, require('./lib/save-usersdojo').bind(seneca));
   seneca.add({role: plugin, cmd: 'remove_usersdojos'}, cmd_remove_usersdojos);
   seneca.add({role: plugin, cmd: 'get_user_types'}, cmd_get_user_types);
   seneca.add({role: plugin, cmd: 'get_user_permissions'}, cmd_get_user_permissions);
@@ -240,7 +240,7 @@ module.exports = function (options) {
 
       userDojo.owner = 0;
 
-      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
+      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo, user: args.user}, done);
     }
 
     function getCurrentFounderUserDojo (prevFounderUserDojo, done) {
@@ -281,7 +281,7 @@ module.exports = function (options) {
         });
       }
       userDojo.owner = 1;
-      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
+      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo, user: args.user}, done);
     }
 
     function updateDojoCreatorEmail (userDojo, done) {
@@ -1596,7 +1596,7 @@ module.exports = function (options) {
             ];
           }
 
-          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
+          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo, invite: inviteToken}, function (err, response) {
             if (err) return done(err);
             return done(null, inviteToken);
           });
@@ -1613,7 +1613,7 @@ module.exports = function (options) {
               {title: 'Ticketing Admin', name: 'ticketing-admin'}
             ];
           }
-          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
+          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo, invite: inviteToken}, function (err, response) {
             if (err) return done(err);
             return done(null, inviteToken);
           });
@@ -1797,7 +1797,7 @@ module.exports = function (options) {
             {title: 'Ticketing Admin', name: 'ticketing-admin'}
           ];
         }
-        seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, done);
+        seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo, user: args.user, invite: joinRequest}, done);
       });
     }
 
@@ -1836,75 +1836,6 @@ module.exports = function (options) {
         done(null, dojos);
       });
     });
-  }
-
-  function cmd_save_usersdojos (args, done) {
-    logger.info({args: args}, 'cmd_save_usersdojos');
-    var userDojo = args.userDojo;
-    var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
-
-    async.series([
-      ownerPermissionsCheck,
-      saveUserDojo,
-      saveNinjasUserDojo
-    ], function (err, res) {
-      if (err) return done(null, {error: err.message});
-      return done(null, res[1]);
-    });
-
-    function ownerPermissionsCheck (done) {
-      if (userDojo.id) {
-        usersDojosEntity.load$(userDojo.id, function (err, response) {
-          if (err) return done(err);
-          var originalUserDojo = response;
-          var updatedUserDojo = userDojo;
-          var isDojoOwner = originalUserDojo && originalUserDojo.owner === 1;
-          if (isDojoOwner) {
-            var invalidUpdate = false;
-            // If this user is the dojo owner, make sure that this update is not removing their permissions or user types.
-            if (updatedUserDojo.userPermissions) {
-              var updatedUserPermissions = _.map(updatedUserDojo.userPermissions, function (userPermission) {
-                return userPermission.name;
-              });
-              var originalUserPermissions = _.map(originalUserDojo.userPermissions, function (userPermission) {
-                return userPermission.name;
-              });
-              var difference = _.difference(originalUserPermissions, updatedUserPermissions);
-              if (!_.isEmpty(difference)) {
-                invalidUpdate = true;
-              }
-            }
-            if (updatedUserDojo.userTypes) {
-              var championUserTypeFound = _.find(updatedUserDojo.userTypes, function (userType) {
-                return userType === 'champion';
-              });
-              if (!championUserTypeFound) invalidUpdate = true;
-            }
-            if (invalidUpdate) return done(new Error('Admin permissions cannot be removed from a Dojo owner.'));
-            return done();
-          }
-          return done();
-        });
-      } else {
-        // Not updating an existing record therefore no owner permission check is required.
-        return done();
-      }
-    }
-
-    function saveUserDojo (done) {
-      if (userDojo.userPermissions) {
-        userDojo.userPermissions = _.uniq(userDojo.userPermissions, function (userPermission) {
-          return userPermission.name;
-        });
-      }
-      if (userDojo.userTypes) userDojo.userTypes = _.uniq(userDojo.userTypes);
-
-      usersDojosEntity.save$(userDojo, done);
-    }
-
-    function saveNinjasUserDojo (done) {
-      seneca.act({role: plugin, cmd: 'add_children_parent_dojo', userId: userDojo.userId, dojoId: userDojo.dojoId}, done);
-    }
   }
 
   function cmd_remove_usersdojos (args, done) {
@@ -1959,7 +1890,7 @@ module.exports = function (options) {
                 youthUserDojo.deleted = 1;
                 youthUserDojo.deletedBy = args.user.id;
                 youthUserDojo.deletedAt = new Date();
-                seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
+                seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo, user: args.user}, cb);
               } else {
                 return cb();
               }

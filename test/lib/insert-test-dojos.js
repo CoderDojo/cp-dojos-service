@@ -75,7 +75,7 @@ module.exports = function (options) {
         if (dojoMember.approved) {
           var userDojo = {userId: user.id, userTypes: userTypes, dojoId: dojo.id, owner: dojoMember.owner, userPermissions: dojoMember.userPermissions};
           if (membership) userDojo.id = membership.id;
-          payload = {role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo};
+          payload = {role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo, user: {roles: ['cdf-admin']}};
         }
         seneca.act(payload, wfCb);
       };

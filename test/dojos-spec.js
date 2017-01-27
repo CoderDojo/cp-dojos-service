@@ -87,7 +87,7 @@ function create_dojo(obj, creator, done) {
 }
 
 function create_users_dojos(obj, done) {
-  seneca.act({role: role, cmd: 'save_usersdojos', userDojo: obj}, done);
+  seneca.act({role: role, cmd: 'save_usersdojos', userDojo: obj, user: {roles: ['cdf-admin']}}, done);
 }
 
 function create_poll(obj, done) {
@@ -689,6 +689,7 @@ lab.experiment('Dojo Microservice test', function () {
               if (err) return done(err);
 
               expect(loadedDojos).to.exist;
+              console.log('loadedDojos', loadedDojos.map(function (dojo) { return dojo.dojoId; }));
               expect(loadedDojos.length).to.equal(2); //cause one of them is deleted during tests
               expect(loadedDojos[0].userId).to.be.ok;
               expect(loadedDojos[1].userId).to.be.ok;
