@@ -1887,6 +1887,14 @@ module.exports = function (options) {
         });
       } else {
         // Not updating an existing record therefore no owner permission check is required.
+        // We do need to check, however, if joining user is trying to grant themselves permissions on the dojo
+        if ((userDojo.userPermissions && userDojo.userPermissions.length > 0) ||
+          _.includes(userDojo.userTypes, 'champion') ||
+          _.includes(userDojo.userTypes, 'mentor')) {
+          return done({
+            message: 'You can only join the Dojo as an attendee or parent/guardian.'
+          });
+        }
         return done();
       }
     }
