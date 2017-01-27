@@ -240,7 +240,7 @@ module.exports = function (options) {
 
       userDojo.owner = 0;
 
-      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
+      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo, user: args.user}, done);
     }
 
     function getCurrentFounderUserDojo (prevFounderUserDojo, done) {
@@ -281,7 +281,7 @@ module.exports = function (options) {
         });
       }
       userDojo.owner = 1;
-      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo}, done);
+      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo, user: args.user}, done);
     }
 
     function updateDojoCreatorEmail (userDojo, done) {
@@ -1596,7 +1596,7 @@ module.exports = function (options) {
             ];
           }
 
-          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
+          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo, invite: inviteToken}, function (err, response) {
             if (err) return done(err);
             return done(null, inviteToken);
           });
@@ -1613,7 +1613,7 @@ module.exports = function (options) {
               {title: 'Ticketing Admin', name: 'ticketing-admin'}
             ];
           }
-          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, function (err, response) {
+          seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo, invite: inviteToken}, function (err, response) {
             if (err) return done(err);
             return done(null, inviteToken);
           });
@@ -1797,7 +1797,7 @@ module.exports = function (options) {
             {title: 'Ticketing Admin', name: 'ticketing-admin'}
           ];
         }
-        seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo}, done);
+        seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: userDojo, user: args.user}, done);
       });
     }
 
@@ -1842,8 +1842,10 @@ module.exports = function (options) {
     logger.info({args: args}, 'cmd_save_usersdojos');
     var userDojo = args.userDojo;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
+    var canUpdate = false;
 
     async.series([
+      hasPermissionToUpdate,
       ownerPermissionsCheck,
       saveUserDojo,
       saveNinjasUserDojo
@@ -1852,8 +1854,24 @@ module.exports = function (options) {
       return done(null, res[1]);
     });
 
+    function hasPermissionToUpdate (done) {
+      if (!args.user) {
+        canUpdate = false;
+        return done();
+      }
+      seneca.act({role: 'cd-dojos', cmd: 'have_permissions_on_user', perm: 'dojo-admin', params: {userId: userDojo.userId}, user: args.user},
+        function (err, resp) {
+          if (err) {
+            canUpdate = false;
+          } else {
+            canUpdate = resp.allowed;
+          }
+          return done();
+        });
+    }
+
     function ownerPermissionsCheck (done) {
-      if (userDojo.id) {
+      if (userDojo.id && canUpdate) {
         usersDojosEntity.load$(userDojo.id, function (err, response) {
           if (err) return done(err);
           var originalUserDojo = response;
@@ -1885,9 +1903,32 @@ module.exports = function (options) {
           }
           return done();
         });
+      } else if (args.invite || canUpdate) {
+        // No need to check if an invite is passed down (blocked by Joi, so can't come from front-end)
+        return done();
       } else {
         // Not updating an existing record therefore no owner permission check is required.
-        return done();
+        // We do need to check, however, if joining user is trying to grant themselves permissions on the dojo
+        if ((userDojo.userPermissions && userDojo.userPermissions.length > 0) ||
+          _.includes(userDojo.userTypes, 'champion') ||
+          _.includes(userDojo.userTypes, 'mentor')) {
+          return done(new Error('You can only join the Dojo as an attendee or parent/guardian.'));
+        }
+        async.some([
+          {role: 'cd-users', cmd: 'is_self', params: {userId: userDojo.userId}, user: args.user},
+          {role: 'cd-users', cmd: 'is_parent_of', params: {userId: userDojo.userId}, user: args.user}
+        ], function (perm, cb) {
+          seneca.act(perm, function (err, resp) {
+            if (err) return cb(false);
+            return cb(resp.allowed);
+          });
+        }, function (result) {
+          if (result === true) {
+            return done();
+          } else {
+            return done(new Error('You can only create associations for yourself or children.'));
+          }
+        });
       }
     }
 
@@ -1903,7 +1944,7 @@ module.exports = function (options) {
     }
 
     function saveNinjasUserDojo (done) {
-      seneca.act({role: plugin, cmd: 'add_children_parent_dojo', userId: userDojo.userId, dojoId: userDojo.dojoId}, done);
+      seneca.act({role: plugin, cmd: 'add_children_parent_dojo', userId: userDojo.userId, dojoId: userDojo.dojoId, user: args.user}, done);
     }
   }
 
@@ -1959,7 +2000,7 @@ module.exports = function (options) {
                 youthUserDojo.deleted = 1;
                 youthUserDojo.deletedBy = args.user.id;
                 youthUserDojo.deletedAt = new Date();
-                seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo}, cb);
+                seneca.act({role: plugin, cmd: 'save_usersdojos', userDojo: youthUserDojo, user: args.user}, cb);
               } else {
                 return cb();
               }
