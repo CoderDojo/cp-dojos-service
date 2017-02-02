@@ -1206,10 +1206,10 @@ module.exports = function (options) {
       },
       function (userDojos, done) {
         if (!userDojos || !userDojos.length) {
-          return done(null, [], []);
+          return done(null, [], [], []);
         }
 
-        var dojoIds = _.map(userDojos, 'dojoId');
+        var dojoIds = _.uniq(_.map(userDojos, 'dojoId'));
         var query = {ids: dojoIds};
 
         var search = args.search;
@@ -1222,14 +1222,14 @@ module.exports = function (options) {
         if (search && search.sort) {
           query.sort$ = search.sort;
         }
-        seneca.make$(ENTITY_NS).list$(query, _.partialRight(done, userDojos));
+        seneca.make$(ENTITY_NS).list$(query, _.partialRight(done, userDojos, dojoIds));
       },
-      function (dojos, userDojos, done) {
+      function (dojos, userDojos, dojoIds, done) {
         _.each(dojos, function (dojo) {
           dojo.userInvites = purgeInviteEmails(dojo.userInvites);
         });
         return done(null, {
-          total: userDojos.length,
+          total: dojoIds.length,
           records: dojos
         });
       }
