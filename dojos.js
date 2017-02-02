@@ -1419,7 +1419,7 @@ module.exports = function (options) {
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
       // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
-      userListQuery.fields$ = ['name', 'email', 'init_user_type', 'profile_id', 'dob'];
+      userListQuery.fields$ = ['name', 'email', 'init_user_type', 'profile_id', 'dob', 'user_id'];
       if (typeQuery) {
         response = _.filter(response, function (user) {
           return _.includes(user.userTypes, typeQuery);
