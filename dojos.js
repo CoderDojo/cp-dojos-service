@@ -1206,7 +1206,7 @@ module.exports = function (options) {
       },
       function (userDojos, done) {
         if (!userDojos || !userDojos.length) {
-          return done(null, [], []);
+          return done(null, [], [], []);
         }
 
         var dojoIds = _.uniq(_.map(userDojos, 'dojoId'));
