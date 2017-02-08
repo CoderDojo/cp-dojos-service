@@ -814,7 +814,7 @@ module.exports = function (options) {
         });
       },
       function (dojo, userDojo, cb) {
-        seneca.act({role: plugin, cmd: 'add_children_parent_dojo', userId: userDojo.userId, dojoId: userDojo.dojoId}, function (err) {
+        seneca.act({role: plugin, cmd: 'add_children_parent_dojo', userId: userDojo.userId, dojoId: userDojo.dojoId, user: args.user}, function (err) {
           if (err) return cb(err);
           cb(null, dojo, userDojo);
         });
