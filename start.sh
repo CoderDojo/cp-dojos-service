@@ -18,4 +18,4 @@ fi
 
 source $FILE
 
-exec node $START $@
+exec node node_modules/.bin/pm2 start $START $@
