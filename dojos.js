@@ -1123,8 +1123,7 @@ module.exports = function (options) {
       async.apply(isUserChampionAndDojoAdmin, query, user),
       deleteDojo,
       deleteUsersDojos,
-      deleteDojoLead,
-      deleteSalesForce
+      deleteDojoLead
     ], function (err, res) {
       if (err) return done(null, {error: err});
       return done(null, res);
@@ -1167,29 +1166,20 @@ module.exports = function (options) {
 
     function deleteDojoLead (done) {
       if (!dojo.dojoLeadId) return done(new Error('no dojo lead_id'));
-
-      seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojo.dojoLeadId}, function (err, ent) {
-        if (err) return done(err);
-
-        ent.completed = true;
-        ent.deleted = 1;
-        ent.deletedBy = user.id;
-        ent.deletedAt = new Date();
-
-        seneca.make$(DOJO_LEADS_ENTITY_NS).save$(ent, done);
-      });
-    }
-
-    function deleteSalesForce (dojoLead, done) {
       seneca.make$(DOJO_LEADS_ENTITY_NS).load$({id: dojo.dojoLeadId}, function (err, res) {
         if (err) return done(err);
 
         var lead = res.data$();
         if (lead) {
-          seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: 'delete'}, function (err, res) {
-            if (err) return done(err);
-            return done(null, res);
-          });
+          lead.completed = true;
+          lead.deleted = 1;
+          lead.deletedBy = user.id;
+          lead.deletedAt = new Date();
+          seneca.act({role: plugin, cmd: 'save_dojo_lead', dojoLead: lead, dojoAction: 'delete'},
+           function (err, res) {
+             if (err) return done(err);
+             return done(null, res);
+           });
         } else {
           return done(null, res);
         }
@@ -1283,22 +1273,9 @@ module.exports = function (options) {
   function cmd_save_dojo_lead_and_profile (args, done) {
     logger.info({args: args}, 'cmd_save_dojo_lead_and_profile');
     var dojoLead = args.dojoLead;
-    var dojoObj = {
-      dojoAction: args.dojoAction || 'blank',
-      dojoLead: args.dojoLead || null,
-      currStep: args.dojoLead.currentStep || null,
-      userId: args.dojoLead.userId || null
-    };
 
     function saveLead (cb) {
       seneca.act({role: plugin, cmd: 'simple_save_dojo_lead', dojoLead: dojoLead}, cb);
-    }
-
-    function updateSalesforce (cb, res) {
-      if (process.env.SALESFORCE_ENABLED === 'true') {
-        seneca.act({role: 'cd-salesforce', cmd: 'queud_update_dojos', param: dojoObj, fatal$: false});
-      }
-      return cb();
     }
 
     function updateDojoLeadProfile (cb) {
@@ -1341,7 +1318,6 @@ module.exports = function (options) {
 
     async.series([
       saveLead,
-      updateSalesforce,
       updateDojoLeadProfile
     ], function (err, results) {
       if (err) return done(err);
