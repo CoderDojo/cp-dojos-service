@@ -1,6 +1,5 @@
 'use strict';
 
-process.env.SALESFORCE_ENABLED = 'true';
 
 var seneca = require('seneca')(),
   config = require(__dirname + '/../config/config.js')(),
@@ -30,7 +29,6 @@ seneca
   .use(__dirname + '/stubs/cd-agreements.js')
   .use(__dirname + '/stubs/cd-countries.js')
   .use(__dirname + '/stubs/cd-profiles.js')
-  .use(__dirname + '/stubs/cd-salesforce.js')
   .use(__dirname + '/stubs/cd-users.js')
   .use(__dirname + '/stubs/cd-user-profile.js')
   .use(__dirname + '/stubs/email-notifications.js')
