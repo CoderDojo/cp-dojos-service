@@ -53,6 +53,7 @@ var cmd_is_own_invite = require('./lib/perm/is-own-invite');
 var cmd_can_award_badge = require('./lib/perm/can-award-badge');
 
 var cmd_get_dojo_stats = require('./lib/dojos/stats');
+var cmd_search_join_requests = require('./lib/dojos/search-join-requests');
 
 var cmd_backfill_champions = require('./lib/backfill-champions');
 
@@ -101,7 +102,9 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'accept_user_invite'}, cmd_accept_user_invite);
   seneca.add({role: plugin, cmd: 'request_user_invite'}, cmd_request_user_invite);
   seneca.add({role: plugin, cmd: 'load_dojo_champion'}, cmd_load_dojo_champion);
+  seneca.add({role: plugin, cmd: 'search_join_requests'}, cmd_search_join_requests);
   seneca.add({role: plugin, cmd: 'accept_user_request'}, cmd_accept_user_request);
+  seneca.add({role: plugin, cmd: 'decline_join_request'}, require('./lib/dojos/decline-join-request').bind(seneca));
   seneca.add({role: plugin, cmd: 'dojos_for_user'}, cmd_dojos_for_user);
   seneca.add({role: plugin, cmd: 'save_usersdojos'}, require('./lib/save-usersdojo').bind(seneca));
   seneca.add({role: plugin, cmd: 'remove_usersdojos'}, cmd_remove_usersdojos);
