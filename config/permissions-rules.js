@@ -193,7 +193,6 @@ module.exports = function () {
         role: 'basic-user'
       }],
       'search_join_requests': [{
-        // No validator here as check is post-recovery of data
         role: 'basic-user',
         customValidator: [{
           role: 'cd-dojos',
