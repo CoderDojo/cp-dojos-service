@@ -144,5 +144,24 @@
     },
     "owner": 0,
     "approved": true
+  },
+  {
+    "email": "userRequestingAccess1@example.com",
+    "userTypes": ["mentor"],
+    "dojo": {
+      "email": "dojo2@example.com"
+    },
+    "owner": 0,
+    "approved": false
+  },
+  {
+    "email": "userRequestingAccess2@example.com",
+    "userTypes": ["champion"],
+    "dojo": {
+      "email": "dojo2@example.com"
+    },
+    "owner": 0,
+    "approved": false
   }
+
 ]
