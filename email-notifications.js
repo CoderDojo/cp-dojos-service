@@ -22,25 +22,29 @@ module.exports = function (options) {
 
   function send_notification (args, done) {
     var subject = args.subject;
+    var bypassTranslation = args.bypassTranslation;
     var subjectVariables = args.subjectVariables || [];
     var subjectTranslation;
+    var emailCode;
     if (options.sendemail && options.email) {
-      var emailCode = args.code + args.locality;
+      emailCode = args.code + args.locality;
       if (!fs.existsSync(path.join(__dirname, '/email-templates/', emailCode))) emailCode = args.code + 'en_US';
       if (!args.to) return done(null, {ok: false, why: 'No recipient set.'});
 
-      subjectTranslation = i18nHelper.getClosestTranslation(args.locality, subject);
-      if (subjectTranslation === null) {
-        return done(null, {ok: false, why: 'Invalid email subject.'});
+      if (!bypassTranslation) {
+        subjectTranslation = i18nHelper.getClosestTranslation(args.locality, subject);
+        if (subjectTranslation === null) {
+          return done(null, {ok: false, why: 'Invalid email subject.'});
+        }
+        subject = subjectTranslation.fetch(subjectVariables);
       }
-
       seneca.act({
         role: 'mail', cmd: 'send',
         from: args.from || options.sendFrom,
         code: emailCode,
         to: args.to,
         replyTo: args.replyTo || options.sendFrom,
-        subject: subjectTranslation.fetch(subjectVariables),
+        subject: subject,
         content: args.content,
         headers: setHeader()
       }, done);

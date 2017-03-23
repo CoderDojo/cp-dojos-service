@@ -125,6 +125,8 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_dojo_email'}, cmd_load_dojo_email);
   seneca.add({role: plugin, cmd: 'notify_all_members'}, cmd_notify_all_members);
   seneca.add({role: plugin, cmd: 'add_children_parent_dojo'}, addChildrenParentDojo);
+  seneca.add({role: plugin, cmd: 'notify_dojo_members'}, require('./lib/dojos/users/notify'));
+  seneca.add({role: plugin, cmd: 'add_children_parent_dojo'}, addChildrenParentDojo.bind(seneca));
 
   //  TODO:10 : export as a different microservice?
   //  Polls channels
@@ -1468,6 +1470,7 @@ module.exports = function (options) {
     var subjectVariables = payload.subjectVariables;
     var emailLocality = payload.locality;
     var replyTo = payload.replyTo;
+    var bypassTranslation = payload.bypassTranslation;
     seneca.act({
       role: 'email-notifications',
       cmd: 'send',
@@ -1478,7 +1481,8 @@ module.exports = function (options) {
       code: emailCode,
       locality: emailLocality,
       subject: emailSubject,
-      subjectVariables: subjectVariables
+      subjectVariables: subjectVariables,
+      bypassTranslation: bypassTranslation
     }, done);
   }
 
