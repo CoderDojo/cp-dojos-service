@@ -1176,9 +1176,6 @@ msgstr "Suggested Notes:"
 msgid "Please bring:"
 msgstr "Please bring:"
 
-msgid "A pack lunch."
-msgstr "A pack lunch."
-
 msgid "A laptop. Borrow one from somebody if needs be."
 msgstr "A laptop. Borrow one from somebody if needs be."
 
@@ -2314,6 +2311,9 @@ msgstr "Event Invitation"
 msgid "e.g. @CoderDojo"
 msgstr "e.g. @CoderDojo"
 
+msgid "e.g. https://www.facebook.com/Coderdojo"
+msgstr "e.g. https://www.facebook.com/Coderdojo"
+
 msgid "User is already a parent of this Ninja"
 msgstr "User is already a parent of this Ninja"
 
@@ -3158,6 +3158,9 @@ msgstr "You have been invited to a Dojo session"
 msgid "Change Role"
 msgstr "Change Role"
 
+msgid "Calling all Dojos; Answer one question, make an impact!"
+msgstr "Calling all Dojos; Answer one question, make an impact!"
+
 msgid "I have read and accept the <a ui-sref=\"terms-and-conditions\" target=\"_blank\"><b>Terms and Conditions here</b></a>"
 msgstr "I have read and accept the <a ui-sref=\"terms-and-conditions\" target=\"_blank\"><b>Terms and Conditions here</b></a>"
 
@@ -3229,3 +3232,51 @@ msgstr "Available Dojos"
 
 msgid "Click one of your Dojos to add {{ name }} as a member, or <a href=\"{{ findADojoUrl }}\">find a new Dojo</a> for them to join."
 msgstr "Click one of your Dojos to add {{ name }} as a member, or <a href=\"{{ findADojoUrl }}\">find a new Dojo</a> for them to join."
+
+msgid "We could not determine a location from this address. Your previous location marker has been retained."
+msgstr "We could not determine a location from this address. Your previous location marker has been retained."
+
+msgid "Day selected doesn't exist in date range, please check your date range."
+msgstr "Day selected doesn't exist in date range, please check your date range."
+
+msgid "%1s | CoderDojo"
+msgctxt "Displayed when sharing a dojo page, %1s being the dojo name"
+msgstr "%1s | CoderDojo"
+
+msgid "%1s at %2s on %3s"
+msgctxt "Metadata displayed when sharing an event page, %1s being the event name, %2s the dojo name and %3s the time of the event"
+msgstr "%1s at %2s on %3s"
+
+msgid "%1s in %2s"
+msgctxt "Metadata displayed when sharing a dojo page, %1s being the dojo name, %2s being the country"
+msgstr "%1s in %2s"
+
+msgid "First Name"
+msgstr "First Name"
+
+msgid "First name is required"
+msgstr "First name is required"
+
+msgid "Surname is required"
+msgstr "Surname is required"
+
+msgid "Alias is required"
+msgstr "Alias is required"
+
+msgid "This unique alias is shown instead of your child's name to protect their privacy on features such as the Ninja Forum."
+msgstr "This unique alias is shown instead of your child's name to protect their privacy on features such as the Ninja Forum."
+
+msgid "Date of birth is required"
+msgstr "Date of birth is required"
+
+msgid "We need your child's date of birth to comply with child protection laws in some countries."
+msgstr "We need your child's date of birth to comply with child protection laws in some countries."
+
+msgid "As your child is over 13 years of age, they can have their own CoderDojo account."
+msgstr "As your child is over 13 years of age, they can have their own CoderDojo account."
+
+msgid "This is optional, but will allow your child to log in by themselves to access features such as badging, booking and the youth forums by themselves. Enter your child's email address, and give them a password if you wish to do this."
+msgstr "This is optional, but will allow your child to log in by themselves to access features such as badging, booking and the youth forums by themselves. Enter your child's email address, and give them a password if you wish to do this."
+
+msgid "You must provide an email address when providing a password."
+msgstr "You must provide an email address when providing a password."
