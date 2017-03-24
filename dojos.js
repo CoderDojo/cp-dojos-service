@@ -1444,7 +1444,9 @@ module.exports = function (options) {
             return r.name.match(nameQuery);
           });
           length = response.length;
-          response = response.slice(skip, limit + skip);
+          if (skip && limit) {
+            response = response.slice(skip, limit + skip);
+          }
           return done(null, {response: response, length: length});
         });
       } else {
