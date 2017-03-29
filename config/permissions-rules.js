@@ -189,7 +189,19 @@ module.exports = function () {
         role: 'basic-user'
       }],
       'accept_user_request': [{
-        // No validator here as check is very custom, and is done already in the actual command code.
+        // No validator here as check is post-recovery of data
+        role: 'basic-user'
+      }],
+      'search_join_requests': [{
+        role: 'basic-user',
+        customValidator: [{
+          role: 'cd-dojos',
+          cmd: 'have_permissions_on_dojo',
+          perm: 'dojo-admin'
+        }]
+      }],
+      'decline_user_request': [{
+        // No validator here as check is post-recovery of data
         role: 'basic-user'
       }],
 
