@@ -8,7 +8,7 @@ module.exports = function (options) {
   var seneca = this;
   var plugin = 'test-dojo-data';
 
-  seneca.add({ role: plugin, cmd: 'insert', entity: 'dojo'}, function (args, done) {
+  seneca.add({role: plugin, cmd: 'insert', entity: 'dojo'}, function (args, done) {
     var dojos = require('../fixtures/e2e/dojos');
     var index = 1;
     async.eachSeries(dojos, function (dojo, sCb) {
@@ -31,7 +31,7 @@ module.exports = function (options) {
     });
   });
 
-  seneca.add({ role: plugin, cmd: 'insert', entity: 'user_dojo'}, function (args, done) {
+  seneca.add({role: plugin, cmd: 'insert', entity: 'user_dojo'}, function (args, done) {
     var dojoMembers = require('../fixtures/e2e/dojo-members');
     async.eachSeries(dojoMembers, function (dojoMember, sCb){
       async.waterfall([
@@ -82,7 +82,7 @@ module.exports = function (options) {
     }
   });
 
-  seneca.add({ role: plugin, cmd: 'insert', entity: 'dojo_lead'}, function (args, done) {
+  seneca.add({role: plugin, cmd: 'insert', entity: 'dojo_lead'}, function (args, done) {
     var dojoleads = require('../fixtures/e2e/dojo-leads.json');
     async.eachSeries(dojoleads, function (lead, sCb){
       async.waterfall([
@@ -91,7 +91,7 @@ module.exports = function (options) {
       ], sCb);
 
       function getUser (wfCb) {
-        seneca.act({ role: 'cd-users', cmd: 'list', query: {email: lead.email}}, function (err, dojoAdmins) {
+        seneca.act({role: 'cd-users', cmd: 'list', query: {email: lead.email}}, function (err, dojoAdmins) {
           if (err) return done(err);
           return wfCb(null, dojoAdmins[0]);
         });
@@ -99,10 +99,22 @@ module.exports = function (options) {
 
       function saveDojoLead (dojoAdmin, wfCb) {
         lead.userId = dojoAdmin.id;
-        seneca.act({ role: 'cd-dojos', cmd: 'simple_save_dojo_lead', dojoLead: lead}, wfCb);
+        seneca.act({role: 'cd-dojos', cmd: 'simple_save_dojo_lead', dojoLead: lead}, wfCb);
       }
     }, done);
   });
+
+  seneca.add({role: plugin, cmd: 'insert', entity: 'poll'}, function (args, done) {
+    var polls = require('../fixtures/e2e/polls.json');
+    var newDate = new Date();
+    newDate.setMonth(newDate.getMonth() + 3);
+    async.eachSeries(polls, function (poll, sCb) {
+        if (!poll.endDate) poll.endDate = newDate;
+        console.log(poll);
+        seneca.act({role: 'cd-dojos', cmd: 'save_poll_setup', poll: poll}, sCb);
+    }, done);
+  });
+
 
   return {
     name: plugin
