@@ -130,6 +130,10 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'notify_dojo_members'}, require('./lib/dojos/users/notify'));
   seneca.add({role: plugin, cmd: 'add_children_parent_dojo'}, addChildrenParentDojo.bind(seneca));
 
+  // CRUD Entities, BACKEND ONLY (unfiltered data, no return to front-end)
+  seneca.add({role: plugin, entity: 'dojo', cmd: 'search'}, require('./lib/entities/dojo/search')());
+  seneca.add({role: plugin, entity: 'dojo', cmd: 'load'}, require('./lib/entities/dojo/load')());
+
   //  TODO:10 : export as a different microservice?
   //  Polls channels
   seneca.add({role: plugin, cmd: 'start_poll'}, cmd_start_poll);
@@ -671,6 +675,8 @@ module.exports = function (options) {
         if (dojo.userInvites) {
           dojo.userInvites = purgeInviteEmails(dojo.userInvites);
         }
+        delete dojo.eventbriteToken;
+        delete dojo.eventbriteWhId;
       });
       done(null, dojos);
     });
@@ -686,7 +692,8 @@ module.exports = function (options) {
         if (dojo.userInvites) {
           dojo.userInvites = purgeInviteEmails(dojo.userInvites);
         }
-
+        delete dojo.eventbriteToken;
+        delete dojo.eventbriteWhId;
         if (!dojosByCountry[dojo.countryName]) dojosByCountry[dojo.countryName] = [];
         dojosByCountry[dojo.countryName].push(dojo);
       });
@@ -705,8 +712,12 @@ module.exports = function (options) {
     seneca.make$(ENTITY_NS).load$(args.id, function (err, response) {
       if (err) return done(err);
 
-      if (response && response.userInvites) {
-        response.userInvites = purgeInviteEmails(response.userInvites);
+      if (response) {
+        if (response.userInvites) {
+          response.userInvites = purgeInviteEmails(response.userInvites);
+        }
+        delete response.eventbriteToken;
+        delete response.eventbriteWhId;
       }
       done(null, response);
     });
@@ -720,8 +731,12 @@ module.exports = function (options) {
     seneca.make$(ENTITY_NS).load$(args.query, function (err, response) {
       if (err) return done(err);
 
-      if (response && response.userInvites) {
-        response.userInvites = purgeInviteEmails(response.userInvites);
+      if (response) {
+        if (response.userInvites) {
+          response.userInvites = purgeInviteEmails(response.userInvites);
+        }
+        delete response.eventbriteToken;
+        delete response.eventbriteWhId;
       }
       done(null, response);
     });
@@ -1239,6 +1254,8 @@ module.exports = function (options) {
       function (dojos, userDojos, dojoIds, done) {
         _.each(dojos, function (dojo) {
           dojo.userInvites = purgeInviteEmails(dojo.userInvites);
+          delete dojo.eventbriteToken;
+          delete dojo.eventbriteWhId;
         });
         return done(null, {
           total: dojoIds.length,
@@ -2027,6 +2044,8 @@ module.exports = function (options) {
         client.end();
         _.each(results.rows, function (dojo) {
           dojo.user_invites = purgeInviteEmails(dojo.user_invites);
+          delete dojo.eventbriteToken;
+          delete dojo.eventbriteWhId;
         });
         return done(null, results.rows);
       });
@@ -2062,6 +2081,8 @@ module.exports = function (options) {
         client.end();
         _.each(results.rows, function (dojo) {
           dojo.user_invites = purgeInviteEmails(dojo.user_invites);
+          delete dojo.eventbriteToken;
+          delete dojo.eventbriteWhId;
         });
         return done(null, results.rows);
       });
