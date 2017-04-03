@@ -3248,7 +3248,6 @@ msgstr "Available Dojos"
 msgid "Click one of your Dojos to add {{ name }} as a member, or <a href=\"{{ findADojoUrl }}\">find a new Dojo</a> for them to join."
 msgstr "Click one of your Dojos to add {{ name }} as a member, or <a href=\"{{ findADojoUrl }}\">find a new Dojo</a> for them to join."
 
-<<<<<<< eea470e6e426ac773c415a0a88a6db29791b17c9
 msgid "We could not determine a location from this address. Your previous location marker has been retained."
 msgstr "We could not determine a location from this address. Your previous location marker has been retained."
 
@@ -3293,6 +3292,36 @@ msgstr "This is optional, but will allow your child to log in by themselves to a
 
 msgid "You must provide an email address when providing a password."
 msgstr "You must provide an email address when providing a password."
+
+msgid "Type the content of your email here"
+msgstr "Type the content of your email here"
+
+msgid "Email sent!"
+msgstr "Email sent!"
+
+msgid "An error has occurred while sending the email"
+msgstr "An error has occurred while sending the email"
+
+msgid "Send Email"
+msgstr "Send Email"
+
+msgid "From"
+msgstr "From"
+
+msgid "To"
+msgstr "To"
+
+msgid "Included Parents"
+msgstr "Included Parents"
+
+msgid "Email subject"
+msgstr "Email subject"
+
+msgid "Email subject must not be empty"
+msgstr "Email subject must not be empty"
+
+msgid "Email content is required"
+msgstr "Email content is required"
 
 msgid "You have a new message from %1s Dojo:"
 msgstr "You have a new message from %1s Dojo:"
