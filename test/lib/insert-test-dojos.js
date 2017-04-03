@@ -110,7 +110,6 @@ module.exports = function (options) {
     newDate.setMonth(newDate.getMonth() + 3);
     async.eachSeries(polls, function (poll, sCb) {
         if (!poll.endDate) poll.endDate = newDate;
-        console.log(poll);
         seneca.act({role: 'cd-dojos', cmd: 'save_poll_setup', poll: poll}, sCb);
     }, done);
   });
