@@ -3,9 +3,10 @@
 var fs = require('fs');
 var path = require('path');
 var _ = require('lodash');
+var CpTranslations = require('cp-translations');
 var I18NHelper = require('cp-i18n-lib');
 var i18nHelper = new I18NHelper({
-  poFilePath: path.resolve('web/locale/'),
+  poFilePath: CpTranslations.getFilePath('/po-files/'),
   poFileName: 'messages.po',
   domain: 'coder-dojo-platform'
 });
@@ -28,7 +29,7 @@ module.exports = function (options) {
     var emailCode;
     if (options.sendemail && options.email) {
       emailCode = args.code + args.locality;
-      if (!fs.existsSync(path.join(__dirname, '/email-templates/', emailCode))) emailCode = args.code + 'en_US';
+      if (!fs.existsSync(CpTranslations.getFilePath(path.join('/email-templates/', emailCode)))) emailCode = args.code + 'en_US';
       if (!args.to) return done(null, {ok: false, why: 'No recipient set.'});
 
       if (!bypassTranslation) {
