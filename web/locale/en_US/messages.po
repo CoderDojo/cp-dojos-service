@@ -2632,6 +2632,15 @@ msgstr "has been approved"
 msgid "Your ticket request for %1$s has been approved"
 msgstr "Your ticket request for %1$s has been approved"
 
+msgid "Your ticket request for %1$s is pending approval"
+msgstr "Your ticket request for %1$s is pending approval"
+
+msgid "A ticket has been booked for %1$s"
+msgstr "A ticket has been booked for %1$s"
+
+msgid "A ticket request has been made for %1$s"
+msgstr "A ticket request has been made for %1$s"
+
 msgid "Your event must contain at least one session."
 msgstr "Your event must contain at least one session."
 

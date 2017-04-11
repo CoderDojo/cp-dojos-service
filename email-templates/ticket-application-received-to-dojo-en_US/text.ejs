@@ -1,0 +1,21 @@
+
+  Hi <%= dojoName %>,
+
+  This is a notification to let you know that a ticket request for <%= event.name %> has been made and is pending approval.
+
+  Order Summary
+  - Date: <%= applicationDate %>
+  - Session: <%= sessionName %>
+    Name     Type     Quantity
+    <% for(var i=0; i<tickets.length; i++) { %>
+      <%= tickets[i].ticketName %> <%= tickets[i].ticketType %> <%= tickets[i].quantity %>
+    <% } %>
+
+  Status: <%= status %>
+
+  About this event
+  - Event date: <%= eventDate %>
+  - Event address: <%= event.address %>
+
+  Best wishes,
+  The CoderDojo Foundation Team
