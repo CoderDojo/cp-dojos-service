@@ -1,4 +1,5 @@
 var path = require('path');
+var CpTranslations = require('cp-translations');
 
 module.exports = function (options) {
   function pgConfig () {
@@ -46,7 +47,7 @@ module.exports = function (options) {
       }
     },
     mailtrap: {
-      folder: path.resolve(__dirname + '/../email-templates'),
+      folder: path.resolve(CpTranslations.getEmailTemplatePath()),
       mail: {
         from: 'no-reply@coderdojo.com'
       },
@@ -60,7 +61,7 @@ module.exports = function (options) {
       }
     },
     maildev: {
-      folder: path.resolve(__dirname + '/../email-templates'),
+      folder: path.resolve(CpTranslations.getEmailTemplatePath()),
       mail: {
         from: 'no-reply@coderdojo.com'
       },
@@ -70,7 +71,7 @@ module.exports = function (options) {
       }
     },
     email: {
-      folder: path.resolve(__dirname + '/../email-templates'),
+      folder: path.resolve(CpTranslations.getEmailTemplatePath()),
       config: {
         pool: true,
         service: 'sendgrid',
