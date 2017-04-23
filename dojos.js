@@ -57,7 +57,8 @@ var cmd_get_dojo_stats = require('./lib/dojos/stats');
 var cmd_search_join_requests = require('./lib/dojos/search-join-requests');
 
 var cmd_backfill_champions = require('./lib/backfill-champions');
-
+// Utils
+var cleanDojo = require('./lib/utils/cleanDojo');
 var logger;
 
 module.exports = function (options) {
@@ -675,8 +676,7 @@ module.exports = function (options) {
         if (dojo.userInvites) {
           dojo.userInvites = purgeInviteEmails(dojo.userInvites);
         }
-        delete dojo.eventbriteToken;
-        delete dojo.eventbriteWhId;
+        dojo = cleanDojo(dojo);
       });
       done(null, dojos);
     });
@@ -692,8 +692,7 @@ module.exports = function (options) {
         if (dojo.userInvites) {
           dojo.userInvites = purgeInviteEmails(dojo.userInvites);
         }
-        delete dojo.eventbriteToken;
-        delete dojo.eventbriteWhId;
+        dojo = cleanDojo(dojo);
         if (!dojosByCountry[dojo.countryName]) dojosByCountry[dojo.countryName] = [];
         dojosByCountry[dojo.countryName].push(dojo);
       });
@@ -716,8 +715,8 @@ module.exports = function (options) {
         if (response.userInvites) {
           response.userInvites = purgeInviteEmails(response.userInvites);
         }
-        delete response.eventbriteToken;
-        delete response.eventbriteWhId;
+        if (response.eventbriteToken && response.eventbriteWhId) response.eventbriteConnected = true;
+        response = cleanDojo(response);
       }
       done(null, response);
     });
@@ -735,8 +734,8 @@ module.exports = function (options) {
         if (response.userInvites) {
           response.userInvites = purgeInviteEmails(response.userInvites);
         }
-        delete response.eventbriteToken;
-        delete response.eventbriteWhId;
+        if (response.eventbriteToken && response.eventbriteWhId) response.eventbriteConnected = true;
+        response = cleanDojo(response);
       }
       done(null, response);
     });
@@ -1254,8 +1253,8 @@ module.exports = function (options) {
       function (dojos, userDojos, dojoIds, done) {
         _.each(dojos, function (dojo) {
           dojo.userInvites = purgeInviteEmails(dojo.userInvites);
-          delete dojo.eventbriteToken;
-          delete dojo.eventbriteWhId;
+          if (dojo.eventbriteToken && dojo.eventbriteWhId) dojo.eventbriteConnected = true;
+          dojo = cleanDojo(dojo);
         });
         return done(null, {
           total: dojoIds.length,
@@ -2044,8 +2043,7 @@ module.exports = function (options) {
         client.end();
         _.each(results.rows, function (dojo) {
           dojo.user_invites = purgeInviteEmails(dojo.user_invites);
-          delete dojo.eventbriteToken;
-          delete dojo.eventbriteWhId;
+          dojo = cleanDojo(dojo);
         });
         return done(null, results.rows);
       });
@@ -2081,8 +2079,7 @@ module.exports = function (options) {
         client.end();
         _.each(results.rows, function (dojo) {
           dojo.user_invites = purgeInviteEmails(dojo.user_invites);
-          delete dojo.eventbriteToken;
-          delete dojo.eventbriteWhId;
+          dojo = cleanDojo(dojo);
         });
         return done(null, results.rows);
       });
