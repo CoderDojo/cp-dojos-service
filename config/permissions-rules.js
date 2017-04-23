@@ -85,7 +85,6 @@ module.exports = function () {
       //  NOTE : No need for a check if the user is the one who started this lead if the args extend user
       'save_dojo_lead': [{
         role: 'basic-user',
-        // userType: 'champion',
         customValidator: [{
           role: 'cd-dojos',
           cmd: 'is_own_lead'
