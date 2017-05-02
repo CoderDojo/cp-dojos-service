@@ -65,7 +65,6 @@ module.exports = function (options) {
   var USER_DOJO_ENTITY_NS = 'cd/usersdojos';
   var STATS_ENTITY_NS = 'cd/stats';
   var DOJO_LEADS_ENTITY_NS = 'cd/dojoleads';
-  var CDF_ADMIN = 'cdf-admin';
   var DEFAULT_INVITE_USER_TYPE = 'mentor';
   var setupDojoSteps = require('./data/setup_dojo_steps');
   var dojoConfig = require('./data/dojos_config');
@@ -98,6 +97,7 @@ module.exports = function (options) {
   // Lead
   seneca.add({role: plugin, entity: 'lead', cmd: 'save'}, require('./lib/entities/lead/save'));
   seneca.add({role: plugin, entity: 'lead', cmd: 'load'}, require('./lib/entities/lead/load'));
+  seneca.add({role: plugin, entity: 'lead', cmd: 'list'}, require('./lib/entities/lead/list'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'save'}, require('./lib/controllers/lead/save'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'confirm'}, require('./lib/controllers/lead/confirm'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'submit'}, require('./lib/controllers/lead/submit'));
@@ -519,23 +519,6 @@ module.exports = function (options) {
     return isDojoCompleted;
   }
 
-  function isUserChampionAndDojoAdmin (query, requestingUser, done) {
-    if (_.includes(requestingUser.roles, 'cdf-admin')) {
-      return done(null, true);
-    }
-
-    seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
-      if (err) return done(err);
-      var userDojo = response[0];
-      var isDojoChampion = _.includes(userDojo.userTypes, 'champion');
-      var isDojoAdmin = _.find(userDojo.userPermissions, function (userPermission) {
-        return userPermission.name === 'dojo-admin';
-      });
-      if (isDojoChampion && isDojoAdmin) return done(null, true);
-      return done(null, false);
-    });
-  }
-
   function cmd_search (args, done) {
     logger.info({args: args}, 'cmd_search');
     async.waterfall([
@@ -829,13 +812,6 @@ module.exports = function (options) {
     };
 
     dojoLeadEntity.load$(query, done);
-  }
-
-  function cmd_load_dojo_lead (args, done) {
-    var dojoLeadEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
-
-    // TO-DO: use seneca-perm to restrict this action to cdf-admin users.
-    dojoLeadEntity.load$(args.id, done);
   }
 
   function cmd_load_setup_dojo_steps (args, done) {
