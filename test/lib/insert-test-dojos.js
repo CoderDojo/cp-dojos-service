@@ -16,13 +16,12 @@ module.exports = function (options) {
       function (err, champions){
         index ++;
         var champ = champions[0];
-        seneca.act({role: 'cd-dojos', cmd: 'load_user_dojo_lead', query: {id: champ.id} }, function (err, lead) {
+        seneca.act({role: 'cd-dojos', entity: 'lead', cmd: 'load', query: {id: champ.id} }, function (err, lead) {
           dojo.dojoLeadId = lead.id;
-          seneca.act({role: 'cd-dojos', cmd: 'create', dojo: dojo, user: champ}, function (err, createdDojo) {
-            // Bypass the restriction on cd_dojos for verified
-            createdDojo.verified = dojo.verified;
-            // A champ shouldn't verify himself, but that's for test data purpose, it's not like it's checked ...
-            seneca.act({role: 'cd-dojos', cmd: 'update', dojo: createdDojo, user: {id: champ.id}}, sCb);
+          seneca.act({role: 'cd-dojos', ctrl: 'dojo', cmd: 'submit', dojo: dojo, user: champ}, function (err, submittedDojo) {
+            seneca.act({role: 'cd-dojos', ctrl: 'dojo', cmd: 'confirm', dojo: submittedDojo, user: {id: '42'}}, function (err, dojo) {
+              sCb()
+            });
           });
         });
       });
@@ -46,6 +45,7 @@ module.exports = function (options) {
     function getDojo (dojoEmail) {
       return function (wfCb) {
         seneca.act({role: 'cd-dojos', cmd: 'list', query: {'email': dojoEmail} }, function (err, dojos) {
+          console.log('getDojo', dojos[0], dojos);
           return wfCb(null, dojos[0]);
         });
       };
