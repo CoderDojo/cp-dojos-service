@@ -1700,7 +1700,7 @@ module.exports = function (options) {
       var code = 'user-request-to-join-';
 
       if (!dojo.email) return done(new Error('This Dojo has no email setup.'));
-      var payload = {to: dojo.email, code: code, locality: locality, content: content, subject: emailSubject};
+      var payload = {to: dojo.email, code: code, locality: locality, content: content, subject: emailSubject, replyTo: user.email};
       seneca.act({role: plugin, cmd: 'send_email', payload: payload}, done);
     }
   }
