@@ -60,6 +60,7 @@
     "postgrator": "2.5.0",
     "randomstring": "1.0.6",
     "request": "2.55.0",
+    "sanitize-html": "^1.14.1",
     "seneca": "1.4.0",
     "seneca-kue": "git://github.com/wardormeur/seneca-kue",
     "seneca-mail": "0.2.2",

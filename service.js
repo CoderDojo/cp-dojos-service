@@ -13,11 +13,26 @@ var heapdump = require('heapdump');
 var dgram = require('dgram');
 var service = 'cp-dojos-service';
 var log = require('cp-logs-lib')({name: service, level: 'warn'});
+var sanitizeHtml = require('sanitize-html');
 config.log = log.log;
 // logger creates a circular JSON
 seneca.log.info('using config', JSON.stringify(config, null, 4));
 
 seneca.options(config);
+seneca.options.sanitizeTextArea = {
+  allowedTags: sanitizeHtml.defaults.allowedTags.concat(['img']),
+  allowedAttributes: _.assign({}, sanitizeHtml.defaults.allowedAttributes, {
+    /**
+     * Allowing everything here since within ckeditor you have the option of setting the following:
+     *
+     *   * styles such as border, width, and height.
+     *   * alt text
+     *
+     * However ng-bind-html strips the style tag, so you won't actually see custom styling.
+     */
+    img: ['*']
+  })
+};
 seneca.decorate('customValidatorLogFormatter', require('./lib/custom-validator-log-formatter'));
 seneca.use(store, config['postgresql-store']);
 if (process.env.MAILTRAP_ENABLED === 'true') {
