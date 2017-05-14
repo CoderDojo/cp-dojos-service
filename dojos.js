@@ -762,9 +762,9 @@ module.exports = function (options) {
     dojo.creatorEmail = user.email;
     dojo.created = new Date();
     dojo.verified = 0;
-    dojo.name = sanitizeHtml(dojo.name);
-    dojo.notes = sanitizeHtml(dojo.notes);
-    dojo.countryName = sanitizeHtml(dojo.countryName);
+    if (dojo.name) dojo.name = sanitizeHtml(dojo.name);
+    if (dojo.notes) dojo.notes = sanitizeHtml(dojo.notes);
+    if (dojo.countryName) dojo.countryName = sanitizeHtml(dojo.countryName);
 
     if (!dojo.geoPoint && dojo.coordinates) {
       var pair = dojo.coordinates.split(',').map(parseFloat);
@@ -899,10 +899,10 @@ module.exports = function (options) {
               dojoLead = dojoLead.data$();
               if (dojoLead && dojoLead.application && dojoLead.application.dojoListing) {
                 dojoLead.application.dojoListing.stage = dojo.stage;
-                dojoLead.application.dojoListing.notes = sanitizeHtml(dojo.notes, so.sanitizeTextArea);
-                dojoLead.application.dojoListing.name = sanitizeHtml(dojo.name);
+                if (dojo.notes) dojoLead.application.dojoListing.notes = sanitizeHtml(dojo.notes, so.sanitizeTextArea);
+                if (dojo.name) dojoLead.application.dojoListing.name = sanitizeHtml(dojo.name);
+                if (dojo.countryName) dojoLead.application.dojoListing.countryName = sanitizeHtml(dojo.countryName); // Used by OpenGraph
                 dojoLead.application.dojoListing.country = dojo.country;
-                dojoLead.application.dojoListing.countryName = sanitizeHtml(dojo.countryName); // Used by OpenGraph
                 dojoLead.application.dojoListing.countryNumber = dojo.countryNumber;
                 dojoLead.application.dojoListing.continent = dojo.continent;
                 dojoLead.application.dojoListing.alpha2 = dojo.alpha2;
@@ -1042,9 +1042,9 @@ module.exports = function (options) {
       },
       function (dojo, done) {
         // update dojo geoPoint as well if coordinates are updated
-        dojo.name = sanitizeHtml(dojo.name);
-        dojo.countryName = sanitizeHtml(dojo.countryName);
-        dojo.notes = sanitizeHtml(dojo.notes, so.sanitizeTextArea);
+        if (dojo.name) dojo.name = sanitizeHtml(dojo.name);
+        if (dojo.countryName) dojo.countryName = sanitizeHtml(dojo.countryName);
+        if (dojo.notes) dojo.notes = sanitizeHtml(dojo.notes, so.sanitizeTextArea);
         seneca.make$(ENTITY_NS).save$(dojo, function (err, response) {
           if (err) return done(err);
           done(null, response);
