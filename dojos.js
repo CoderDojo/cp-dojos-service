@@ -102,6 +102,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'save'}, require('./lib/controllers/lead/save'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'confirm'}, require('./lib/controllers/lead/confirm'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'submit'}, require('./lib/controllers/lead/submit'));
+  seneca.add({role: plugin, ctrl: 'lead', cmd: 'search'}, require('./lib/controllers/lead/search'));
   // Alias old behavior
   seneca.add({role: plugin, cmd: 'simple_save_dojo_lead'}, require('./lib/entities/lead/save'));
   seneca.add({role: plugin, cmd: 'save_dojo_lead'}, require('./lib/controllers/lead/save'));
@@ -127,7 +128,6 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'get_user_types'}, cmd_get_user_types);
   seneca.add({role: plugin, cmd: 'get_user_permissions'}, cmd_get_user_permissions);
   seneca.add({role: plugin, cmd: 'create_dojo_email'}, cmd_create_dojo_email);
-  seneca.add({role: plugin, cmd: 'search_dojo_leads'}, cmd_search_dojo_leads);
   seneca.add({role: plugin, cmd: 'uncompleted_dojos'}, cmd_uncompleted_dojos);
   seneca.add({role: plugin, cmd: 'get_dojo_config'}, cmd_get_dojo_config);
   seneca.add({role: plugin, cmd: 'load_dojo_admins'}, cmd_load_dojo_admins);
@@ -461,12 +461,6 @@ module.exports = function (options) {
 
   function sha1sum (input) {
     return crypto.createHash('sha1').update(JSON.stringify(input)).digest('hex');
-  }
-
-  function cmd_search_dojo_leads (args, done) {
-    logger.info({args: args}, 'cmd_search_dojo_leads');
-    var dojoLeadsEntity = seneca.make$(DOJO_LEADS_ENTITY_NS);
-    dojoLeadsEntity.list$(args.query, done);
   }
 
   function cmd_uncompleted_dojos (args, done) {
