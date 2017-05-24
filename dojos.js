@@ -100,8 +100,8 @@ module.exports = function (options) {
   seneca.add({role: plugin, entity: 'lead', cmd: 'load'}, require('./lib/entities/lead/load'));
   seneca.add({role: plugin, entity: 'lead', cmd: 'list'}, require('./lib/entities/lead/list'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'save'}, require('./lib/controllers/lead/save'));
-  seneca.add({role: plugin, ctrl: 'lead', cmd: 'confirm'}, require('./lib/controllers/lead/confirm'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'submit'}, require('./lib/controllers/lead/submit'));
+  seneca.add({role: plugin, ctrl: 'lead', cmd: 'confirm'}, require('./lib/controllers/lead/confirm'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'search'}, require('./lib/controllers/lead/search'));
   // Alias old behavior
   seneca.add({role: plugin, cmd: 'simple_save_dojo_lead'}, require('./lib/entities/lead/save'));
@@ -110,11 +110,15 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_dojo_lead'}, require('./lib/entities/lead/load'));
 
+  // Notifications :
+  seneca.add({role: plugin, ctrl: 'notifications', channel: 'email', cmd: 'send'}, require('./lib/controllers/notifications/email/send'));
+  // Alias old behavior
+  seneca.add({role: plugin, cmd: 'send_email'}, require('./lib/controllers/notifications/email/send'));
+
   seneca.add({role: plugin, cmd: 'load_setup_dojo_steps'}, cmd_load_setup_dojo_steps);
   seneca.add({role: plugin, cmd: 'load_usersdojos'}, cmd_load_users_dojos);
   seneca.add({role: plugin, cmd: 'load_dojo_users'}, cmd_load_dojo_users);
   seneca.add({role: plugin, cmd: 'export_dojo_users'}, cmd_export_dojo_users);
-  seneca.add({role: plugin, cmd: 'send_email'}, cmd_send_email);
   seneca.add({role: plugin, cmd: 'generate_user_invite_token'}, cmd_generate_user_invite_token);
   seneca.add({role: plugin, cmd: 'accept_user_invite'}, cmd_accept_user_invite);
   seneca.add({role: plugin, cmd: 'request_user_invite'}, cmd_request_user_invite);
@@ -898,34 +902,6 @@ module.exports = function (options) {
         });
       }
     });
-  }
-
-  function cmd_send_email (args, done) {
-    logger.info({args: args}, 'cmd_send_email');
-    var payload = args.payload;
-    var to = payload.to;
-    var content = payload.content;
-    var from = payload.from;
-    content.year = moment(new Date()).format('YYYY');
-    var emailCode = payload.code;
-    var emailSubject = payload.subject;
-    var subjectVariables = payload.subjectVariables;
-    var emailLocality = payload.locality;
-    var replyTo = payload.replyTo;
-    var bypassTranslation = payload.bypassTranslation;
-    seneca.act({
-      role: 'email-notifications',
-      cmd: 'send',
-      from: from,
-      to: to,
-      replyTo: replyTo,
-      content: content,
-      code: emailCode,
-      locality: emailLocality,
-      subject: emailSubject,
-      subjectVariables: subjectVariables,
-      bypassTranslation: bypassTranslation
-    }, done);
   }
 
   function cmd_generate_user_invite_token (args, done) {
