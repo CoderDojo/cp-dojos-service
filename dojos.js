@@ -79,8 +79,8 @@ module.exports = function (options) {
   seneca.add({role: plugin, entity: 'dojo', cmd: 'save'}, require('./lib/entities/dojo/save'));
   // TODO: create w/ proper restrictions ?
   seneca.add({role: plugin, ctrl: 'dojo', cmd: 'save'}, require('./lib/controllers/dojo/save'));
-  seneca.add({role: plugin, ctrl: 'dojo', cmd: 'confirm'}, require('./lib/controllers/dojo/confirm'));
   seneca.add({role: plugin, ctrl: 'dojo', cmd: 'submit'}, require('./lib/controllers/dojo/submit'));
+  seneca.add({role: plugin, ctrl: 'dojo', cmd: 'confirm'}, require('./lib/controllers/dojo/confirm'));
   seneca.add({role: plugin, ctrl: 'dojo', cmd: 'delete'}, require('./lib/controllers/dojo/delete'));
   // Alias old behavior
   seneca.add({role: plugin, cmd: 'create'}, require('./lib/controllers/dojo/save'));
@@ -557,7 +557,7 @@ module.exports = function (options) {
       },
       function (searchResult, done) {
         var userIds = _.chain(searchResult).map('creators').flatten().map('id').uniq().value();
-        seneca.act({role: 'cd-agreements', cmd: 'list', userIds: userIds}, function (err, agreements) {
+        seneca.act({role: 'cd-agreements', cmd: 'list', query: {userId: {in$: userIds}}}, function (err, agreements) {
           if (err) return done(err);
           agreements = _.keyBy(agreements, 'userId');
           _.forEach(searchResult, function (dojo) {
@@ -745,7 +745,6 @@ module.exports = function (options) {
         if (!userDojos || !userDojos.length) {
           return done(null, [], [], []);
         }
-
         var dojoIds = _.uniq(_.map(userDojos, 'dojoId'));
         var query = {ids: dojoIds};
 

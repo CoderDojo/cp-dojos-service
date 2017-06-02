@@ -18,8 +18,10 @@ module.exports = function (options) {
         var champ = champions[0];
         seneca.act({role: 'cd-dojos', entity: 'lead', cmd: 'load', query: {id: champ.id} }, function (err, lead) {
           dojo.dojoLeadId = lead.id;
-          seneca.act({role: 'cd-dojos', ctrl: 'dojo', cmd: 'submit', dojo: dojo, user: champ}, function (err, submittedDojo) {
-            seneca.act({role: 'cd-dojos', ctrl: 'dojo', cmd: 'confirm', dojo: submittedDojo, user: {id: '42'}}, function (err, dojo) {
+          seneca.act({role: 'cd-dojos', ctrl: 'dojo', cmd: 'submit', dojo: dojo, user: champ},
+           function (err, submittedDojo) {
+            seneca.act({role: 'cd-dojos', ctrl: 'dojo', cmd: 'confirm', dojo: submittedDojo, user: {id: '42'}},
+             function (err, dojo) {
               sCb()
             });
           });
