@@ -69,7 +69,6 @@ module.exports = function (options) {
   var setupDojoSteps = require('./data/setup_dojo_steps');
   var dojoConfig = require('./data/dojos_config');
   var protocol = process.env.PROTOCOL || 'http';
-  var so = seneca.options;
   logger = options.logger;
 
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
