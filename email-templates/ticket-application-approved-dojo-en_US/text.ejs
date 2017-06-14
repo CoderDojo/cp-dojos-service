@@ -1,0 +1,23 @@
+
+  Hi,
+
+  This is a notification to let you know that a request for a ticket for the below event has been received.
+
+
+  Order Summary
+  - Who: <%= applicantName %>
+  - Date: <%= applicationDate %>
+  - Session: <%= sessionName %>
+    Name     Type     Quantity
+    <% for(var i=0; i<tickets.length; i++) { %>
+      <%= tickets[i].ticketName %> <%= tickets[i].ticketType %> <%= tickets[i].quantity %>
+    <% } %>
+
+  Status: <%= status %>
+
+  About this event
+  - Event date: <%= eventDate %>
+  - Event address: <%= event.address %>
+
+  Best wishes,
+  The CoderDojo Foundation Team
