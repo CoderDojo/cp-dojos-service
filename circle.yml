@@ -9,6 +9,8 @@ dependencies:
     - if [ "$CIRCLE_BRANCH" = "master" ]; then cd ~/ && git clone git@github.com:CoderDojo/cp-translations.git && cd cp-translations && ./build.sh; fi
   override:
     - npm install
+  post: 
+    - cd ~/cp-dojos-service && find ./node_modules/* -mtime +10950 -exec touch {} \;   
 test:
   override:
     - npm run test
