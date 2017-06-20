@@ -27,4 +27,4 @@ seneca.ready(function() {
 
 require('../../network.js')(seneca);
 // Add "its" µs as a dependency
-seneca.client({ type: 'web', port: 10301, pin: { role: 'cd-dojos', cmd: '*' } });
+seneca.client({ type: 'web', host: process.env.CD_DOJOS || 'localhost', port: 10301, pin: { role: 'cd-dojos', cmd: '*' } });
