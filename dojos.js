@@ -76,6 +76,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load'}, cmd_load);
   seneca.add({role: plugin, cmd: 'find'}, cmd_find);
   seneca.add({role: plugin, entity: 'dojo', cmd: 'save'}, require('./lib/entities/dojo/save'));
+  seneca.add({role: plugin, entity: 'dojo', cmd: 'list'}, require('./lib/entities/dojo/list'));
   // TODO: create w/ proper restrictions ?
   seneca.add({role: plugin, ctrl: 'dojo', cmd: 'save'}, require('./lib/controllers/dojo/save'));
   seneca.add({role: plugin, ctrl: 'dojo', cmd: 'submit'}, require('./lib/controllers/dojo/submit'));
@@ -103,11 +104,16 @@ module.exports = function (options) {
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'confirm'}, require('./lib/controllers/lead/confirm'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'search'}, require('./lib/controllers/lead/search'));
   // Alias old behavior
+  seneca.add({role: plugin, cmd: 'search_dojo_leads'}, require('./lib/controllers/lead/search'));
   seneca.add({role: plugin, cmd: 'simple_save_dojo_lead'}, require('./lib/entities/lead/save'));
   seneca.add({role: plugin, cmd: 'save_dojo_lead'}, require('./lib/controllers/lead/save'));
   seneca.add({role: plugin, cmd: 'update_dojo_lead'}, require('./lib/controllers/lead/save'));
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_dojo_lead'}, require('./lib/entities/lead/load'));
+
+  // UserDojo
+  seneca.add({role: plugin, entity: 'userdojo', cmd: 'list'}, require('./lib/entities/dojo-users/list'));
+  seneca.add({role: plugin, entity: 'userdojo', cmd: 'save'}, require('./lib/entities/dojo-users/save'));
 
   // Notifications :
   seneca.add({role: plugin, ctrl: 'notifications', channel: 'email', cmd: 'send'}, require('./lib/controllers/notifications/email/send'));
@@ -698,7 +704,6 @@ module.exports = function (options) {
     logger.info({args: args}, 'cmd_load');
     seneca.make$(ENTITY_NS).load$(args.id, function (err, response) {
       if (err) return done(err);
-
       if (response && response.userInvites) {
         response.userInvites = purgeInviteEmails(response.userInvites);
       }
@@ -822,7 +827,6 @@ module.exports = function (options) {
     query.deleted = 0;
 
     usersdojos_ent = seneca.make$(USER_DOJO_ENTITY_NS);
-
     usersdojos_ent.list$(query, function (err, usersDojos) {
       if (err) {
         return done(err);

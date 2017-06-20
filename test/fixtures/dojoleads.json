@@ -3,13 +3,67 @@
     "id": 1000,
     "userId": 1000,
     "email": "lead1@example.com",
-    "currentStep": 0,
     "completed": false,
-    "converted": false,
-    "mysql_dojo_id": 23,
     "application" : {
-    	"dojoListing": {
-    		"notes": "new note details"
+      "champion": {
+        "firstName": "champ1",
+        "lastName": "One",
+        "email": "champion1@example.com",
+        "dob": "1990-01-01",
+        "address": "22 lower street",
+        "phone": "+353837812534",
+        "twitter": "http://twitter.com/leChamp1",
+        "confidentCoding": 1,
+        "confidentMentoring": 2,
+        "reference": "family",
+        "isValid": false,
+        "visited": false
+    	},
+      "dojo": {
+        "name": "le Do-Joe",
+        "firstSession": "2017-05-10",
+        "frequency": "1/w",
+        "day": 1,
+        "hour": "20",
+        "requestEmail": false,
+        "email": "do-joe@example.com",
+    		"notes": "new note details",
+        "isValid": false,
+        "visited": false
+    	},
+      "venue": {
+        "isFound": true,
+        "country": {
+            "countryName": "Italy",
+            "countryNumber": 380,
+            "continent": "EU",
+            "alpha2": "IT",
+            "alpha3": "ITA",
+            "$$hashKey": "object:212"
+        },
+        "place": {
+            "nameWithHierarchy": "Roma",
+            "$$hashKey": "object:966"
+        },
+        "geoPoint": {
+          "lat": 4,
+          "lon": 5
+        },
+        "address1": "Address 1",
+        "type": "school",
+        "isValid": false,
+        "visited": false
+    	},
+      "charter": {
+        "id": 1,
+        "fullName": "champ1 One",
+        "isValid": false,
+        "visited": false
+      },
+      "team": {
+        "status": "exists",
+        "isValid": false,
+        "visited": false
     	}
     }
   }
