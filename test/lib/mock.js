@@ -8,6 +8,7 @@ var _ = require('lodash');
  * @return {Object}         result || dynamic value
  */
 
+// TODO: mocking an act on a same microservice than the one tested seems not to work
 module.exports = function (seneca) {
   return function (pattern, result) {
     var role = pattern.role;

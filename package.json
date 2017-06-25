@@ -9,7 +9,7 @@
   "scripts": {
     "start": "node service.js",
     "lint": "./node_modules/.bin/semistandard *.js config/config.js",
-    "test": "bash -c 'source ./config/development.env; npm run lint && ./node_modules/.bin/lab lib/ -P spec --ignore __core-js_shared__ '",
+    "test": "bash -c 'source ./config/development.env; npm run lint && ./node_modules/.bin/lab lib/controllers/lead -P spec --ignore __core-js_shared__ '",
     "legacytest": "bash -c 'source ./config/development.env; npm run lint && ./node_modules/.bin/lab --ignore __core-js_shared__ --flat'",
     "coverage": "bash -c 'source ./config/development.env; ./node_modules/.bin/lab --threshold 68 -r html -o ./coverage/coverage.html -r lcov -o ./coverage/lcov.info -r json -o ./coverage/coverage.json -r console -o stdout'",
     "covrep": "bash test/covrep.sh"
