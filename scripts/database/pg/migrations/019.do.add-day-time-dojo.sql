@@ -10,7 +10,7 @@ DO $$
         END;
         BEGIN
         -- TODO: This should be added later on : NOT NULL DEFAULT NOW()
-            ALTER TABLE cd_dojos ADD hour timestamp;
+            ALTER TABLE cd_dojos ADD hour time;
         EXCEPTION
           WHEN duplicate_column THEN RAISE NOTICE 'column time already exists in cd_dojos.';
           WHEN others THEN RAISE NOTICE 'Unhandled error: % %', SQLERRM, SQLSTATE;
