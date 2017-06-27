@@ -12,17 +12,23 @@ module.exports = function (options) {
     var dojos = require('../fixtures/e2e/dojos');
     var index = 1;
     async.eachSeries(dojos, function (dojo, sCb) {
-      seneca.act({role: 'cd-users', cmd: 'list', query: {email: 'champion'+ index + '@example.com'}},
-      function (err, champions){
+      seneca.act({role: 'cd-users', cmd: 'list', query: {email: 'champion' + index + '@example.com'}},
+      function (err, champions) {
         index ++;
         var champ = champions[0];
-        seneca.act({role: 'cd-dojos', entity: 'lead', cmd: 'load', query: {id: champ.id} }, function (err, lead) {
+        seneca.act({role: 'cd-dojos', entity: 'lead', cmd: 'load', query: {id: champ.id}}, function (err, lead) {
           dojo.dojoLeadId = lead.id;
-          seneca.act({role: 'cd-dojos', ctrl: 'dojo', cmd: 'submit', dojo: dojo, user: champ},
-           function (err, submittedDojo) {
-            seneca.act({role: 'cd-dojos', ctrl: 'dojo', cmd: 'confirm', dojo: submittedDojo, user: {id: '42'}},
+          //The f-end is supposed to add *isValid* field to each step
+          _.each(lead.application, function (step) {
+            step.isValid = true;
+          });
+          seneca.act({role: 'cd-dojos', ctrl: 'lead', cmd: 'submit', lead: lead, user: champ, locality: 'en_US'},
+           function (err, submittedLead) {
+            if (err) return done(err);
+            seneca.act({role: 'cd-dojos', ctrl: 'lead', cmd: 'confirm', lead: submittedLead, user: {id: '42'}},
              function (err, dojo) {
-              sCb()
+              if (err) return done(err);
+              sCb();
             });
           });
         });
@@ -47,7 +53,6 @@ module.exports = function (options) {
     function getDojo (dojoEmail) {
       return function (wfCb) {
         seneca.act({role: 'cd-dojos', cmd: 'list', query: {'email': dojoEmail} }, function (err, dojos) {
-          console.log('getDojo', dojos[0], dojos);
           return wfCb(null, dojos[0]);
         });
       };
@@ -86,7 +91,7 @@ module.exports = function (options) {
 
   seneca.add({role: plugin, cmd: 'insert', entity: 'dojo_lead'}, function (args, done) {
     var dojoleads = require('../fixtures/e2e/dojo-leads.json');
-    async.eachSeries(dojoleads, function (lead, sCb){
+    async.eachSeries(dojoleads, function (lead, sCb) {
       async.waterfall([
         getUser,
         saveDojoLead
@@ -101,7 +106,7 @@ module.exports = function (options) {
 
       function saveDojoLead (dojoAdmin, wfCb) {
         lead.userId = dojoAdmin.id;
-        seneca.act({role: 'cd-dojos', cmd: 'simple_save_dojo_lead', dojoLead: lead}, wfCb);
+        seneca.act({role: 'cd-dojos', ctrl: 'lead', cmd: 'save', lead: lead, user: {id: lead.userId}}, wfCb);
       }
     }, done);
   });
