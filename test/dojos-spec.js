@@ -184,7 +184,6 @@ lab.experiment('Dojo Microservice test', function () {
           dojosEnt.load$({creator: users[4].id}, function (err, loadedDojo) {
             if (err) return done(err);
             expect(dojos).not.to.be.empty;
-            console.log(loadedDojo);
             expect(loadedDojo).to.exist;
             expect(loadedDojo).to.be.ok;
 
