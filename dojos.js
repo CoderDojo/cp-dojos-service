@@ -80,7 +80,7 @@ module.exports = function (options) {
   // TODO: create w/ proper restrictions ?
   seneca.add({role: plugin, ctrl: 'dojo', cmd: 'save'}, require('./lib/controllers/dojo/save'));
   seneca.add({role: plugin, ctrl: 'dojo', cmd: 'submit'}, require('./lib/controllers/dojo/submit'));
-  seneca.add({role: plugin, ctrl: 'dojo', cmd: 'confirm'}, require('./lib/controllers/dojo/confirm'));
+  seneca.add({role: plugin, ctrl: 'dojo', cmd: 'verify'}, require('./lib/controllers/dojo/verify'));
   seneca.add({role: plugin, ctrl: 'dojo', cmd: 'delete'}, require('./lib/controllers/dojo/delete'));
   // Alias old behavior
   seneca.add({role: plugin, cmd: 'create'}, require('./lib/controllers/dojo/save'));
@@ -101,7 +101,6 @@ module.exports = function (options) {
   seneca.add({role: plugin, entity: 'lead', cmd: 'list'}, require('./lib/entities/lead/list'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'save'}, require('./lib/controllers/lead/save'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'submit'}, require('./lib/controllers/lead/submit'));
-  seneca.add({role: plugin, ctrl: 'lead', cmd: 'confirm'}, require('./lib/controllers/lead/confirm'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'search'}, require('./lib/controllers/lead/search'));
   // Alias old behavior
   seneca.add({role: plugin, cmd: 'search_dojo_leads'}, require('./lib/controllers/lead/search'));
