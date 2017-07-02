@@ -9,10 +9,21 @@ DO $$
           WHEN others THEN RAISE NOTICE 'Unhandled error: % %', SQLERRM, SQLSTATE;
         END;
         BEGIN
-        -- TODO: This should be added later on : NOT NULL DEFAULT NOW()
-            ALTER TABLE cd_dojos ADD hour time;
+            ALTER TABLE cd_dojos ADD start_time time;
         EXCEPTION
-          WHEN duplicate_column THEN RAISE NOTICE 'column time already exists in cd_dojos.';
+          WHEN duplicate_column THEN RAISE NOTICE 'column start_time already exists in cd_dojos.';
+          WHEN others THEN RAISE NOTICE 'Unhandled error: % %', SQLERRM, SQLSTATE;
+        END;
+        BEGIN
+            ALTER TABLE cd_dojos ADD end_time time;
+        EXCEPTION
+          WHEN duplicate_column THEN RAISE NOTICE 'column end_time already exists in cd_dojos.';
+          WHEN others THEN RAISE NOTICE 'Unhandled error: % %', SQLERRM, SQLSTATE;
+        END;
+        BEGIN
+            ALTER TABLE cd_dojos ADD frequency character varying;
+        EXCEPTION
+          WHEN duplicate_column THEN RAISE NOTICE 'column frequency already exists in cd_dojos.';
           WHEN others THEN RAISE NOTICE 'Unhandled error: % %', SQLERRM, SQLSTATE;
         END;
     END;

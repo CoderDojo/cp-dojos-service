@@ -19,7 +19,8 @@
             "name": "dojo1",
             "firstSession": "2017-11-13T23:00:00.000Z",
             "frequency": "1/w",
-            "hour": "13:00:00.000",
+            "startTime": "13:00:00.000",
+            "endTime": "15:00:00.000",
             "day": 1,
             "requestEmail": false,
             "email": "dojo1@example.com",
@@ -84,7 +85,8 @@
         "dojo": {
             "notes": "Bring laptop.",
             "name": "dojo2",
-            "hour": "10:00:00.000",
+            "startTime": "10:00:00.000",
+            "startTime": "12:00:00.000",
             "day": 1,
             "email": "dojo2@example.com",
             "supporterImage": null,
@@ -146,7 +148,8 @@
         "dojo": {
             "notes": "<p>Lorem Ipsum</p>\n",
             "name": "Roma",
-            "hour": "10:00:00.000",
+            "startTime": "10:00:00.000",
+            "endTime": "12:00:00.000",
             "day": 1,
             "email": "dojo2@example.com",
             "address1": "Roma, Italy",
@@ -210,7 +213,8 @@
         "dojo": {
             "notes": "<p>Suggested Notes:<br />\n<br />\nPlease bring:</p>\n\n<ul>\n\t<li>A pack lunch.</li>\n\t<li>A laptop. Borrow one from somebody if needs be.</li>\n\t<li><strong>A parent! (Very important). If you are 12 or under, your parent must stay with you during the session.</strong></li>\n</ul>\n\n<p>&nbsp;</p>\n",
             "name": "Dojo Dublin",
-            "hour": "6:30:00.000",
+            "startTime": "6:30:00.000",
+            "endTime": "8:30:00.000",
             "day": 1
         },
         "venue": {
