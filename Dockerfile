@@ -1,4 +1,4 @@
-FROM mhart/alpine-node:0.10.38
+FROM mhart/alpine-node:0.10.48
 MAINTAINER butlerx <butlerx@notthe.cloud>
 
 RUN apk add --update git python build-base postgresql-client openssl && \
