@@ -561,20 +561,24 @@ module.exports = function (options) {
       },
       function (searchResult, done) {
         var userIds = _.chain(searchResult).map('creators').flatten().map('id').uniq().value();
-        seneca.act({role: 'cd-agreements', cmd: 'list', query: {userId: {in$: userIds}}}, function (err, agreements) {
-          if (err) return done(err);
-          agreements = _.keyBy(agreements, 'userId');
-          _.forEach(searchResult, function (dojo) {
-            dojo.agreements = [];
-            _.forEach(dojo.creators, function (creator) {
-              creator.agreements = [];
-              if (agreements[creator.id]) {
-                creator.agreements = agreements[creator.id].agreements;
-              }
+        if (userIds.length > 0) {
+          seneca.act({role: 'cd-agreements', cmd: 'list', query: {userId: {in$: userIds}}}, function (err, agreements) {
+            if (err) return done(err);
+            agreements = _.keyBy(agreements, 'userId');
+            _.forEach(searchResult, function (dojo) {
+              dojo.agreements = [];
+              _.forEach(dojo.creators, function (creator) {
+                creator.agreements = [];
+                if (agreements[creator.id]) {
+                  creator.agreements = agreements[creator.id].agreements;
+                }
+              });
             });
+            return done(null, searchResult);
           });
-          return done(null, searchResult);
-        });
+        } else {
+          return done(null, []);
+        }
       }
     ], function (err, res) {
       if (err) return done(null, {error: err});
