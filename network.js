@@ -34,7 +34,7 @@ module.exports = function (seneca) {
       host: process.env.CD_USERS || 'localhost',
       port: 10303,
       pin: {
-        role: 'cd-user-profiles',
+        role: 'cd-user-profile',
         cmd: '*'
       }
     })
