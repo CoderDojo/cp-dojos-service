@@ -40,14 +40,13 @@ module.exports = function (options) {
 
   seneca.add({role: plugin, cmd: 'insert', entity: 'user_dojo'}, function (args, done) {
     var dojoMembers = require('../fixtures/e2e/dojo-members');
-    async.eachSeries(dojoMembers, function (dojoMember, sCb){
+    async.eachSeries(dojoMembers, function (dojoMember, sCb) {
       async.waterfall([
         getDojo(dojoMember.dojo.email),
         getUser(dojoMember.email),
         getExistingMembership(dojoMember.existing),
         saveUserDojo(dojoMember, dojoMember.userTypes)
       ], sCb);
-
     }, done);
 
     function getDojo (dojoEmail) {
@@ -106,7 +105,7 @@ module.exports = function (options) {
 
       function saveDojoLead (dojoAdmin, wfCb) {
         lead.userId = dojoAdmin.id;
-        seneca.act({role: 'cd-dojos', ctrl: 'lead', cmd: 'save', lead: lead, user: {id: lead.userId}}, wfCb);
+        seneca.act({role: 'cd-dojos', ctrl: 'lead', cmd: 'save', lead: lead, user: {id: lead.userId, email: lead.email}}, wfCb);
       }
     }, done);
   });
