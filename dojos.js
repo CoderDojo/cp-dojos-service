@@ -2148,7 +2148,7 @@ module.exports = function (options) {
             name: dojo.name,
             email: dojo.email
           },
-          event: {},
+          event: event,
           year: moment(new Date()).format('YYYY')
         };
 
