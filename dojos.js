@@ -2150,7 +2150,7 @@ module.exports = function (options) {
           },
           event: {
             name: event.name
-          }
+          },
           year: moment(new Date()).format('YYYY')
         };
 
