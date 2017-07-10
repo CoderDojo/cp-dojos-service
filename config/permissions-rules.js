@@ -256,6 +256,9 @@ module.exports = function () {
             role: 'cd-dojos',
             cmd: 'is_own_lead'
           }]
+        }],
+        'delete': [{
+          role: 'cdf-admin'
         }]
       }
     }

@@ -102,6 +102,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'save'}, require('./lib/controllers/lead/save'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'submit'}, require('./lib/controllers/lead/submit'));
   seneca.add({role: plugin, ctrl: 'lead', cmd: 'search'}, require('./lib/controllers/lead/search'));
+  seneca.add({role: plugin, ctrl: 'lead', cmd: 'delete'}, require('./lib/controllers/lead/delete'));
   // Alias old behavior
   seneca.add({role: plugin, cmd: 'search_dojo_leads'}, require('./lib/controllers/lead/search'));
   seneca.add({role: plugin, cmd: 'simple_save_dojo_lead'}, require('./lib/entities/lead/save'));
@@ -739,7 +740,7 @@ module.exports = function (options) {
   function cmd_bulk_delete (args, done) {
     logger.info({args: args}, 'cmd_bulk_delete');
     async.map(args.dojos, function deleteDojo (dojo, cb) {
-      seneca.act({role: plugin, cmd: 'delete', dojo: dojo, user: args.user}, cb);
+      seneca.act({role: plugin, ctrl: 'dojo', cmd: 'delete', dojo: dojo, user: args.user}, cb);
     }, done);
   }
 
