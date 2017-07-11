@@ -22,6 +22,7 @@ var fs = require('fs');
 var addChildrenParentDojo = require('./lib/add-children-parent-dojo');
 var cmd_export_dojo_users = require('./lib/export-csv');
 var cmd_update_image = require('./lib/update-image');
+var purgeInviteEmails = require('./lib/utils/dojo/purgeInviteEmails');
 // Polls
 // TODO: change import to require polls out of dojos.js
 var cmd_save_poll_result = require('./lib/poll/save-poll-result');
@@ -87,8 +88,8 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'update'}, require('./lib/controllers/dojo/save'));
   seneca.add({role: plugin, cmd: 'delete'}, require('./lib/controllers/dojo/delete'));
 
+  seneca.add({role: plugin, ctrl: 'dojo', cmd: 'joinedDojos'}, require('./lib/controllers/dojo/joined-dojos'));
   seneca.add({role: plugin, cmd: 'update_image'}, cmd_update_image);
-  seneca.add({role: plugin, cmd: 'my_dojos'}, cmd_my_dojos);
   seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
   seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
   seneca.add({role: plugin, cmd: 'dojos_state_count'}, cmd_dojos_state_count);
@@ -656,13 +657,6 @@ module.exports = function (options) {
     }
   }
 
-  function purgeInviteEmails (invitesArray) {
-    return _.map(invitesArray, function (invite) {
-      delete invite.email;
-      return invite;
-    });
-  }
-
   function cmd_list (args, done) {
     logger.info({args: args}, 'cmd_list');
     var query = args.query || {};
@@ -742,42 +736,6 @@ module.exports = function (options) {
     async.map(args.dojos, function deleteDojo (dojo, cb) {
       seneca.act({role: plugin, ctrl: 'dojo', cmd: 'delete', dojo: dojo, user: args.user}, cb);
     }, done);
-  }
-
-  function cmd_my_dojos (args, done) {
-    async.waterfall([
-      function (done) {
-        seneca.make$(USER_DOJO_ENTITY_NS).list$({userId: args.user.id, limit$: 'NULL', deleted: 0}, done);
-      },
-      function (userDojos, done) {
-        if (!userDojos || !userDojos.length) {
-          return done(null, [], [], []);
-        }
-        var dojoIds = _.uniq(_.map(userDojos, 'dojoId'));
-        var query = {ids: dojoIds};
-
-        var search = args.search;
-        if (search && search.from) {
-          query.skip$ = search.from;
-        }
-        if (search && search.size) {
-          query.limit$ = search.size;
-        }
-        if (search && search.sort) {
-          query.sort$ = search.sort;
-        }
-        seneca.make$(ENTITY_NS).list$(query, _.partialRight(done, userDojos, dojoIds));
-      },
-      function (dojos, userDojos, dojoIds, done) {
-        _.each(dojos, function (dojo) {
-          dojo.userInvites = purgeInviteEmails(dojo.userInvites);
-        });
-        return done(null, {
-          total: dojoIds.length,
-          records: dojos
-        });
-      }
-    ], done);
   }
 
   function cmd_get_stats (args, done) {

@@ -59,7 +59,7 @@ module.exports = function () {
       'list': [{
         role: 'none',
       }],
-      'my_dojos': [{
+      'joinedDojos': [{
         role: 'basic-user'
       }],
       'load': [{
