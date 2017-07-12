@@ -491,4 +491,105 @@
             "coderDojoReference": "Family/Friends"
         }
     }
+}, {
+  "email": "champion3@example.com",
+  "currentStep": 5,
+  "completed": false,
+  "converted": false,
+  "application": {
+      "championDetails": {
+          "email": "champion3@example.com",
+          "name": "Champion3",
+          "dateOfBirth": "1957-11-13T23:00:00.000Z",
+          "phone": "393345678910",
+          "country": {
+              "countryName": "France",
+              "countryNumber": 250,
+              "continent": "EU",
+              "alpha2": "FR",
+              "alpha3": "FRA",
+              "$$hashKey": "object:212"
+          },
+          "county": {},
+          "state": {},
+          "city": {},
+          "place": {
+              "nameWithHierarchy": "Lyon",
+              "$$hashKey": "object:966"
+          },
+          "countryName": "France",
+          "countryNumber": 250,
+          "continent": "EU",
+          "alpha2": "FR",
+          "alpha3": "FRA",
+          "address1": "24 Rue Pizay",
+          "projects": "Lorem Ipsum",
+          "coderDojoReference": "Other"
+      },
+      "setupYourDojo": {
+          "findTechnicalMentors": true,
+          "findTechnicalMentorsText": "1",
+          "findNonTechnicalMentors": true,
+          "findNonTechnicalMentorsText": "1",
+          "backgroundCheck": false,
+          "backgroundCheckText": "",
+          "locateVenue": true,
+          "locateVenueText": "24 Rue Pizay",
+          "ensureHealthAndSafety": true,
+          "ensureHealthAndSafetyText": "ok",
+          "ensureInsuranceCover": true,
+          "ensureInsuranceCoverText": "ok",
+          "setDojoDateAndTime": true,
+          "setDojoDateAndTimeText": "Soon",
+          "planContent": true,
+          "setupTicketingAndRegistration": true,
+          "setDojoEmailAddress": true,
+          "setupSocialMedia": false,
+          "embodyCoderDojoTao": true,
+          "onlineSafetyBestPractice": false,
+          "onlineSafetyBestPracticeText": "",
+          "dataProtectionRegulated": false,
+          "dataProtectionRegulatedText": "",
+          "diversityRespected": true,
+          "diversityRespectedText": "",
+          "engageCoderDojoMovement": true,
+          "engageCoderDojoMovementText": ""
+      },
+      "dojoListing": {
+          "stage": 2,
+          "notes": "<p>Lorem Ipsum</p>\n",
+          "name": "Lyon",
+          "time": "Every X, 10:00 -13:00",
+          "country": {
+              "countryName": "France",
+              "countryNumber": 250,
+              "continent": "EU",
+              "alpha2": "FR",
+              "alpha3": "FRA"
+          },
+          "placeName": "Lyon",
+          "county": {},
+          "state": {},
+          "city": {},
+          "place": {
+              "nameWithHierarchy": "Lyon"
+          },
+          "countryName": "France",
+          "countryNumber": 380,
+          "continent": "EU",
+          "alpha2": "FR",
+          "alpha3": "FRA",
+          "email": "privateDojo1@example.com",
+          "address1": "24 Rue Pizay, Lyon, France",
+          "needMentors": 1,
+          "coordinates": "45.76711, 4.83662",
+          "mailingList": 1,
+          "supporterImage": null,
+          "website": null,
+          "twitter": null,
+          "googleGroup": null,
+          "private": 0,
+          "creatorEmail": "champion1@example.com"
+      }
+  }
 }]
