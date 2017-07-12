@@ -134,6 +134,7 @@ module.exports = function (options) {
   // CRUD Entities, BACKEND ONLY (unfiltered data, no return to front-end)
   seneca.add({role: plugin, entity: 'dojo', cmd: 'search'}, require('./lib/entities/dojo/search')());
   seneca.add({role: plugin, entity: 'dojo', cmd: 'load'}, require('./lib/entities/dojo/load')());
+  seneca.add({role: plugin, entity: 'dojo', cmd: 'update'}, require('./lib/entities/dojo/save')());
 
   //  TODO:10 : export as a different microservice?
   //  Polls channels
