@@ -239,8 +239,8 @@ module.exports = function () {
         'search': [{
           role: 'basic-user',
           customValidator: [{
-            role: 'cd-users',
-            cmd: 'is_self'
+            role: 'cd-dojos',
+            cmd: 'is_own_lead'
           }]
         }],
         'save': [{
