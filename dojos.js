@@ -57,7 +57,8 @@ var cmd_get_dojo_stats = require('./lib/dojos/stats');
 var cmd_search_join_requests = require('./lib/dojos/search-join-requests');
 
 var cmd_backfill_champions = require('./lib/backfill-champions');
-
+// Utils
+var cleanDojo = require('./lib/utils/cleanDojo');
 var logger;
 
 module.exports = function (options) {
@@ -129,6 +130,11 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'add_children_parent_dojo'}, addChildrenParentDojo);
   seneca.add({role: plugin, cmd: 'notify_dojo_members'}, require('./lib/dojos/users/notify'));
   seneca.add({role: plugin, cmd: 'add_children_parent_dojo'}, addChildrenParentDojo.bind(seneca));
+
+  // CRUD Entities, BACKEND ONLY (unfiltered data, no return to front-end)
+  seneca.add({role: plugin, entity: 'dojo', cmd: 'search'}, require('./lib/entities/dojo/search')());
+  seneca.add({role: plugin, entity: 'dojo', cmd: 'load'}, require('./lib/entities/dojo/load')());
+  seneca.add({role: plugin, entity: 'dojo', cmd: 'update'}, require('./lib/entities/dojo/save')());
 
   //  TODO:10 : export as a different microservice?
   //  Polls channels
@@ -671,6 +677,7 @@ module.exports = function (options) {
         if (dojo.userInvites) {
           dojo.userInvites = purgeInviteEmails(dojo.userInvites);
         }
+        dojo = cleanDojo(dojo);
       });
       done(null, dojos);
     });
@@ -686,7 +693,7 @@ module.exports = function (options) {
         if (dojo.userInvites) {
           dojo.userInvites = purgeInviteEmails(dojo.userInvites);
         }
-
+        dojo = cleanDojo(dojo);
         if (!dojosByCountry[dojo.countryName]) dojosByCountry[dojo.countryName] = [];
         dojosByCountry[dojo.countryName].push(dojo);
       });
@@ -705,8 +712,12 @@ module.exports = function (options) {
     seneca.make$(ENTITY_NS).load$(args.id, function (err, response) {
       if (err) return done(err);
 
-      if (response && response.userInvites) {
-        response.userInvites = purgeInviteEmails(response.userInvites);
+      if (response) {
+        if (response.userInvites) {
+          response.userInvites = purgeInviteEmails(response.userInvites);
+        }
+        if (response.eventbriteToken && response.eventbriteWhId) response.eventbriteConnected = true;
+        response = cleanDojo(response);
       }
       done(null, response);
     });
@@ -720,8 +731,12 @@ module.exports = function (options) {
     seneca.make$(ENTITY_NS).load$(args.query, function (err, response) {
       if (err) return done(err);
 
-      if (response && response.userInvites) {
-        response.userInvites = purgeInviteEmails(response.userInvites);
+      if (response) {
+        if (response.userInvites) {
+          response.userInvites = purgeInviteEmails(response.userInvites);
+        }
+        if (response.eventbriteToken && response.eventbriteWhId) response.eventbriteConnected = true;
+        response = cleanDojo(response);
       }
       done(null, response);
     });
@@ -1229,6 +1244,8 @@ module.exports = function (options) {
       function (dojos, userDojos, dojoIds, done) {
         _.each(dojos, function (dojo) {
           dojo.userInvites = purgeInviteEmails(dojo.userInvites);
+          if (dojo.eventbriteToken && dojo.eventbriteWhId) dojo.eventbriteConnected = true;
+          dojo = cleanDojo(dojo);
         });
         return done(null, {
           total: dojoIds.length,
@@ -2003,6 +2020,7 @@ module.exports = function (options) {
         client.end();
         _.each(results.rows, function (dojo) {
           dojo.user_invites = purgeInviteEmails(dojo.user_invites);
+          dojo = cleanDojo(dojo);
         });
         return done(null, results.rows);
       });
@@ -2038,6 +2056,7 @@ module.exports = function (options) {
         client.end();
         _.each(results.rows, function (dojo) {
           dojo.user_invites = purgeInviteEmails(dojo.user_invites);
+          dojo = cleanDojo(dojo);
         });
         return done(null, results.rows);
       });
