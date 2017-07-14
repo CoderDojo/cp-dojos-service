@@ -59,7 +59,7 @@ module.exports = function () {
       'list': [{
         role: 'none',
       }],
-      'my_dojos': [{
+      'joinedDojos': [{
         role: 'basic-user'
       }],
       'load': [{
@@ -79,43 +79,6 @@ module.exports = function () {
 
       'get_stats': [{
         role: 'cdf-admin'
-      }],
-
-      //  We can't enforce to be a champion, elsewhat no user appart from champion can start a dojo
-      //  NOTE : No need for a check if the user is the one who started this lead if the args extend user
-      'save_dojo_lead': [{
-        role: 'basic-user',
-        // userType: 'champion',
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'is_own_lead'
-        }]
-      }],
-      'update_dojo_lead': [{
-        role: 'basic-user',
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'is_own_lead'
-        }]
-      }],
-
-      'load_user_dojo_lead': [{
-        role: 'basic-user'
-      }],
-      'load_dojo_lead': [{
-        role: 'basic-user',
-        userType: 'champion',
-        extendedUserTypes: true,
-        customValidator: [{
-          role: 'cd-dojos',
-          cmd: 'own_dojo'
-        }]
-      }, {
-        role: 'cdf-admin'
-      }],
-      //  TODO:140 strengthen ?
-      'search_dojo_leads': [{
-        role: 'basic-user'
       }],
 
       'load_setup_dojo_steps': [{
@@ -264,14 +227,40 @@ module.exports = function () {
         role: 'none'
       }],
       'send_test_email_poll': [{
-       role: 'cdf-admin'
+        role: 'cdf-admin'
       }],
       'start_poll': [{
-       role: 'cdf-admin'
-     }],
-     'queue_email_poll': [{
-      role: 'cdf-admin'
-     }]
+        role: 'cdf-admin'
+      }],
+      'queue_email_poll': [{
+        role: 'cdf-admin'
+      }],
+      'lead': {
+        'search': [{
+          role: 'basic-user',
+          customValidator: [{
+            role: 'cd-dojos',
+            cmd: 'is_own_lead'
+          }]
+        }],
+        'save': [{
+          role: 'basic-user',
+          customValidator: [{
+            role: 'cd-dojos',
+            cmd: 'is_own_lead'
+          }]
+        }],
+        'submit': [{
+          role: 'basic-user',
+          customValidator: [{
+            role: 'cd-dojos',
+            cmd: 'is_own_lead'
+          }]
+        }],
+        'delete': [{
+          role: 'cdf-admin'
+        }]
+      }
     }
   };
 };
