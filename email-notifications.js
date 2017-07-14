@@ -26,13 +26,15 @@ module.exports = function (options) {
     var subjectVariables = args.subjectVariables || [];
     var subjectTranslation;
     var emailCode;
+    var locale = args.locality;
+    var code = args.code;
     if (options.sendemail && options.email) {
-      emailCode = args.code + args.locality;
-      if (!fs.existsSync(CpTranslations.getEmailTemplatePath(emailCode))) emailCode = args.code + 'en_US';
+      emailCode = code + locale;
+      if (!fs.existsSync(CpTranslations.getEmailTemplatePath(emailCode))) emailCode = code + 'en_US';
       if (!args.to) return done(null, {ok: false, why: 'No recipient set.'});
 
       if (!bypassTranslation) {
-        subjectTranslation = i18nHelper.getClosestTranslation(args.locality, subject);
+        subjectTranslation = i18nHelper.getClosestTranslation(locale, subject);
         if (subjectTranslation === null) {
           return done(null, {ok: false, why: 'Invalid email subject.'});
         }
