@@ -205,37 +205,6 @@ lab.experiment('Dojo Microservice test', function () {
     });
   });
 
-  lab.experiment('Save dojo lead', function () {
-    lab.test('save dojo lead to db', function (done) {
-      expect(dojoleads[0]).to.exist;
-      expect(dojoleads[0].userId).to.be.ok;
-
-      seneca.act({
-        role: role,
-        cmd: 'save_dojo_lead',
-        lead: dojoleads[0]
-      }, function (err, savedLead) {
-        if (err) return done(err);
-
-        expect(savedLead).to.exist;
-        expect(savedLead.userId).to.be.ok;
-        expect(savedLead.email).to.be.ok;
-        expect(savedLead).not.to.be.empty;
-
-        dojoLeadsEnt.load$({userId: dojoleads[0].userId}, function (err, loadedLead) {
-          if (err) return done(err);
-
-          expect(loadedLead).to.exist;
-          expect(loadedLead.userId).to.be.ok;
-          expect(loadedLead.email).to.be.ok;
-          expect(loadedLead.userId).to.equal(savedLead.userId);
-
-          done();
-        });
-      });
-    });
-  });
-
   lab.experiment('Delete', function () {
     lab.test('delete dojo from db', {timeout: 20000}, function (done) {
       dojosEnt.list$({creator: users[0].id}, function (err, dojos) {
@@ -263,55 +232,6 @@ lab.experiment('Dojo Microservice test', function () {
       });
     });
   });
-
-  lab.experiment('Load user dojo lead', function () {
-    lab.test('load dojo lead based on user id', function (done) {
-      dojoLeadsEnt.list$(function (err, dojoLeads) {
-
-        expect(dojoLeads).not.to.be.empty;
-        expect(dojoLeads[0].userId).to.be.ok;
-
-        seneca.act({role: role, cmd: 'load_user_dojo_lead', id: dojoLeads[0].user_id}, function (err, loadedLead) {
-          if (err) return done(err);
-
-          expect(loadedLead).not.to.exist;
-          done();
-        });
-      });
-    });
-  });
-
-  lab.experiment('Find Dojo Lead', function () {
-    lab.test('load dojolead from db based on query', function (done) {
-      dojoLeadsEnt.list$(function (err, dojoLeads) {
-        if (err) return done(err);
-
-        expect(dojoLeads).not.to.be.empty;
-
-        // console.log('dojoLeads: ' + util.inspect(dojoLeads));
-        // console.log('dojoLeads[0].id: ' + util.inspect(dojoLeads[0].id));
-
-        expect(dojoLeads[0].mysql_dojo_id).to.exist;
-        expect(dojoLeads[0].mysql_dojo_id).to.be.ok;
-
-        seneca.act({
-          role: role,
-          cmd: 'find_dojolead',
-          query: {mysql_dojo_id: dojoLeads[0].mysql_dojo_id}
-        }, function (err, dojoLeadFound) {
-          if (err) return done(err);
-
-          // console.log('dojoLeadFound: ' + util.inspect(dojoLeadFound));
-
-          expect(dojoLeadFound).to.exist;
-          expect(dojoLeadFound).to.be.ok;
-
-          done();
-        });
-      });
-    });
-  });
-
 
   lab.experiment('Update', function () {
     lab.test('update dojo field', function (done) {
@@ -572,54 +492,6 @@ lab.experiment('Dojo Microservice test', function () {
     });
   });
 
-
-  lab.experiment('Load dojo lead', function () {
-    lab.test('load dojo lead based on its id', function (done) {
-      dojoLeadsEnt.list$(function (err, dojoLeads) {
-
-        expect(dojoLeads).not.to.be.empty;
-        expect(dojoLeads[0].id).to.be.ok;
-
-        seneca.act({role: role, cmd: 'load_dojo_lead', id: dojoLeads[0].id}, function (err, loadedLead) {
-          if (err) return done(err);
-
-          expect(loadedLead).to.exist;
-          expect(loadedLead.userId).to.be.ok;
-          expect(loadedLead.email).to.be.ok;
-          expect(loadedLead.id).to.equal(dojoLeads[0].id);
-
-          done();
-        });
-      });
-    });
-  });
-
-  lab.experiment('Load setup dojo steps', function () {
-    lab.test('load dojo wizard steps', function (done) {
-      seneca.act({role: role, cmd: 'load_setup_dojo_steps'}, function (err, dojoSteps) {
-        if (err) return done(err);
-
-        expect(dojoSteps).to.not.be.empty;
-
-        var all_keys = [];
-        _.forEach(dojoSteps, function (element) {
-          var obj_keys = Object.keys(element);
-          all_keys = _.union(all_keys, obj_keys); // append all fields to a list, no duplicates
-
-          // check for all fields to be ok
-          _.forEach(obj_keys, function (key) {
-            expect(element[key]).to.be.ok;
-          });
-        });
-
-        // TODO: find a way to feed array into include assertion
-        expect(all_keys).to.include('title')
-        expect(all_keys).to.include('checkboxes')
-
-        done();
-      });
-    });
-  });
 
   // Doesn't make any sense, jack shit test
   lab.experiment.skip('Load users dojos', function () {
