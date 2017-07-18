@@ -26,5 +26,11 @@ DO $$
           WHEN duplicate_column THEN RAISE NOTICE 'column frequency already exists in cd_dojos.';
           WHEN others THEN RAISE NOTICE 'Unhandled error: % %', SQLERRM, SQLSTATE;
         END;
+        BEGIN
+            ALTER TABLE cd_dojos ADD alternative_frequency character varying;
+        EXCEPTION
+          WHEN duplicate_column THEN RAISE NOTICE 'column alternative_frequency already exists in cd_dojos.';
+          WHEN others THEN RAISE NOTICE 'Unhandled error: % %', SQLERRM, SQLSTATE;
+        END;
     END;
 $$

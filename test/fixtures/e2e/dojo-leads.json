@@ -28,12 +28,12 @@
             "website": null,
             "twitter": null,
             "facebook": null,
-            "private": 0,
             "isValid": true,
             "visited": true
         },
         "venue": {
             "isFound": true,
+            "private": 0,
             "country": {
                 "countryName": "Romania",
                 "countryNumber": 642,
@@ -96,6 +96,7 @@
         },
         "venue": {
             "isFound": true,
+            "private": 0,
             "country": {
                 "countryName": "UnitedStates",
                 "countryNumber": 840,
@@ -160,6 +161,7 @@
         },
         "venue": {
             "isFound": true,
+            "private": 0,
             "country": {
                 "countryName": "Italy",
                 "countryNumber": 380,
@@ -219,6 +221,7 @@
         },
         "venue": {
             "isFound": true,
+            "private": 0,
             "country": {
                 "countryName": "Italy",
                 "countryNumber": 380,
