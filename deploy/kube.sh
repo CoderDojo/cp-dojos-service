@@ -9,7 +9,7 @@ else
 fi
 docker build --rm=false --build-arg DEP_VERSION=$DEP_VER -t coderdojo/cp-dojos-service:"$CIRCLE_SHA1" .
 docker login -e "$DOCKER_EMAIL" -u "$DOCKER_USER" -p "$DOCKER_PASS"
-docker push coderdojo/cp-event-service:"$CIRCLE_SHA1"
+docker push coderdojo/cp-dojos-service:"$CIRCLE_SHA1"
 sudo chown -R ubuntu:ubuntu /home/ubuntu/.kube
 kubectl config set-cluster default-cluster --server=https://"${STAGING_HOST}" --certificate-authority="${CA_CERT}"
 kubectl config set-credentials default-admin --certificate-authority="${CA_CERT}" --client-key="${ADMIN_KEY}" --client-certificate="${ADMIN_CERT}"
