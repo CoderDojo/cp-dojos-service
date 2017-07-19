@@ -40,7 +40,7 @@ deployment:
             key_pattern: staging/applications/cp-dojos-service-staging-{SHORT_COMMIT}-{BUILD_NUM}.zip
         deployment_group: staging-zen
         deployment_config: CodeDeployDefault.OneAtATime
-   kube:
+  kube:
     branch: staging
     commands:
       - ./deploy/kube.sh
