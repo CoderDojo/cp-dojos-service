@@ -144,7 +144,6 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'get_user_types'}, cmd_get_user_types);
   seneca.add({role: plugin, cmd: 'get_user_permissions'}, cmd_get_user_permissions);
   seneca.add({role: plugin, cmd: 'create_dojo_email'}, cmd_create_dojo_email);
-  seneca.add({role: plugin, cmd: 'uncompleted_dojos'}, cmd_uncompleted_dojos);
   seneca.add({role: plugin, cmd: 'get_dojo_config'}, cmd_get_dojo_config);
   seneca.add({role: plugin, cmd: 'load_dojo_admins'}, cmd_load_dojo_admins);
   seneca.add({role: plugin, cmd: 'load_ticketing_admins'}, cmd_load_ticketing_admins);
@@ -477,57 +476,6 @@ module.exports = function (options) {
 
   function sha1sum (input) {
     return crypto.createHash('sha1').update(JSON.stringify(input)).digest('hex');
-  }
-
-  function cmd_uncompleted_dojos (args, done) {
-    var query = {creator: args.user.id, deleted: 0};
-    seneca.act({role: plugin, cmd: 'list', query: query}, function (err, dojos) {
-      if (err) {
-        return done(err);
-      }
-      if (dojos.length > 0) {
-        var uncompletedDojos = [];
-        async.each(dojos, function (dojo, cb) {
-          // check if dojo "setup dojo step is completed"
-          seneca.act({role: plugin, cmd: 'load_dojo_lead', id: dojo.dojoLeadId}, function (err, dojoLead) {
-            if (err) return cb(err);
-            if (dojoLead) {
-              var isCompleted = checkSetupYourDojoIsCompleted(dojoLead);
-              if (!isCompleted) {
-                uncompletedDojos.push(dojo);
-              }
-            }
-            return cb();
-          });
-        }, function (err) {
-          if (err) return done(err);
-          return done(null, uncompletedDojos);
-        });
-      } else return done(null);
-    });
-  }
-
-  function checkSetupYourDojoIsCompleted (dojoLead) {
-    var isDojoCompleted = true;
-
-    if (dojoLead.application.setupYourDojo) {
-      var setupYourDojo = dojoLead.application.setupYourDojo;
-      var checkboxes = _.flatten(_.map(setupDojoSteps, 'checkboxes'));
-
-      _.each(checkboxes, function (checkbox) {
-        if (!setupYourDojo[checkbox.name]) {
-          isDojoCompleted = false;
-        }
-
-        if (checkbox.textField) {
-          if (!setupYourDojo[checkbox.name + 'Text']) {
-            isDojoCompleted = false;
-          }
-        }
-      });
-    }
-
-    return isDojoCompleted;
   }
 
   function cmd_search (args, done) {

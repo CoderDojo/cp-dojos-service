@@ -71,11 +71,6 @@ module.exports = function () {
       'bulk_delete': [{
         role: 'cdf-admin'
       }],
-      'uncompleted_dojos': [{
-        role: 'basic-user',
-        userType: 'champion',
-        extendedUserTypes: true
-      }],
 
       'get_stats': [{
         role: 'cdf-admin'
@@ -177,7 +172,6 @@ module.exports = function () {
         }]
       }],
 
-
       'notify_all_members': [
       {
         role: 'basic-user',
@@ -241,6 +235,12 @@ module.exports = function () {
           customValidator: [{
             role: 'cd-dojos',
             cmd: 'is_own_lead'
+          }]
+        }, {
+          role: 'basic-user',
+          customValidator: [{
+            role: 'cd-users',
+            cmd: 'is_self'
           }]
         }],
         'save': [{
