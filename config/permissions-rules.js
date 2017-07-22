@@ -34,6 +34,7 @@ module.exports = function () {
       { role: 'basic-user',
         userType: 'mentor'
       }],
+      // TODO : perm for ctrl:'dojo', cmd: 'save'
       'update': [{
         role: 'basic-user',
         customValidator: [{
@@ -50,23 +51,15 @@ module.exports = function () {
             perm: 'dojo-admin'
         }]
       }],
-      'delete': [{
-        role: 'cdf-admin',
-      }],
       'dojos_by_country': [{
         role: 'none'
       }],
       'list': [{
         role: 'none',
       }],
-      'joinedDojos': [{
-        role: 'basic-user'
-      }],
+
       'load': [{
         role: 'none'
-      }],
-      'bulk_update': [{
-        role: 'cdf-admin'
       }],
       'bulk_delete': [{
         role: 'cdf-admin'
@@ -229,6 +222,20 @@ module.exports = function () {
       'queue_email_poll': [{
         role: 'cdf-admin'
       }],
+      'dojo': {
+        'bulkVerify': [{
+          role: 'cdf-admin'
+        }],
+        'verify': [{
+          role: 'cdf-admin'
+        }],
+        'joinedDojos': [{
+          role: 'basic-user'
+        }],
+        'delete': [{
+          role: 'cdf-admin'
+        }]
+      },
       'lead': {
         'search': [{
           role: 'basic-user',

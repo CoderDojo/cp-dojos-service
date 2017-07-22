@@ -99,7 +99,7 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'dojos_count'}, cmd_dojos_count);
   seneca.add({role: plugin, cmd: 'dojos_by_country'}, cmd_dojos_by_country);
   seneca.add({role: plugin, cmd: 'dojos_state_count'}, cmd_dojos_state_count);
-  seneca.add({role: plugin, cmd: 'bulk_update'}, cmd_bulk_update);
+  seneca.add({role: plugin, cmd: 'bulkVerify'}, require('./lib/controllers/dojo/bulk-verify'));
   seneca.add({role: plugin, cmd: 'bulk_delete'}, cmd_bulk_delete);
   seneca.add({role: plugin, cmd: 'get_stats'}, cmd_get_stats);
   // Lead
@@ -683,13 +683,6 @@ module.exports = function (options) {
       }
       done(null, response);
     });
-  }
-
-  function cmd_bulk_update (args, done) {
-    logger.info({args: args}, 'cmd_bulk_update');
-    async.each(args.dojos, function (dojo, cb) {
-      seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, cb);
-    }, done);
   }
 
   function cmd_bulk_delete (args, done) {

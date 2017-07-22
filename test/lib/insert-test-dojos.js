@@ -25,7 +25,7 @@ module.exports = function (options) {
           seneca.act({role: 'cd-dojos', ctrl: 'lead', cmd: 'submit', lead: lead, user: champ, locality: 'en_US'},
            function (err, submittedLead) {
             if (err) return done(err);
-            seneca.act({role: 'cd-dojos', ctrl: 'dojo', cmd: 'verify', id: submittedLead.application.dojo.id, user: {id: '42'}},
+            seneca.act({role: 'cd-dojos', ctrl: 'dojo', cmd: 'verify', verified: 1, id: submittedLead.application.dojo.id, user: {id: '42'}},
              function (err, dojo) {
               if (err) return done(err);
               sCb();
