@@ -1,9 +1,9 @@
 DO $$
     BEGIN
         BEGIN
-        -- TODO: This should be added later on : NOT NULL DEFAULT 0
+        -- TODO: This should be added later on : NOT NULL DEFAULT 1 ; Also ISO 8601
             ALTER TABLE cd_dojos ADD day smallint
-            CONSTRAINT day_range CHECK (day >= 0 AND day <= 6);
+            CONSTRAINT day_range CHECK (day >= 1 AND day <= 7);
         EXCEPTION
           WHEN duplicate_column THEN RAISE NOTICE 'column day already exists in cd_dojos.';
           WHEN others THEN RAISE NOTICE 'Unhandled error: % %', SQLERRM, SQLSTATE;
