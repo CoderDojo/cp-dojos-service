@@ -1060,6 +1060,7 @@ module.exports = function (options) {
         if (dojo.name) dojo.name = sanitizeHtml(dojo.name);
         if (dojo.countryName) dojo.countryName = sanitizeHtml(dojo.countryName);
         if (dojo.notes) dojo.notes = sanitizeHtml(dojo.notes, so.sanitizeTextArea);
+        delete dojo.eventbriteConnected;
         seneca.make$(ENTITY_NS).save$(dojo, function (err, response) {
           if (err) return done(err);
           done(null, response);
