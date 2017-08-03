@@ -24,16 +24,6 @@ module.exports = function () {
       'search': [{
         role: 'cdf-admin'
       }],
-      'create': [{
-        role: 'basic-user',
-        userType: 'parent-guardian'
-      },
-      { role: 'basic-user',
-        userType: 'champion'
-      },
-      { role: 'basic-user',
-        userType: 'mentor'
-      }],
       // TODO : perm for ctrl:'dojo', cmd: 'save'
       'update': [{
         role: 'basic-user',

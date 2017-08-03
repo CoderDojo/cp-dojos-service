@@ -68,7 +68,6 @@ module.exports = function (options) {
   var STATS_ENTITY_NS = 'cd/stats';
   var DOJO_LEADS_ENTITY_NS = 'cd/dojoleads';
   var DEFAULT_INVITE_USER_TYPE = 'mentor';
-  var setupDojoSteps = require('./data/setup_dojo_steps');
   var dojoConfig = require('./data/dojos_config');
   var protocol = process.env.PROTOCOL || 'http';
   logger = options.logger;
@@ -90,7 +89,6 @@ module.exports = function (options) {
   seneca.add({role: plugin, ctrl: 'dojo', cmd: 'verify'}, require('./lib/controllers/dojo/verify'));
   seneca.add({role: plugin, ctrl: 'dojo', cmd: 'delete'}, require('./lib/controllers/dojo/delete'));
   // Alias old behavior
-  seneca.add({role: plugin, cmd: 'create'}, require('./lib/controllers/dojo/save'));
   seneca.add({role: plugin, cmd: 'update'}, require('./lib/controllers/dojo/save'));
   seneca.add({role: plugin, cmd: 'delete'}, require('./lib/controllers/dojo/delete'));
 
@@ -127,7 +125,6 @@ module.exports = function (options) {
   // Alias old behavior
   seneca.add({role: plugin, cmd: 'send_email'}, require('./lib/controllers/notifications/email/send'));
 
-  seneca.add({role: plugin, cmd: 'load_setup_dojo_steps'}, cmd_load_setup_dojo_steps);
   seneca.add({role: plugin, cmd: 'load_usersdojos'}, cmd_load_users_dojos);
   seneca.add({role: plugin, cmd: 'load_dojo_users'}, cmd_load_dojo_users);
   seneca.add({role: plugin, cmd: 'export_dojo_users'}, cmd_export_dojo_users);
@@ -734,10 +731,6 @@ module.exports = function (options) {
     };
 
     dojoLeadEntity.load$(query, done);
-  }
-
-  function cmd_load_setup_dojo_steps (args, done) {
-    done(null, setupDojoSteps);
   }
 
   function cmd_load_users_dojos (args, done) {
