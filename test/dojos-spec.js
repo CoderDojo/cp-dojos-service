@@ -73,15 +73,6 @@ function mockSenecaError(role, cmd) {
 // NOTE: all tests are basic
 //       they just follow the happy scenario for each exposed action
 
-function create_dojo(obj, creator, done) {
-  seneca.act({role: role, cmd: 'create', dojo: obj, user: {id: creator.id, roles: ['cdf-admin']}},
-    function (err, savedDojo) {
-      if (err) return done(err);
-      expect(savedDojo.id).to.be.ok;
-      done(null, savedDojo);
-    });
-}
-
 function create_users_dojos(obj, done) {
   seneca.act({role: role, cmd: 'save_usersdojos', userDojo: obj, user: {roles: ['cdf-admin']}}, done);
 }
