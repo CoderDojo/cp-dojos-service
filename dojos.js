@@ -321,7 +321,6 @@ module.exports = function (options) {
     }
 
     function updateDojoCreatorEmail (userDojo, done) {
-      console.log(userDojo);
       var userId = userDojo.userId;
       var dojoId = userDojo.dojoId;
 
