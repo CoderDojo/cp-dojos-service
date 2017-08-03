@@ -271,7 +271,7 @@ module.exports = function (options) {
 
     function updatePreviousFounderUserDojo (userDojo, done) {
       if (_.isEmpty(userDojo)) {
-        return done(new Error('Cannot find previous founder'));
+        return cmdCb(new Error('Cannot find previous founder'));
       }
 
       userDojo.owner = 0;
@@ -285,7 +285,7 @@ module.exports = function (options) {
       query.dojoId = founder.dojoId;
 
       seneca.act({role: 'cd-dojos', cmd: 'load_usersdojos', query: query}, function (err, currentFounder) {
-        if (err) return done(err);
+        if (err) return cmdCb(err);
         return done(null, currentFounder[0]);
       });
     }
@@ -317,14 +317,18 @@ module.exports = function (options) {
         });
       }
       userDojo.owner = 1;
-      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo, user: args.user}, done);
+      seneca.act({role: 'cd-dojos', cmd: 'save_usersdojos', userDojo: userDojo, user: args.user}, function (err) {
+        if (err) return cmdCb(err);
+        done(null, userDojo);
+      });
     }
 
     function updateDojoCreatorEmail (userDojo, done) {
+      console.log(userDojo);
       var userId = userDojo.userId;
       var dojoId = userDojo.dojoId;
 
-      if (!userId || !dojoId) return done(null, {ok: false, why: 'No userId or dojoId for new Dojo creator.'});
+      if (!userId || !dojoId) return cmdCb(null, {ok: false, why: 'No userId or dojoId for new Dojo creator.'});
 
       async.waterfall([
         loadUser,
@@ -340,9 +344,9 @@ module.exports = function (options) {
 
       function updateDojo (user, cb) {
         seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
-          if (err) return done(err);
+          if (err) return cmdCb(err);
           dojo.creatorEmail = user.email;
-          seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, cb);
+          seneca.act({role: plugin, entity: 'dojo', cmd: 'save', dojo: {id: dojo.id, creatorEmail: dojo.creatorEmail}, user: args.user}, cb);
         });
       }
     }
@@ -856,7 +860,12 @@ module.exports = function (options) {
         return userInvite.email;
       });
 
-      seneca.act({role: plugin, cmd: 'update', user: currentUser, dojo: dojo}, done);
+      seneca.act({role: plugin, entity: 'dojo', cmd: 'save', user: currentUser, dojo: {id: dojo.id, userInvites: dojo.userInvites}},
+      function (err) {
+        if (err) return done(err);
+        // Because the returned value is the payload, we need to send the original dojo
+        return done(null, dojo);
+      });
     }
 
     function getUserTypeTitle (dojo, done) {
@@ -968,7 +977,7 @@ module.exports = function (options) {
       seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
         if (err) return done(err);
         dojo.userInvites = _.without(dojo.userInvites, _.find(dojo.userInvites, {id: inviteToken.id}));
-        seneca.act({role: plugin, cmd: 'update', dojo: dojo, user: args.user}, function (err, response) {
+        seneca.act({role: plugin, entity: 'dojo', cmd: 'save', dojo: {id: dojo.id, userInvites: dojo.userInvites}, user: args.user}, function (err, response) {
           if (err) return done(err);
           return done();
         });
