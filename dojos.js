@@ -199,6 +199,7 @@ module.exports = function (options) {
 
   // One shot
   seneca.add({role: plugin, cmd: 'backfill_champions'}, cmd_backfill_champions);
+  seneca.add({role: plugin, cmd: 'migrate-v1-leads'}, require('./lib/migrate-old-lead'));
 
   if (options.kue && options.kue.start) {
     var kues = ['batch-poller', 'sms-poll', 'email-poll'];
