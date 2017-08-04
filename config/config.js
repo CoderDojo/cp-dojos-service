@@ -95,6 +95,10 @@ module.exports = function (options) {
       maxUserDojos: process.env.LIMITS_MAX_USER_DOJOS || 30
     },
     timeout: 120000,
+    env: {
+      hostname: process.env.HOSTNAME || '127.0.0.1:8000',
+      protocol: process.env.HOSTNAME ? 'https' : 'http'
+    },
     strict: { add: false, result: false },
     actcache: { active: false }
   };

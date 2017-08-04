@@ -46,5 +46,14 @@ module.exports = function (seneca) {
         role: 'cd-events',
         cmd: '*'
       }
+    })
+    .client({
+      type: 'web',
+      host: process.env.CD_ORGANISATIONS || 'localhost',
+      port: 10309,
+      pin: {
+        role: 'cd-organisations',
+        cmd: '*'
+      }
     });
 };

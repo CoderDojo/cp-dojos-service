@@ -1,6 +1,8 @@
 machine:
   node:
     version: 0.10.40
+  services:
+    - docker
   environment:
     LANG: en_US.utf8
 dependencies:
@@ -8,6 +10,7 @@ dependencies:
     - npm -g install npm@latest-2
   override:
     - npm install
+    - if [ "$CIRCLE_BRANCH" = "staging" ]; then npm install --save cp-translations@staging; fi
 test:
   override:
     - npm run test
@@ -25,3 +28,20 @@ deployment:
             key_pattern: applications/cp-dojos-service-ci-{BUILD_NUM}.zip
         deployment_group: prod-zen
         deployment_config: CodeDeployDefault.OneAtATime
+  staging:
+    branch: staging
+    codedeploy:
+      cp-dojos-service-staging:
+        application_root: /
+        region: eu-west-1
+        revision_location:
+          revision_type: S3
+          s3_location:
+            bucket: zen-deployments
+            key_pattern: staging/applications/cp-dojos-service-staging-{SHORT_COMMIT}-{BUILD_NUM}.zip
+        deployment_group: staging-zen
+        deployment_config: CodeDeployDefault.OneAtATime
+  kube:
+    branch: staging
+    commands:
+      - ./deploy/kube.sh
