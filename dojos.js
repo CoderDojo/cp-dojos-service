@@ -116,6 +116,10 @@ module.exports = function (options) {
   seneca.add({role: plugin, cmd: 'load_user_dojo_lead'}, cmd_load_user_dojo_lead);
   seneca.add({role: plugin, cmd: 'load_dojo_lead'}, require('./lib/entities/lead/load'));
 
+  // Dojolead relationship (CDF usage for filtering)
+  seneca.add({role: plugin, entity: 'dojolead', cmd: 'list'}, require('./lib/entities/dojolead/list'));
+  seneca.add({role: plugin, ctrl: 'dojolead', cmd: 'search'}, require('./lib/controllers/dojolead/search'));
+
   // UserDojo
   seneca.add({role: plugin, entity: 'userdojo', cmd: 'list'}, require('./lib/entities/dojo-users/list'));
   seneca.add({role: plugin, entity: 'userdojo', cmd: 'save'}, require('./lib/entities/dojo-users/save'));
