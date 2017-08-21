@@ -20,7 +20,7 @@ fi
 sudo apt-get update
 sudo apt-get install --only-upgrade docker -y
 docker build --rm=false --build-arg DEP_VERSION=$DEP_VER -t coderdojo/cp-dojos-service:"$CIRCLE_SHA1" .
-docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
+docker login -u "$DOCKER_USER" -p "$DOCKER_PASS" -e "$DOCKER_EMAIL"
 docker push coderdojo/cp-dojos-service:"$CIRCLE_SHA1"
 sudo chown -R ubuntu:ubuntu /home/ubuntu/.kube
 kubectl config set-cluster default-cluster --server=https://"${HOST}" --certificate-authority="${CA_CERT}"
