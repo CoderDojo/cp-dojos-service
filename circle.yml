@@ -32,4 +32,5 @@ deployment:
   staging:
     branch: staging
     commands:
+      - docker --version
       - ./deploy/kube.sh
