@@ -17,6 +17,8 @@ elif [ "$CIRCLE_BRANCH" = "staging" ]; then
 else
   exit 0
 fi
+sudo apt-get update
+sudo apt-get install --only-upgrade docker -y
 docker build --rm=false --build-arg DEP_VERSION=$DEP_VER -t coderdojo/cp-dojos-service:"$CIRCLE_SHA1" .
 docker login -u "$DOCKER_USER" -p "$DOCKER_PASS"
 docker push coderdojo/cp-dojos-service:"$CIRCLE_SHA1"
