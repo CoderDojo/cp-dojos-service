@@ -34,4 +34,4 @@ deployment:
     commands:
       - sudo /opt/google-cloud-sdk/bin/gcloud --quiet components update --version 120.0.0
       - sudo /opt/google-cloud-sdk/bin/gcloud --quiet components update --version 120.0.0 kubectl
-      - ./deploy/kube.sh
+      - GIT_SHA1=$CIRCLE_SHA1 ./deploy/kube.sh
