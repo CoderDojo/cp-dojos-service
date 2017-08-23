@@ -256,7 +256,6 @@
 }, {
     "email": "champion5@example.com",
     "completed": false,
-    "converted": false,
     "application": {
         "champion": {
             "email": "champion5@example.com",
