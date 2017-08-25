@@ -8,6 +8,7 @@
   },
   "scripts": {
     "start": "node service.js",
+    "dev": "nodemon service.js",
     "lint": "./node_modules/.bin/semistandard *.js config/config.js",
     "test": "bash -c 'source ./config/development.env; npm run lint && ./node_modules/.bin/lab lib/controllers -P spec --ignore __core-js_shared__ '",
     "testdata": "node test/lib/service.js",
@@ -15,9 +16,7 @@
     "coverage": "bash -c 'source ./config/development.env; ./node_modules/.bin/lab --threshold 68 -r html -o ./coverage/coverage.html -r lcov -o ./coverage/lcov.info -r json -o ./coverage/coverage.json -r console -o stdout'",
     "covrep": "bash test/covrep.sh"
   },
-  "pre-commit": [
-    "test"
-  ],
+  "pre-commit": ["test"],
   "repository": {
     "type": "git",
     "url": "git://github.com/CoderDojo/cp-dojos-service.git"
@@ -31,6 +30,7 @@
     "chai": "2.2.0",
     "chai-moment": "^0.1.0",
     "lab": "5.15.1",
+    "nodemon": "^1.11.0",
     "pre-commit": "1.0.7",
     "semistandard": "7.0.3",
     "sinon": "1.16.1"

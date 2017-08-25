@@ -46,3 +46,4 @@ web/locale/*
 !web/locale/en_US
 email-templates/*
 !email-templates/*-en_US
+.pkg.sha1
