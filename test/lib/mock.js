@@ -24,7 +24,7 @@ module.exports = function (seneca) {
         var res = mocks[role][cmd][0];
         mocks[role][cmd].shift();
         if (_.isFunction(res)) {
-          res();
+          res(args);
         } else {
           return done(null, res);
         }
