@@ -1,3 +1,4 @@
+---
 machine:
   node:
     version: 0.10.40
@@ -30,18 +31,5 @@ deployment:
         deployment_config: CodeDeployDefault.OneAtATime
   staging:
     branch: staging
-    codedeploy:
-      cp-dojos-service-staging:
-        application_root: /
-        region: eu-west-1
-        revision_location:
-          revision_type: S3
-          s3_location:
-            bucket: zen-deployments
-            key_pattern: staging/applications/cp-dojos-service-staging-{SHORT_COMMIT}-{BUILD_NUM}.zip
-        deployment_group: staging-zen
-        deployment_config: CodeDeployDefault.OneAtATime
-  kube:
-    branch: staging
     commands:
-      - ./deploy/kube.sh
+      - GIT_SHA1=$CIRCLE_SHA1 GIT_BRANCH=$CIRCLE_BRANCH ./deploy/kube.sh
