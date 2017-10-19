@@ -9,7 +9,6 @@ var seneca = require('seneca')(config);
 var util = require('util');
 var _ = require('lodash');
 var store = require('seneca-postgresql-store');
-var heapdump = require('heapdump');
 var dgram = require('dgram');
 var service = 'cp-dojos-service';
 var log = require('cp-logs-lib')({name: service, level: 'warn'});
@@ -57,6 +56,7 @@ seneca.use(require('cp-permissions-plugin'), {
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
 process.on('uncaughtException', shutdown);
+process.on('SIGUSR2', shutdown);
 
 function shutdown (err) {
   seneca.act({ role: 'queue', cmd: 'stop' });
@@ -67,15 +67,6 @@ function shutdown (err) {
   }
   process.exit(0);
 }
-
-process.on('SIGUSR2', function () {
-  var snapshot = '/tmp/cp-dojos-service-' + Date.now() + '.heapsnapshot';
-  console.log('Got SIGUSR2, creating heap snapshot: ', snapshot);
-  heapdump.writeSnapshot(snapshot, function (err, filename) {
-    if (err) console.error('Error creating snapshot:', err);
-    console.log('dump written to', filename);
-  });
-});
 
 require('./migrate-psql-db.js')(function (err) {
   if (err) {
