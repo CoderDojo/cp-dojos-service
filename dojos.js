@@ -23,6 +23,8 @@ var addChildrenParentDojo = require('./lib/add-children-parent-dojo');
 var cmd_export_dojo_users = require('./lib/export-csv');
 var cmd_update_image = require('./lib/update-image');
 var purgeInviteEmails = require('./lib/utils/dojo/purgeInviteEmails');
+var cmd_ping = require('./lib/ping');
+
 // Polls
 // TODO: change import to require polls out of dojos.js
 var cmd_save_poll_result = require('./lib/poll/save-poll-result');
@@ -72,6 +74,7 @@ module.exports = function (options) {
   var protocol = process.env.PROTOCOL || 'http';
   logger = options.logger;
 
+  seneca.add({role: plugin, cmd: 'ping'}, cmd_ping);
   seneca.add({role: plugin, cmd: 'search'}, cmd_search);
   seneca.add({role: plugin, cmd: 'list'}, cmd_list);
   seneca.add({role: plugin, cmd: 'load'}, cmd_load);
