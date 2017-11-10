@@ -57,7 +57,7 @@
     "node-geocoder": "2.23.0",
     "pg": "4.4.0",
     "phoneformat.js": "^1.0.3",
-    "pkgcloud": "^1.3.0",
+    "pkgcloud": "1.3.0",
     "po2json": "0.4.2",
     "postgrator": "2.5.0",
     "randomstring": "1.0.6",
