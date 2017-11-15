@@ -16,7 +16,9 @@ var log = require('cp-logs-lib')({name: service, level: 'warn'});
 var sanitizeHtml = require('sanitize-html');
 config.log = log.log;
 // logger creates a circular JSON
-seneca.log.info('using config', JSON.stringify(config, null, 4));
+if (process.env.NODE_ENV !== 'production') {
+  seneca.log.info('using config', JSON.stringify(config, null, 4));
+}
 
 seneca.options(config);
 seneca.options.sanitizeTextArea = {
@@ -62,10 +64,16 @@ process.on('SIGUSR2', shutdown);
 
 function shutdown (err) {
   seneca.act({ role: 'queue', cmd: 'stop' });
-  if (err !== void 0 && err.stack !== void 0) {
-    console.error(new Date().toString() + ' FATAL: UncaughtException, please report: ' + util.inspect(err));
-    console.error(util.inspect(err.stack));
-    console.trace();
+  if (err !== undefined) {
+    var error = {
+      date: new Date().toString(),
+      msg: err.stack !== undefined
+        ? 'FATAL: UncaughtException, please report: ' + util.inspect(err.stack)
+        : 'FATAL: UncaughtException, no stack trace',
+      err: util.inspect(err)
+    };
+    console.error(JSON.stringify(error));
+    process.exit(1);
   }
   process.exit(0);
 }
