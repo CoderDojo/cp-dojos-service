@@ -226,6 +226,13 @@ module.exports = function () {
           role: 'cdf-admin'
         }]
       },
+      'load_dojo_lead': [{
+        role: 'basic-user',
+        customValidator: [{
+          role: 'cd-dojos',
+          cmd: 'is_own_lead'
+        }]
+      }],
       'lead': {
         'search': [{
           role: 'basic-user',
