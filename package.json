@@ -10,7 +10,7 @@
     "start": "node service.js",
     "dev": "nodemon service.js",
     "lint": "./node_modules/.bin/semistandard *.js config/config.js",
-    "test": "sh -c '. ./config/development.env; npm run lint && ./node_modules/.bin/lab lib/controllers -P spec --ignore __core-js_shared__ '",
+    "test": "sh -c '. ./config/development.env; ./node_modules/.bin/lab lib/controllers -P spec --ignore __core-js_shared__ '",
     "testdata": "node test/lib/service.js",
     "legacytest": "sh -c '. ./config/development.env; npm run lint && ./node_modules/.bin/lab --ignore __core-js_shared__ --flat'",
     "coverage": "sh -c '. ./config/development.env; ./node_modules/.bin/lab --threshold 68 -r html -o ./coverage/coverage.html -r lcov -o ./coverage/lcov.info -r json -o ./coverage/coverage.json -r console -o stdout'",
