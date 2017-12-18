@@ -4,7 +4,7 @@ jobs:
   build:
     working_directory: ~/cp-dojos-service
     docker:
-      - image: node:8.4
+      - image: node:8
         environment:
           NODE_ENV: testing
     steps:
