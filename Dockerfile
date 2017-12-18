@@ -1,4 +1,4 @@
-FROM mhart/alpine-node:0.10.48
+FROM node:8-alpine
 MAINTAINER butlerx <butlerx@notthe.cloud>
 ARG DEP_VERSION=latest
 RUN apk add --update git python build-base postgresql-client openssl && \
