@@ -12,10 +12,10 @@ module.exports = function (options) {
       username: process.env.POSTGRES_USERNAME,
       password: process.env.POSTGRES_PASSWORD,
       nolimit: true,
-      fromColumnName: function (attr) {
+      fromColumnName: (attr) => {
         return camelCase(attr);
       },
-      toColumnName: function (attr) {
+      toColumnName: (attr) => {
         return decamelize(attr);
       }
     };
