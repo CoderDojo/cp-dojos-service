@@ -70,7 +70,7 @@
     "seneca": "1.4.0",
     "seneca-kue": "wardormeur/seneca-kue",
     "seneca-mail": "0.2.2",
-    "seneca-newrelic-plugin": "https://github.com/wardormeur/seneca-newrelic",
+    "seneca-newrelic": "https://github.com/wardormeur/seneca-newrelic",
     "seneca-postgresql-store": "2.3",
     "seneca-queue": "^0.3.0",
     "seneca-store-query": "0.0.5",
