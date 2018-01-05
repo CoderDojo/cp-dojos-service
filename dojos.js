@@ -626,7 +626,6 @@ module.exports = function (options) {
     if (query.mysqlDojoId && query.mysqlDojoId.toString().length > 8) return done(null, []);
     seneca.make$(ENTITY_NS).list$(query, function (err, dojos) {
       if (err) return done(err);
-
       _.each(dojos, function (dojo) {
         if (dojo.userInvites) {
           dojo.userInvites = purgeInviteEmails(dojo.userInvites);

@@ -1,8 +1,7 @@
 process.setMaxListeners(0);
 require('events').EventEmitter.prototype._maxListeners = 100;
-
-if (process.env.NEW_RELIC_ENABLED === 'true') require('newrelic');
-
+let newrelic;
+if (process.env.NEW_RELIC_ENABLED === 'true') newrelic = require('newrelic');
 const config = require('./config/config.js')();
 const seneca = require('seneca')(config);
 const util = require('util');
@@ -56,6 +55,17 @@ seneca.use(require('seneca-queue'));
 seneca.use(require('cp-permissions-plugin'), {
   config: `${__dirname}/config/permissions-rules`
 });
+if (process.env.NEW_RELIC_ENABLED === 'true' ) {
+  seneca.use(require('seneca-newrelic'), {
+    newrelic,
+    roles: ['cd-dojos'],
+    filter: (p) => { 
+      p.user = p.user ? p.user.id : undefined;
+      p.login = p.login ? p.login.id : undefined;
+      return p; 
+    },
+  });
+}
 
 process.on('SIGINT', shutdown);
 process.on('SIGTERM', shutdown);
