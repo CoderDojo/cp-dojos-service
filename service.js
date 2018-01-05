@@ -60,8 +60,8 @@ if (process.env.NEW_RELIC_ENABLED === 'true' ) {
     newrelic,
     roles: ['cd-dojos'],
     filter: (p) => { 
-      p.user = p.user ? p.user.id : void 0;
-      p.login = p.login ? p.login.id : void 0;
+      p.user = p.user ? p.user.id : undefined;
+      p.login = p.login ? p.login.id : undefined;
       return p; 
     },
   });
