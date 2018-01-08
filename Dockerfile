@@ -7,7 +7,8 @@ RUN apk add --update git python build-base postgresql-client openssl && \
 WORKDIR /usr/src/app
 COPY . /usr/src/app/
 RUN yarn && \
+    yarn add cp-translations@latest && \
     apk del build-base python && \
     rm -rf /tmp/* /root/.npm /root/.node-gyp
 EXPOSE 10301
-CMD ["npm", "start"]
+CMD ["yarn", "start"]
