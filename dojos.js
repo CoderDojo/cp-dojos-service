@@ -761,6 +761,7 @@ module.exports = function (options) {
     var nameQuery = null;
     var skip = 0;
     var userListQuery = {};
+    userListQuery.fields$ = ['name', 'email', 'init_user_type', 'profile_id', 'dob', 'user_id'];
     if (query.sort$) {
       userListQuery.sort$ = query.sort$;
       delete query.sort$;
@@ -786,10 +787,14 @@ module.exports = function (options) {
       delete query.skip$;
     }
 
+    if (query.fields) {
+      userListQuery.fields$ = query.fields;
+      delete query.fields;
+    }
+
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
       // column name must match the casing in the DB as per latest changes in seneca-postgresql-store
-      userListQuery.fields$ = ['name', 'email', 'init_user_type', 'profile_id', 'dob', 'user_id'];
       if (typeQuery) {
         response = _.filter(response, function (user) {
           return _.includes(user.userTypes, typeQuery);
