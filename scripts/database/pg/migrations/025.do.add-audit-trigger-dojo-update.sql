@@ -4,12 +4,12 @@ DO $$
     CREATE SCHEMA IF NOT EXISTS audit;
     CREATE OR REPLACE FUNCTION audit.dojo_stage_fn() RETURNS TRIGGER AS $body$
     BEGIN
-      INSERT INTO audit.dojo_stage(id, dojo_id, stage)
-        VALUES (public.gen_random_uuid(), NEW.id, NEW.stage);
+      INSERT INTO audit.dojo_stage(dojo_id, stage)
+        VALUES (NEW.id, NEW.stage);
       RETURN NEW;
     EXCEPTION
       WHEN OTHERS THEN
-          RAISE WARNING '[AUDIT.IF_MODIFIED_FUNC] - UDF ERROR [OTHER] - SQLSTATE: %, SQLERRM: %',SQLSTATE,SQLERRM;
+          RAISE WARNING '[AUDIT.DOJO_STAGE_FN] - UDF ERROR [OTHER] - SQLSTATE: %, SQLERRM: %',SQLSTATE,SQLERRM;
           RETURN NULL;
     END;
     $body$
@@ -28,7 +28,7 @@ DO $$
       FOR EACH ROW EXECUTE PROCEDURE audit.dojo_stage_fn();
     
     CREATE TABLE IF NOT EXISTS audit.dojo_stage (
-      id CHARACTER varying NOT NULL,
+      id CHARACTER varying PRIMARY KEY DEFAULT public.gen_random_uuid(),
       dojo_id CHARACTER varying NOT NULL,
       updated_at TIMESTAMP WITH TIME zone NOT NULL DEFAULT CURRENT_TIMESTAMP,
       stage smallint NOT NULL
