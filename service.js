@@ -36,8 +36,8 @@ seneca.options.sanitizeTextArea = {
 seneca.decorate('customValidatorLogFormatter', require('./lib/custom-validator-log-formatter'));
 seneca.use(store, config['postgresql-store']);
 seneca.use(storeQuery);
-if (process.env.MAILTRAP_ENABLED === 'true') {
-  seneca.use('mail', config.mailtrap);
+if (process.env.MAILDEV_ENABLED === 'true') {
+  seneca.use('mail', config.maildev);
 } else {
   seneca.use('mail', config.email);
 }

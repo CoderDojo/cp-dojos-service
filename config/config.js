@@ -70,7 +70,8 @@ module.exports = function (options) {
         from: 'no-reply@coderdojo.com'
       },
       config: {
-        port: 1025,
+        host: 'maildev',
+        port: 25,
         ignoreTLS: true
       }
     },
