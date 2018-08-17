@@ -146,7 +146,7 @@ seneca.ready(() => {
               // Loop over each value of the array of the dangerous field 
               ids.forEach((id) => {
                 if (!/^[a-zA-Z0-9-]+$/g.test(id)) {
-                  throw new Error(`Unexcpected characters in ${col}`);
+                  throw new Error(`Unexpected characters in ${col}`);
                 }
               });
             });
