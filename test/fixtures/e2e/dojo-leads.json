@@ -10,8 +10,6 @@
             "dob": "1957-11-13T23:00:00.000Z",
             "phone": "393345678910",
             "address1": "Address 1",
-            "confidentCoding": 2,
-            "confidentMentoring": 3,
             "isValid": true,
             "visited": true
         },
@@ -76,8 +74,6 @@
             "phone": "393345678910",
             "dob": "1957-11-13T23:00:00.000Z",
             "address1": "Address 1",
-            "confidentCoding": 2,
-            "confidentMentoring": 3,
             "reference": "media",
             "isValid": true,
             "visited": true
@@ -140,8 +136,6 @@
             "dob": "1957-11-13T23:00:00.000Z",
             "phone": "393345678910",
             "address1": "Address 1",
-            "confidentCoding": 2,
-            "confidentMentoring": 3,
             "reference": "media",
             "isValid": true,
             "visited": true
@@ -206,8 +200,6 @@
             "notes": "Lorem Ipsum.",
             "linkedIn": "https://ie.linkedin.com/in/xxxxx",
             "dob": "1972-12-25T00:00:00.000Z",
-            "confidentCoding": 2,
-            "confidentMentoring": 3,
             "reference": "media",
             "isValid": true,
             "visited": true
@@ -263,8 +255,6 @@
             "phone": "3530234567891",
             "dob": "1981-05-31T23:00:00.000Z",
             "twitter": "@Coderdojo",
-            "confidentCoding": 2,
-            "confidentMentoring": 3,
             "reference": "media",
             "isValid": true,
             "visited": true
