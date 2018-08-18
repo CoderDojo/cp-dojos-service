@@ -137,19 +137,21 @@ seneca.ready(() => {
         }
         // Loop over each props
         Object.values(args.q).forEach((value, key) => {
-          const insecureProp = ['nin$', 'in$'];
-          const detected = Object.keys(value).filter((val) => insecureProp.indexOf(val) > -1);
-          if (detected.length > 0) {
-            // Loop over each detected insecureProp being used (nin or in)
-            detected.forEach((col, key) => {
-              const ids = value[col];
-              // Loop over each value of the array of the dangerous field 
-              ids.forEach((id) => {
-                if (!/^[a-zA-Z0-9-]+$/g.test(id)) {
-                  throw new Error(`Unexpected characters in ${col}`);
-                }
+          if (_.isObject(value)) {
+            const insecureProp = ['nin$', 'in$'];
+            const detected = Object.keys(value).filter((val) => insecureProp.indexOf(val) > -1);
+            if (detected.length > 0) {
+              // Loop over each detected insecureProp being used (nin or in)
+              detected.forEach((col, key) => {
+                const ids = value[col];
+                // Loop over each value of the array of the dangerous field 
+                ids.forEach((id) => {
+                  if (!/^[a-zA-Z0-9-]+$/g.test(id)) {
+                    throw new Error(`Unexpected characters in ${col}`);
+                  }
+                });
               });
-            });
+            }
           }
         });
         this.prior(args, cb);
