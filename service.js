@@ -41,7 +41,7 @@ if (process.env.MAILDEV_ENABLED === 'true') {
 } else {
   seneca.use('mail', config.email);
 }
-seneca.use(require('./email-notifications.js'));
+seneca.use(require('./email-notifications.js'), { logger: log.logger });
 seneca.use(require('seneca-kue'));
 seneca.use(require('./dojos.js'), {
   limits: config.limits,
