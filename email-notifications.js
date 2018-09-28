@@ -13,6 +13,7 @@ var i18nHelper = new I18NHelper({
 module.exports = function (options) {
   var seneca = this;
   var plugin = 'email-notifications';
+  var { logger } = options;
 
   var so = seneca.options();
 
@@ -40,6 +41,7 @@ module.exports = function (options) {
         }
         subject = subjectTranslation.fetch(subjectVariables);
       }
+      logger.warn('email-notifications', JSON.stringify(args));
       seneca.act({
         role: 'mail', cmd: 'send',
         from: args.from || options.sendFrom,
