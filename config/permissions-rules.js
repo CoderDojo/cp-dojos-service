@@ -78,7 +78,17 @@ module.exports = function () {
       }],
 
       'dojos_for_user': [{
-        role: 'basic-user'
+        role: 'basic-user',
+        customValidator:[{
+          role: 'cd-users',
+          cmd: 'is_self'
+        }]
+      }, {
+        role: 'basic-user',
+        customValidator: [{
+          role: 'cd-users',
+          cmd: 'is_parent_of',
+        }] 
       }],
 
       //  TODO:130 split join from manage userdojos

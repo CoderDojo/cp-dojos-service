@@ -1083,24 +1083,21 @@ module.exports = function (options) {
       userId: args.id,
       deleted: 0
     };
-    var dojos = [];
     seneca.act({role: plugin, cmd: 'load_usersdojos', query: query}, function (err, response) {
       if (err) return done(err);
-      var dojoEntity = seneca.make$(ENTITY_NS);
-      async.each(response, function (userDojoLink, cb) {
+      const dojoIds = response.map(d => d.dojoId); 
+      if (dojoIds.length > 0) {
         query = {
-          id: userDojoLink.dojoId,
-          deleted: 0
+          id: { in$: dojoIds },
+          deleted: 0,
         };
-        dojoEntity.load$(query, function (err, response) {
+        seneca.act({ role: plugin, cmd: 'list', query }, function (err, response) {
           if (err) return cb(err);
-          if (response) dojos.push(response);
-          cb();
+          done(null, response);
         });
-      }, function (err) {
-        if (err) return done(err);
-        done(null, dojos);
-      });
+      } else {
+        done(null, []); 
+      }
     });
   }
 
