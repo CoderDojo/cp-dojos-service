@@ -210,8 +210,11 @@ module.exports = function () {
       'get_poll_setup': [{
         role: 'none'
       }],
-      'get-poll-results': [{
+      'get_poll_results': [{
         role: 'none'
+      }],
+      'remove_poll_result': [{
+        role: 'cdf-admin',   
       }],
       'send_test_email_poll': [{
         role: 'cdf-admin'
