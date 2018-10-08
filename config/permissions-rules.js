@@ -134,7 +134,11 @@ module.exports = function () {
         }]
       }],
       'accept_user_invite': [{
-        role: 'basic-user'
+        role: 'basic-user',
+        customValidator: [{
+          role: 'cd-dojos',
+          cmd: 'is_own_invite'
+        }]
       }],
       'request_user_invite': [{
         role: 'basic-user'
