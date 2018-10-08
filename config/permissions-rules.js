@@ -211,6 +211,9 @@ module.exports = function () {
       'save_poll_result': [{
         role: 'none'
       }],
+      'save_poll_setup': [{
+        role: 'cdf-admin'
+      }],
       'get_poll_setup': [{
         role: 'none'
       }],
