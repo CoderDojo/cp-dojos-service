@@ -74,6 +74,13 @@ module.exports = function () {
       }, {
         role: 'basic-user',
         customValidator: [{
+          role: 'cd-dojos',
+          cmd: 'have_permissions_on_dojo',
+          perm: 'dojo-admin'
+        }]
+      }, {
+        role: 'basic-user',
+        customValidator: [{
           role: 'cd-users',
           cmd: 'is_self'
         }]
