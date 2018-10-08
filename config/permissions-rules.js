@@ -215,7 +215,7 @@ module.exports = function () {
         role: 'cdf-admin'
       }],
       'get_poll_setup': [{
-        role: 'cdf-admin'
+        role: 'none'
       }],
       'get_poll_results': [{
         role: 'none'
