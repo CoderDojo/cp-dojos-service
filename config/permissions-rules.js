@@ -277,14 +277,13 @@ module.exports = function () {
           cmd: 'is_own_lead'
         }]
       }],
+      'dojolead': {
+        'search': [{
+          role: 'cdf-admin',
+        }],
+      },
       'lead': {
         'search': [{
-          role: 'basic-user',
-          customValidator: [{
-            role: 'cd-dojos',
-            cmd: 'is_own_lead'
-          }]
-        }, {
           role: 'basic-user',
           customValidator: [{
             role: 'cd-users',
