@@ -849,7 +849,7 @@ module.exports = function (options) {
     ], done);
 
     function getDojo (done) {
-      seneca.act({role: plugin, cmd: 'load', id: dojoId}, done);
+      seneca.make$('cd/dojos').load$(dojoId, done); 
     }
 
     function generateInviteToken (dojo, done) {
@@ -917,7 +917,7 @@ module.exports = function (options) {
     });
 
     function loadInviteToken (done) {
-      seneca.act({role: plugin, cmd: 'load'}, {id: dojoId}, function (err, response) {
+      seneca.make$('cd/dojos').load$(dojoId, function (err, response) { 
         if (err) return done(err);
         var userInvites = response.userInvites;
         var inviteFound = _.find(userInvites, function (userInvite) {
@@ -979,7 +979,7 @@ module.exports = function (options) {
     }
 
     function deleteInviteToken (inviteToken, done) {
-      seneca.act({role: plugin, cmd: 'load', id: dojoId}, function (err, dojo) {
+      seneca.make$('cd/dojos').load$(dojoId, function (err, dojo) {
         if (err) return done(err);
         dojo.userInvites = _.without(dojo.userInvites, _.find(dojo.userInvites, {id: inviteToken.id}));
         seneca.act({role: plugin, entity: 'dojo', cmd: 'save', dojo: {id: dojo.id, userInvites: dojo.userInvites}, user: args.user}, function (err, response) {
