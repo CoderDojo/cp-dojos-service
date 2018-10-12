@@ -165,7 +165,11 @@ module.exports = function () {
         }]
       }],
       'request_user_invite': [{
-        role: 'basic-user'
+        role: 'basic-user',
+        customValidator: [{
+          role: 'cd-users',
+          cmd: 'is_self',
+        }],
       }],
       'accept_user_request': [{
         // No validator here as check is post-recovery of data
@@ -193,8 +197,15 @@ module.exports = function () {
         }]
       }],
 
-      'notify_all_members': [
-      {
+      'notify_all_members': [{
+        role: 'basic-user',
+        customValidator: [{
+          role: 'cd-dojos',
+          cmd: 'have_permissions_on_dojo',
+          perm: 'dojo-admin'
+        }]
+      }],
+      'notify_dojo_members': [{
         role: 'basic-user',
         customValidator: [{
           role: 'cd-dojos',
