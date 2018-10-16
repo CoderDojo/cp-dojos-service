@@ -267,10 +267,10 @@ module.exports = function () {
       'queue_email_poll': [{
         role: 'cdf-admin'
       }],
+      'bulkVerify': [{
+        role: 'cdf-admin'
+      }],
       'dojo': {
-        'bulkVerify': [{
-          role: 'cdf-admin'
-        }],
         'verify': [{
           role: 'cdf-admin'
         }],
