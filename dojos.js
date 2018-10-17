@@ -1103,8 +1103,8 @@ module.exports = function (options) {
 
   function cmd_remove_usersdojos (args, done) {
     var data = args.data;
-    var userId = data.userId;
-    var dojoId = data.dojoId;
+    var userId = args.userId;
+    var dojoId = args.dojoId;
     var emailSubject = data.emailSubject;
     var usersDojosEntity = seneca.make$(USER_DOJO_ENTITY_NS);
 
@@ -1124,6 +1124,7 @@ module.exports = function (options) {
       usersDojosEntity.load$({userId: userId, dojoId: dojoId, deleted: 0}, function (err, response) {
         if (err) return cb(err);
         var userDojo = response;
+        if (!userDojo) return cb(new Error('User is not part of that Dojo'));
         if (userDojo.owner === 1) return cb(new Error('Dojo owners cannot be removed.'));
         return cb(null, userDojo);
       });
