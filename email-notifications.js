@@ -30,6 +30,7 @@ module.exports = function (options) {
     var locale = args.locality;
     var code = args.code;
     if (options.sendemail && options.email) {
+      logger.warn('email-notifications', JSON.stringify(args));
       emailCode = code + locale;
       if (!fs.existsSync(CpTranslations.getEmailTemplatePath(emailCode))) emailCode = code + 'en_US';
       if (!args.to) return done(null, {ok: false, why: 'No recipient set.'});
@@ -37,11 +38,15 @@ module.exports = function (options) {
       if (!bypassTranslation) {
         subjectTranslation = i18nHelper.getClosestTranslation(locale, subject);
         if (subjectTranslation === null) {
+          logger.warn('email-notifications', JSON.stringify({
+            ok: false,
+            why: 'Invalid email subject.',
+            args
+          }));
           return done(null, {ok: false, why: 'Invalid email subject.'});
         }
         subject = subjectTranslation.fetch(subjectVariables);
       }
-      logger.warn('email-notifications', JSON.stringify(args));
       seneca.act({
         role: 'mail', cmd: 'send',
         from: args.from || options.sendFrom,
