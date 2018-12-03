@@ -4,11 +4,6 @@ var fs = require('fs');
 var _ = require('lodash');
 var CpTranslations = require('cp-translations');
 var I18NHelper = require('cp-i18n-lib');
-var i18nHelper = new I18NHelper({
-  poFilePath: CpTranslations.getPoFilePath(),
-  poFileName: 'messages.po',
-  domain: 'coder-dojo-platform'
-});
 
 module.exports = function (options) {
   var seneca = this;
@@ -29,6 +24,12 @@ module.exports = function (options) {
     var emailCode;
     var locale = args.locality;
     var code = args.code;
+    var i18nHelper = new I18NHelper({
+      poFilePath: CpTranslations.getPoFilePath(),
+      poFileName: 'messages.po',
+      domain: 'coder-dojo-platform'
+    });
+
     if (options.sendemail && options.email) {
       logger.warn('email-notifications', JSON.stringify(args));
       emailCode = code + locale;
