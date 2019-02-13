@@ -1449,6 +1449,7 @@ module.exports = function (options) {
   function cmd_reverse_geocode (args, done) {
     var coords = args.coords;
     geocoder.reverse(coords, function (err, res) {
+      if (!res) res = {};
       if (err) res.error = err;
       done(null, res);
     });
