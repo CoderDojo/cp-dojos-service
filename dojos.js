@@ -207,6 +207,7 @@ module.exports = function (options) {
 
   // One shot
   seneca.add({role: plugin, cmd: 'backfill_champions'}, cmd_backfill_champions);
+  seneca.add({role: plugin, cmd: 'backfill_dojo_county_state'}, require('./lib/backfill-dojo-county-state'));
   seneca.add({role: plugin, cmd: 'migrate-v1-leads'}, require('./lib/migrate-old-lead'));
 
   if (options.kue && options.kue.start) {
@@ -1447,7 +1448,6 @@ module.exports = function (options) {
 
   function cmd_reverse_geocode (args, done) {
     var coords = args.coords;
-
     geocoder.reverse(coords, function (err, res) {
       if (err) res.error = err;
       done(null, res);
