@@ -44,7 +44,7 @@
     "cp-i18n-lib": "CoderDojo/cp-i18n-lib#remove-global-store",
     "cp-logs-lib": "CoderDojo/cp-logs-lib#1.1.0",
     "cp-permissions-plugin": "CoderDojo/cp-permissions-plugin#1.0.4",
-    "cp-translations": "^1.0.109",
+    "cp-translations": "^1.0.138",
     "csvtojson": "^1.0.2",
     "debug": "2.2.0",
     "decamelize": "^1.2.0",
