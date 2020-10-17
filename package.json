@@ -67,7 +67,7 @@
     "randomstring": "1.0.6",
     "request": "2.55.0",
     "sanitize-html": "1.15.0",
-    "seneca": "1.4.0",
+    "seneca": "3.9.0",
     "seneca-kue": "wardormeur/seneca-kue",
     "seneca-mail": "0.2.2",
     "seneca-newrelic": "https://github.com/wardormeur/seneca-newrelic",
