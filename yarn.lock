@@ -1172,10 +1172,10 @@ cp-permissions-plugin@CoderDojo/cp-permissions-plugin#1.0.4:
     async "^2.0.0-rc.5"
     lodash "^4.13.1"
 
-cp-translations@^1.0.146:
-  version "1.0.146"
-  resolved "https://registry.yarnpkg.com/cp-translations/-/cp-translations-1.0.146.tgz#dee5c55263fb31c7c5c3e4e8fd573f3a05921f8d"
-  integrity sha512-h2DRtFybsA2tvcnWg8FI5ZmxyBgavMDr9F+Cp0e78VgyJJusJLPvuSSHHtUxwnYKNsrdgCWZKnPwRkwJXXJtsQ==
+cp-translations@^1.0.149:
+  version "1.0.149"
+  resolved "https://registry.yarnpkg.com/cp-translations/-/cp-translations-1.0.149.tgz#e09845115a80380cf19c49dfd003d8ed75578690"
+  integrity sha512-AQa/d/MDNAM8y70gWbE6a65R9ZUYP11WWOF056Eq8Ttngdzg6j1WsmkV4VuZQB5NSIYrZIuM2UoCWIOfC20kmw==
 
 cross-spawn-async@^2.1.8:
   version "2.2.5"
@@ -6515,8 +6515,9 @@ stringset@~0.2.1:
   resolved "https://registry.yarnpkg.com/stringset/-/stringset-0.2.1.tgz#ef259c4e349344377fcd1c913dd2e848c9c042b5"
 
 stringstream@~0.0.4, stringstream@~0.0.5:
-  version "0.0.5"
-  resolved "https://registry.yarnpkg.com/stringstream/-/stringstream-0.0.5.tgz#4e484cd4de5a0bbbee18e46307710a8a81621878"
+  version "0.0.6"
+  resolved "https://registry.yarnpkg.com/stringstream/-/stringstream-0.0.6.tgz#7880225b0d4ad10e30927d167a1d6f2fd3b33a72"
+  integrity sha512-87GEBAkegbBcweToUrdzf3eLhWNg06FJTebl4BVJz/JgWy8CvEr9dRtX5qWphiynMSQlxxi+QqN0z5T32SLlhA==
 
 strip-ansi@^2.0.1:
   version "2.0.1"
