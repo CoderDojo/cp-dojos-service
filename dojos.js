@@ -763,7 +763,7 @@ module.exports = function (options) {
     var nameQuery = null;
     var skip = 0;
     var userListQuery = {};
-    userListQuery.fields$ = ['name', 'email', 'init_user_type', 'profile_id', 'dob', 'user_id'];
+    userListQuery.fields$ = args.fields? args.fields : ['name', 'email', 'init_user_type', 'profile_id', 'dob', 'user_id'];
     if (query.sort$) {
       userListQuery.sort$ = query.sort$;
       delete query.sort$;
