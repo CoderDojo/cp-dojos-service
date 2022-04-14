@@ -38,7 +38,7 @@
     "sinon": "1.16.1"
   },
   "dependencies": {
-    "async": "0.9.2",
+    "async": "3.2.2",
     "camelcase": "^4.1.0",
     "countries-list": "1.0.3",
     "cp-i18n-lib": "CoderDojo/cp-i18n-lib#remove-global-store",
