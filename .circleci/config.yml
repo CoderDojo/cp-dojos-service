@@ -51,4 +51,6 @@ workflows:
             branches:
               only:
                 - master
-                - staging
+          context:
+            - docker-hub
+            - bastion-cluster-access
