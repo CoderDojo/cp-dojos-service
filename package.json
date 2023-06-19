@@ -46,7 +46,7 @@
     "cp-permissions-plugin": "CoderDojo/cp-permissions-plugin#1.0.4",
     "cp-translations": "^1.0.167",
     "csvtojson": "^1.0.2",
-    "debug": "2.2.0",
+    "debug": "2.6.9",
     "decamelize": "^1.2.0",
     "ejs": "1.0.0",
     "googleapis": "2.0.5",
